@@ -23,7 +23,7 @@ public class Tables {
     private long places;
 
     @ManyToOne
-    private Users users;
+    private Users user;
 
     public Tables() {}
 
