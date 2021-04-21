@@ -1,7 +1,8 @@
 package fr.ul.miage.gl_restaurant.model;
 
 import lombok.Data;
-import org.hibernate.annotations.Tables;
+
+import fr.ul.miage.gl_restaurant.model.Tables;
 
 import javax.persistence.*;
 
