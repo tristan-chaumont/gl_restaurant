@@ -1,6 +1,7 @@
 package fr.ul.miage.gl_restaurant.model;
 
 import lombok.Data;
+import org.hibernate.annotations.Tables;
 
 import javax.persistence.*;
 
@@ -15,4 +16,13 @@ public class Reservations {
 
     @Column(name = "lunch")
     private boolean lunch;
+
+    @ManyToOne
+    private Tables table;
+
+    public Reservations() {}
+
+    public Reservations(boolean lunch) {
+        this.lunch = lunch;
+    }
 }
