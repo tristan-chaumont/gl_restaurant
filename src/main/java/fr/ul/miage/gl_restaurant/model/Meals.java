@@ -26,7 +26,7 @@ public class Meals {
     @ManyToOne
     private Tables table;
 
-    @ManyToOne
+    @OneToOne
     private Bills bill;
 
     public Meals() {}
