@@ -16,17 +16,10 @@ import java.util.Properties;
 @Slf4j
 public class DbAccess {
 
-    private static DbAccess instance;
+    private static Connection connection;
+    private static String url, username, password;
 
-    private final Connection connection;
-    private String url, username, password;
-
-    private DbAccess() throws SQLException {
-        parseProperties();
-        connection = DriverManager.getConnection(url, username, password);
-    }
-
-    private void parseProperties() {
+    private static void parseProperties() {
         String propertiesFileName = "db.properties";
         Properties properties = new Properties();
         try (InputStream inputStream = new FileInputStream(propertiesFileName)) {
@@ -43,9 +36,15 @@ public class DbAccess {
         }
     }
 
-    public static DbAccess getInstance() throws SQLException {
-        if (instance == null)
-            instance = new DbAccess();
-        return instance;
+    public static Connection getInstance() {
+        if (connection == null) {
+            parseProperties();
+            try {
+                connection = DriverManager.getConnection(url, username, password);
+            } catch (SQLException e) {
+                log.error("Exception: " + e.getMessage());
+            }
+        }
+        return connection;
     }
 }
