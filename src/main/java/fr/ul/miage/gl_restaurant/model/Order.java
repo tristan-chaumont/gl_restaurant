@@ -11,6 +11,8 @@ import java.sql.Timestamp;
 @ToString
 public class Order {
 
+    private static final String TABLE_NAME = "Orders";
+
     private Long orderId;
 
     private Timestamp orderDate;

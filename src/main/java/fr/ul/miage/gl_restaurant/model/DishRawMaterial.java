@@ -9,6 +9,8 @@ import lombok.ToString;
 @ToString
 public class DishRawMaterial {
 
+    private static final String TABLE_NAME = "Dishes_RawMaterials";
+
     private Dish dish;
 
     private RawMaterial rawMaterial;

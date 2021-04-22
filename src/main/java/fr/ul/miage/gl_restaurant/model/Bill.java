@@ -9,6 +9,8 @@ import lombok.ToString;
 @ToString
 public class Bill {
 
+    private static final String TABLE_NAME = "Bills";
+
     private Long billId;
 
     public Bill() {}

@@ -9,6 +9,8 @@ import lombok.ToString;
 @ToString
 public class Table {
 
+    private static final String TABLE_NAME = "Tables";
+
     private Long tableId;
 
     private Integer floor;

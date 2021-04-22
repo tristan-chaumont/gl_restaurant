@@ -9,6 +9,8 @@ import lombok.ToString;
 @ToString
 public class DishOrder {
 
+    private static final String TABLE_NAME = "Dishes_Orders";
+
     private Dish dish;
 
     private Order order;

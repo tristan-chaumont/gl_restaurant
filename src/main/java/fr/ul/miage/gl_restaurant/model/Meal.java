@@ -11,6 +11,8 @@ import java.sql.Timestamp;
 @ToString
 public class Meal {
 
+    private static final String TABLE_NAME = "Meals";
+
     private Long mealId;
 
     private Integer customersNb;

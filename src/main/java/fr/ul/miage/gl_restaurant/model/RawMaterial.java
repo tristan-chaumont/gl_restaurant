@@ -2,6 +2,8 @@ package fr.ul.miage.gl_restaurant.model;
 
 public class RawMaterial {
 
+    private static final String TABLE_NAME = "RawMaterials";
+
     private Long rawMaterialId;
 
     private String rawMaterialLabel;
