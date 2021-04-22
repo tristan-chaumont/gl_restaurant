@@ -26,6 +26,9 @@ public class Meals {
     @ManyToOne
     private Tables table;
 
+    @ManyToOne
+    private Bills bill;
+
     public Meals() {}
 
     public Meals(long customersNb, Timestamp startDate, long mealDuration) {
