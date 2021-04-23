@@ -18,6 +18,6 @@ public interface Repository<T, K> {
 
     T update(T object);
 
-    T delete(K id);
+    void delete(K id);
 }
 
