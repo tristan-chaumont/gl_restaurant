@@ -16,9 +16,12 @@ public class UserRepositoryImpl implements Repository<User, Long> {
 
     private static final String FIND_ALL_SQL = "SELECT userId, login, lastName, firstName, role FROM Users";
     private static final String FIND_BY_ID_SQL = "SELECT userId, login, lastName, firstName, role FROM Users WHERE userId = ?";
+    private static final String FIND_BY_LOGIN = "SELECT userId, login, lastName, firstName, role FROM Users WHERE login = ?";
     private static final String SAVE_SQL = "INSERT INTO Users(login, lastName, firstName, role) VALUES(?, ?, ?, ?)";
     private static final String UPDATE_SQL = "UPDATE Users SET login = ?, lastName = ?, firstName = ?, role = ? WHERE userId = ?";
     private static final String DELETE_SQL = "DELETE FROM Users WHERE userId = ?";
+
+    /* FIND */
 
     @Override
     public List<User> findAll() {
@@ -44,15 +47,34 @@ public class UserRepositoryImpl implements Repository<User, Long> {
         Optional<User> user = Optional.empty();
         try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_ID_SQL)) {
             preparedStatement.setLong(1, id);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (resultSet.first()) {
-                    Long userId = resultSet.getLong("userId");
-                    String login = resultSet.getString("login");
-                    String lastName = resultSet.getString("lastName");
-                    String firstName = resultSet.getString("firstName");
-                    String role = resultSet.getString("role");
-                    user = Optional.of(new User(userId, login, lastName, firstName, role));
-                }
+            user = getUserFromSQL(preparedStatement);
+        } catch (SQLException e) {
+            log.error("Exception: " + e.getMessage());
+        }
+        return user;
+    }
+
+    public Optional<User> findByLogin(String login) {
+        Optional<User> user = Optional.empty();
+        try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_LOGIN, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+            preparedStatement.setString(1, login);
+            user = getUserFromSQL(preparedStatement);
+        } catch (SQLException e) {
+            log.error("Exception: " + e.getMessage());
+        }
+        return user;
+    }
+
+    private Optional<User> getUserFromSQL(PreparedStatement preparedStatement) {
+        Optional<User> user = Optional.empty();
+        try (ResultSet resultSet = preparedStatement.executeQuery()) {
+            if (resultSet.first()) {
+                Long userId = resultSet.getLong("userId");
+                String userLogin = resultSet.getString("login");
+                String lastName = resultSet.getString("lastName");
+                String firstName = resultSet.getString("firstName");
+                String role = resultSet.getString("role");
+                user = Optional.of(new User(userId, userLogin, lastName, firstName, role));
             }
         } catch (SQLException e) {
             log.error("Exception: " + e.getMessage());
