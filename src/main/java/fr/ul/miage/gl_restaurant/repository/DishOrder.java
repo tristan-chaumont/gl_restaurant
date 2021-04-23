@@ -1,6 +1,7 @@
 package fr.ul.miage.gl_restaurant.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 public class DishOrder implements Repository<DishOrder, Long> {
 
@@ -10,7 +11,7 @@ public class DishOrder implements Repository<DishOrder, Long> {
     }
 
     @Override
-    public DishOrder findById(Long id) {
+    public Optional<DishOrder> findById(Long id) {
         return null;
     }
 

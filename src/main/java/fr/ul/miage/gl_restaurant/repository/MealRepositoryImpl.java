@@ -3,6 +3,7 @@ package fr.ul.miage.gl_restaurant.repository;
 import fr.ul.miage.gl_restaurant.model.Meal;
 
 import java.util.List;
+import java.util.Optional;
 
 public class MealRepositoryImpl implements Repository<Meal, Long> {
 
@@ -12,7 +13,7 @@ public class MealRepositoryImpl implements Repository<Meal, Long> {
     }
 
     @Override
-    public Meal findById(Long id) {
+    public Optional<Meal> findById(Long id) {
         return null;
     }
 

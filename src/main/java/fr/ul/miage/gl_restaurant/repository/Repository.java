@@ -4,6 +4,7 @@ import fr.ul.miage.gl_restaurant.jdbc.DbAccess;
 
 import java.sql.Connection;
 import java.util.List;
+import java.util.Optional;
 
 public interface Repository<T, K> {
 
@@ -11,7 +12,7 @@ public interface Repository<T, K> {
 
     List<T> findAll();
 
-    T findById(K id);
+    Optional<T> findById(K id);
 
     T save(T object);
 

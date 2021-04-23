@@ -3,6 +3,7 @@ package fr.ul.miage.gl_restaurant.repository;
 import fr.ul.miage.gl_restaurant.model.Bill;
 
 import java.util.List;
+import java.util.Optional;
 
 public class BillRepositoryImpl implements Repository<Bill, Long> {
 
@@ -12,7 +13,7 @@ public class BillRepositoryImpl implements Repository<Bill, Long> {
     }
 
     @Override
-    public Bill findById(Long id) {
+    public Optional<Bill> findById(Long id) {
         return null;
     }
 

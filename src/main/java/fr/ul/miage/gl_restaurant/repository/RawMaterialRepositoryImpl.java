@@ -3,6 +3,7 @@ package fr.ul.miage.gl_restaurant.repository;
 import fr.ul.miage.gl_restaurant.model.RawMaterial;
 
 import java.util.List;
+import java.util.Optional;
 
 public class RawMaterialRepositoryImpl implements Repository<RawMaterial, Long> {
 
@@ -12,7 +13,7 @@ public class RawMaterialRepositoryImpl implements Repository<RawMaterial, Long> 
     }
 
     @Override
-    public RawMaterial findById(Long id) {
+    public Optional<RawMaterial> findById(Long id) {
         return null;
     }
 

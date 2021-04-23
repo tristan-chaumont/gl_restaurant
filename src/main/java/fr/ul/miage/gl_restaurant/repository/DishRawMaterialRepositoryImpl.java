@@ -3,6 +3,7 @@ package fr.ul.miage.gl_restaurant.repository;
 import fr.ul.miage.gl_restaurant.model.DishRawMaterial;
 
 import java.util.List;
+import java.util.Optional;
 
 public class DishRawMaterialRepositoryImpl implements Repository<DishRawMaterial, Long> {
 
@@ -12,7 +13,7 @@ public class DishRawMaterialRepositoryImpl implements Repository<DishRawMaterial
     }
 
     @Override
-    public DishRawMaterial findById(Long id) {
+    public Optional<DishRawMaterial> findById(Long id) {
         return null;
     }
 
