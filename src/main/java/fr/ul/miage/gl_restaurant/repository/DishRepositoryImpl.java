@@ -1,9 +1,7 @@
 package fr.ul.miage.gl_restaurant.repository;
 
 import fr.ul.miage.gl_restaurant.model.Dish;
-import fr.ul.miage.gl_restaurant.model.User;
 import lombok.extern.slf4j.Slf4j;
-import lombok.extern.slf4j.XSlf4j;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -17,8 +15,8 @@ import java.util.Optional;
 public class DishRepositoryImpl implements Repository<Dish, Long> {
 
     private static final String FIND_ALL_SQL = "SELECT dishId, category, menuType, price FROM Dishes";
-    private static final String FIND_BY_ID_SQL = "SELECT dishId, category, menuType, price FROM Users WHERE dishId = ?";
-    private static final String SAVE_SQL = "INSERT INTO Users(category, menuType, price) VALUES(?, ?, ?)";
+    private static final String FIND_BY_ID_SQL = "SELECT dishId, category, menuType, price FROM Dishes WHERE dishId = ?";
+    private static final String SAVE_SQL = "INSERT INTO Dishes(category, menuType, price) VALUES(?, ?, ?)";
     private static final String UPDATE_SQL = "UPDATE Dishes SET category = ?, menuType = ?, price = ? WHERE dishId = ?";
     private static final String DELETE_SQL = "DELETE FROM Dishes WHERE dishId = ?";
 
@@ -29,9 +27,9 @@ public class DishRepositoryImpl implements Repository<Dish, Long> {
              ResultSet resultSet = statement.executeQuery(FIND_ALL_SQL)) {
             while (resultSet.next()) {
                 Long dishId = resultSet.getLong("dishId");
-                String category = resultSet.getString("login");
-                String menuType = resultSet.getString("lastName");
-                String price = resultSet.getString("firstName");
+                String category = resultSet.getString("category");
+                String menuType = resultSet.getString("menuType");
+                Double price = resultSet.getDouble("price");
                 dishes.add(new Dish(dishId, category, menuType, price));
             }
         } catch (SQLException e) {
@@ -48,9 +46,9 @@ public class DishRepositoryImpl implements Repository<Dish, Long> {
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.first()) {
                     Long dishId = resultSet.getLong("dishId");
-                    String category = resultSet.getString("login");
-                    String menuType = resultSet.getString("lastName");
-                    String price = resultSet.getString("firstName");
+                    String category = resultSet.getString("category");
+                    String menuType = resultSet.getString("menuType");
+                    Double price = resultSet.getDouble("price");
                     dish = Optional.of(new Dish(dishId, category, menuType, price));
                 }
             }
@@ -89,7 +87,7 @@ public class DishRepositoryImpl implements Repository<Dish, Long> {
                 preparedStatement.setString(1, object.getCategory());
                 preparedStatement.setString(2, object.getMenuType());
                 preparedStatement.setDouble(3, object.getPrice());
-                preparedStatement.setLong(5, object.getDishId());
+                preparedStatement.setLong(4, object.getDishId());
                 preparedStatement.executeUpdate();
             } catch (SQLException e) {
                 e.printStackTrace();

@@ -13,7 +13,7 @@ public class Dish {
 
     private Long dishId;
 
-    private String text;
+    private String category;
 
     private String menuType;
 
@@ -21,9 +21,9 @@ public class Dish {
 
     public Dish() {}
 
-    public Dish(Long dishId, String text, String menuType, Double price) {
+    public Dish(Long dishId, String category, String menuType, Double price) {
         this.dishId = dishId;
-        this.text = text;
+        this.category = category;
         this.menuType = menuType;
         this.price = price;
     }

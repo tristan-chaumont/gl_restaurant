@@ -2,8 +2,6 @@ package fr.ul.miage.gl_restaurant.repository;
 
 import fr.ul.miage.gl_restaurant.model.Meal;
 import fr.ul.miage.gl_restaurant.model.Order;
-import fr.ul.miage.gl_restaurant.model.Table;
-import fr.ul.miage.gl_restaurant.model.User;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.*;

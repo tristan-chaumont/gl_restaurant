@@ -1,21 +1,22 @@
 package fr.ul.miage.gl_restaurant.repository;
 
 import fr.ul.miage.gl_restaurant.model.Bill;
-import fr.ul.miage.gl_restaurant.model.Dish;
 import fr.ul.miage.gl_restaurant.model.Meal;
 import fr.ul.miage.gl_restaurant.model.Table;
+import lombok.extern.slf4j.Slf4j;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 public class MealRepositoryImpl implements Repository<Meal, Long> {
 
     private static final String FIND_ALL_SQL = "SELECT mealId, customersnb, startDate, mealDuration, tableId, billId FROM Meals";
     private static final String FIND_BY_ID_SQL = "SELECT mealId, customersnb, startDate, mealDuration, tableId, billId FROM Meals WHERE mealId = ?";
-    private static final String SAVE_SQL = "INSERT INTO Users(customersnb, startDate, mealDuration, tableId, billId) VALUES(?, ?, ?, ?, ?)";
-    private static final String UPDATE_SQL = "UPDATE Users SET customersnb = ?, startDate = ?, mealDuration = ?, tableId = ?, billId = ? WHERE mealId = ?";
+    private static final String SAVE_SQL = "INSERT INTO Meals(customersnb, startDate, mealDuration, tableId, billId) VALUES(?, ?, ?, ?, ?)";
+    private static final String UPDATE_SQL = "UPDATE Meals SET customersnb = ?, startDate = ?, mealDuration = ?, tableId = ?, billId = ? WHERE mealId = ?";
     private static final String DELETE_SQL = "DELETE FROM Users WHERE userId = ?";
 
     @Override
@@ -71,11 +72,11 @@ public class MealRepositoryImpl implements Repository<Meal, Long> {
     public Meal save(Meal object) {
         if (object != null) {
             try (PreparedStatement preparedStatement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
-                preparedStatement.setString(1, object.getCustomersnb());
-                preparedStatement.setString(2, object.getStartDate());
+                preparedStatement.setInt(1, object.getCustomersNb());
+                preparedStatement.setTimestamp(2, object.getStartDate());
                 preparedStatement.setDouble(3, object.getMealDuration());
-                preparedStatement.setString(4, object.getTableId());
-                preparedStatement.setDouble(5, object.getBillId());
+                preparedStatement.setLong(4, object.getTable().getTableId());
+                preparedStatement.setLong(5, object.getBill().getBillId());
                 int numRowsAffected = preparedStatement.executeUpdate();
                 try (ResultSet resultSet = preparedStatement.getGeneratedKeys()) {
                     if (resultSet.next()) {
@@ -95,11 +96,11 @@ public class MealRepositoryImpl implements Repository<Meal, Long> {
     public Meal update(Meal object) {
         if (object != null) {
             try (PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_SQL)) {
-                preparedStatement.setInt(1, object.getCustomersnb());
+                preparedStatement.setInt(1, object.getCustomersNb());
                 preparedStatement.setTimestamp(2, object.getStartDate());
                 preparedStatement.setLong(3, object.getMealDuration());
-                preparedStatement.setLong(4, object.getTableId());
-                preparedStatement.setLong(5, object.getBillId());
+                preparedStatement.setLong(4, object.getTable().getTableId());
+                preparedStatement.setLong(5, object.getBill().getBillId());
                 preparedStatement.setLong(6, object.getMealId());
                 preparedStatement.executeUpdate();
             } catch (SQLException e) {

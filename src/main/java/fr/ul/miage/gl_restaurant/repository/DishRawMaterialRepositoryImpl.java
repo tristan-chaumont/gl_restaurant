@@ -28,7 +28,7 @@ public class DishRawMaterialRepositoryImpl implements Repository<DishRawMaterial
     }
 
     @Override
-    public DishRawMaterial delete(Long id) {
-        return null;
+    public void delete(Long id) {
+
     }
 }
