@@ -17,18 +17,18 @@ public class Dish {
 
     private String menuType;
 
-    private Double precision;
+    private Double price;
 
     public Dish() {}
 
-    public Dish(Long dishId, String text, String menuType, Double precision) {
+    public Dish(Long dishId, String text, String menuType, Double price) {
         this.dishId = dishId;
         this.text = text;
         this.menuType = menuType;
-        this.precision = precision;
+        this.price = price;
     }
 
-    public Dish(String text, String menuType, Double precision) {
-        this(null, text, menuType, precision);
+    public Dish(String text, String menuType, Double price) {
+        this(null, text, menuType, price);
     }
 }
