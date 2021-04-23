@@ -19,6 +19,8 @@ public class DbAccess {
     private static Connection connection;
     private static String url, username, password;
 
+    private DbAccess() {}
+
     private static void parseProperties() {
         String propertiesFileName = "db.properties";
         Properties properties = new Properties();

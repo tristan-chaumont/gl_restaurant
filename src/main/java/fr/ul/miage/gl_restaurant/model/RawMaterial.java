@@ -1,5 +1,12 @@
 package fr.ul.miage.gl_restaurant.model;
 
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+
+@Getter
+@Setter
+@ToString
 public class RawMaterial {
 
     private static final String TABLE_NAME = "RawMaterials";
