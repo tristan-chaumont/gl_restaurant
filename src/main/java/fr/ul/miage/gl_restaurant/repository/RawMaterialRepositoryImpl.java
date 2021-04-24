@@ -1,5 +1,6 @@
 package fr.ul.miage.gl_restaurant.repository;
 
+import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.model.RawMaterial;
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,6 +20,10 @@ public class RawMaterialRepositoryImpl extends Repository<RawMaterial, Long> {
     private static final String SAVE_SQL = "INSERT INTO RawMaterials(rmLabel, stockQuantity, unit) VALUES(?, ?, ?)";
     private static final String UPDATE_SQL = "UPDATE RawMaterials SET rmLabel = ?, stockQuantity = ?, unit = ? WHERE rmId = ?";
     private static final String DELETE_SQL = "DELETE FROM RawMaterials WHERE rmId = ?";
+
+    protected RawMaterialRepositoryImpl(Environment environment) {
+        super(environment);
+    }
 
     @Override
     public List<RawMaterial> findAll() {

@@ -1,11 +1,16 @@
 package fr.ul.miage.gl_restaurant.repository;
 
+import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.model.DishRawMaterial;
 
 import java.util.List;
 import java.util.Optional;
 
 public class DishRawMaterialRepositoryImpl extends Repository<DishRawMaterial, Long> {
+
+    protected DishRawMaterialRepositoryImpl(Environment environment) {
+        super(environment);
+    }
 
     @Override
     public List<DishRawMaterial> findAll() {

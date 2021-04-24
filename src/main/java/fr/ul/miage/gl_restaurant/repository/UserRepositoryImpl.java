@@ -1,5 +1,6 @@
 package fr.ul.miage.gl_restaurant.repository;
 
+import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.model.User;
 import lombok.extern.slf4j.Slf4j;
 
@@ -20,6 +21,10 @@ public class UserRepositoryImpl extends Repository<User, Long> {
     private static final String SAVE_SQL = "INSERT INTO Users(login, lastName, firstName, role) VALUES(?, ?, ?, ?)";
     private static final String UPDATE_SQL = "UPDATE Users SET login = ?, lastName = ?, firstName = ?, role = ? WHERE userId = ?";
     private static final String DELETE_SQL = "DELETE FROM Users WHERE userId = ?";
+
+    protected UserRepositoryImpl(Environment environment) {
+        super(environment);
+    }
 
     /* FIND */
 

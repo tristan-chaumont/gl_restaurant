@@ -1,5 +1,6 @@
 package fr.ul.miage.gl_restaurant.repository;
 
+import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.model.Table;
 import fr.ul.miage.gl_restaurant.model.User;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,10 @@ public class TableRepositoryImpl extends Repository<Table, Long> {
     private static final String SAVE_SQL = "INSERT INTO Tables(floor, state, places, userId) VALUES(?, ?, ?, ?)";
     private static final String UPDATE_SQL = "UPDATE Tables SET floor = ?, state = ?, places = ?, userId = ? WHERE tableId = ?";
     private static final String DELETE_SQL = "DELETE FROM Tables WHERE tableId = ?";
+
+    protected TableRepositoryImpl(Environment environment) {
+        super(environment);
+    }
 
     @Override
     public List<Table> findAll() {

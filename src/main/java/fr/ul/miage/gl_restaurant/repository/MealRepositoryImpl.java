@@ -1,5 +1,6 @@
 package fr.ul.miage.gl_restaurant.repository;
 
+import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.model.Bill;
 import fr.ul.miage.gl_restaurant.model.Meal;
 import fr.ul.miage.gl_restaurant.model.Table;
@@ -19,6 +20,10 @@ public class MealRepositoryImpl extends Repository<Meal, Long> {
     private static final String UPDATE_SQL = "UPDATE Meals SET customersnb = ?, startDate = ?, mealDuration = ?, tableId = ?, billId = ? WHERE mealId = ?";
     private static final String DELETE_SQL = "DELETE FROM Users WHERE userId = ?";
 
+    protected MealRepositoryImpl(Environment environment) {
+        super(environment);
+    }
+
     @Override
     public List<Meal> findAll() {
         List<Meal> meals = new ArrayList<>();
@@ -29,9 +34,9 @@ public class MealRepositoryImpl extends Repository<Meal, Long> {
                 Integer customersnb = resultSet.getInt("customersnb");
                 Timestamp startDate = resultSet.getTimestamp("startDate");
                 Long mealDuration = resultSet.getLong("mealDuration");
-                Optional<Table> table = new TableRepositoryImpl().findById(resultSet.getLong("tableId"));
+                Optional<Table> table = new TableRepositoryImpl(Environment.TEST).findById(resultSet.getLong("tableId"));
                 if(table.isPresent()){
-                    Optional<Bill> bill = new BillRepositoryImpl().findById(resultSet.getLong("billId"));
+                    Optional<Bill> bill = new BillRepositoryImpl(Environment.TEST).findById(resultSet.getLong("billId"));
                     bill.ifPresent(value -> meals.add(new Meal(mealId, customersnb, startDate, mealDuration, table.get(), value)));
                 }
 
@@ -53,9 +58,9 @@ public class MealRepositoryImpl extends Repository<Meal, Long> {
                     Integer customersnb = resultSet.getInt("customersnb");
                     Timestamp startDate = resultSet.getTimestamp("startDate");
                     Long mealDuration = resultSet.getLong("mealDuration");
-                    Optional<Table> table = new TableRepositoryImpl().findById(resultSet.getLong("tableId"));
+                    Optional<Table> table = new TableRepositoryImpl(Environment.TEST).findById(resultSet.getLong("tableId"));
                     if (table.isPresent()) {
-                        Optional<Bill> bill = new BillRepositoryImpl().findById(resultSet.getLong("billId"));
+                        Optional<Bill> bill = new BillRepositoryImpl(Environment.TEST).findById(resultSet.getLong("billId"));
                         if (bill.isPresent()) {
                             meal = Optional.of(new Meal(mealId, customersnb, startDate, mealDuration, table.get(), bill.get()));
                         }

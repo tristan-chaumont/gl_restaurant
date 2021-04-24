@@ -1,5 +1,6 @@
 package fr.ul.miage.gl_restaurant.repository;
 
+import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.model.Dish;
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,6 +20,10 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
     private static final String SAVE_SQL = "INSERT INTO Dishes(category, menuType, price) VALUES(?, ?, ?)";
     private static final String UPDATE_SQL = "UPDATE Dishes SET category = ?, menuType = ?, price = ? WHERE dishId = ?";
     private static final String DELETE_SQL = "DELETE FROM Dishes WHERE dishId = ?";
+
+    protected DishRepositoryImpl(Environment environment) {
+        super(environment);
+    }
 
     @Override
     public List<Dish> findAll() {

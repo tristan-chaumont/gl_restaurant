@@ -1,5 +1,6 @@
 package fr.ul.miage.gl_restaurant.repository;
 
+import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.model.Meal;
 import fr.ul.miage.gl_restaurant.model.Order;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,10 @@ public class OrderRepositoryImpl extends Repository<Order, Long> {
     private static final String UPDATE_SQL = "UPDATE Orders SET orderDate = ?, preparationDate = ?, mealId = ? WHERE orderId = ?";
     private static final String DELETE_SQL = "DELETE FROM Orders WHERE orderId = ?";
 
+    protected OrderRepositoryImpl(Environment environment) {
+        super(environment);
+    }
+
     @Override
     public List<Order> findAll() {
         List<Order> orders = new ArrayList<>();
@@ -27,7 +32,7 @@ public class OrderRepositoryImpl extends Repository<Order, Long> {
                 Long orderId = resultSet.getLong("orderId");
                 Timestamp orderDate = resultSet.getTimestamp("orderDate");
                 Timestamp preparationDate = resultSet.getTimestamp("preparationDate");
-                Optional<Meal> meal = new MealRepositoryImpl().findById(resultSet.getLong("mealId"));
+                Optional<Meal> meal = new MealRepositoryImpl(Environment.TEST).findById(resultSet.getLong("mealId"));
                 meal.ifPresent(value -> orders.add(new Order(orderId, orderDate, preparationDate, value)));
             }
         } catch (SQLException e) {
@@ -46,7 +51,7 @@ public class OrderRepositoryImpl extends Repository<Order, Long> {
                     Long orderId = resultSet.getLong("orderId");
                     Timestamp orderDate = resultSet.getTimestamp("orderDate");
                     Timestamp preparationDate = resultSet.getTimestamp("preparationDate");
-                    Optional<Meal> meal = new MealRepositoryImpl().findById(resultSet.getLong("mealId"));
+                    Optional<Meal> meal = new MealRepositoryImpl(Environment.TEST).findById(resultSet.getLong("mealId"));
                     if (meal.isPresent()) {
                         order = Optional.of(new Order(orderId, orderDate, preparationDate, meal.get()));
                     }

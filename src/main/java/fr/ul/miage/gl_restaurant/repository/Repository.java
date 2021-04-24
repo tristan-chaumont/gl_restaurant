@@ -1,5 +1,6 @@
 package fr.ul.miage.gl_restaurant.repository;
 
+import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.jdbc.DbAccess;
 
 import java.sql.Connection;
@@ -8,10 +9,10 @@ import java.util.Optional;
 
 public abstract class Repository<T, K> {
 
-    Connection connection = DbAccess.getInstance();
+    Connection connection;
 
-    protected Repository() {
-        
+    protected Repository(Environment environment) {
+        connection = DbAccess.getInstance(environment);
     }
 
     abstract List<T> findAll();

@@ -1,5 +1,6 @@
 package fr.ul.miage.gl_restaurant.repository;
 
+import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.model.Bill;
 import lombok.extern.slf4j.Slf4j;
 
@@ -16,6 +17,9 @@ public class BillRepositoryImpl extends Repository<Bill, Long> {
     private static final String UPDATE_SQL = "UPDATE Bills SET billId = ? WHERE billId = ?";
     private static final String DELETE_SQL = "DELETE FROM Bills WHERE billId = ?";
 
+    protected BillRepositoryImpl(Environment environment) {
+        super(environment);
+    }
 
     @Override
     public List<Bill> findAll() {
