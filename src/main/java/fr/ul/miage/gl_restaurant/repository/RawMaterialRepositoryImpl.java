@@ -31,11 +31,7 @@ public class RawMaterialRepositoryImpl extends Repository<RawMaterial, Long> {
         try (Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(FIND_ALL_SQL)) {
             while (resultSet.next()) {
-                Long rmId = resultSet.getLong("rmId");
-                String rmLabel = resultSet.getString("rmLabel");
-                Integer stockQuantity = resultSet.getInt("stockQuantity");
-                String unit = resultSet.getString("unit");
-                rawMaterials.add(new RawMaterial(rmId, rmLabel, stockQuantity, unit));
+                rawMaterials.add(new RawMaterial(resultSet));
             }
         } catch (SQLException e) {
             log.error("Exception: " + e.getMessage());
@@ -50,11 +46,7 @@ public class RawMaterialRepositoryImpl extends Repository<RawMaterial, Long> {
             preparedStatement.setLong(1, id);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.first()) {
-                    Long rmId = resultSet.getLong("rmId");
-                    String rmLabel = resultSet.getString("rmLabel");
-                    Integer stockQuantity = resultSet.getInt("stockQuantity");
-                    String unit = resultSet.getString("unit");
-                    rawMaterial = Optional.of(new RawMaterial(rmId, rmLabel, stockQuantity, unit));
+                    rawMaterial = Optional.of(new RawMaterial(resultSet));
                 }
             }
         } catch (SQLException e) {

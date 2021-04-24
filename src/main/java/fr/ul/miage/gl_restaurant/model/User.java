@@ -4,6 +4,9 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 @Setter
 @Getter
 @ToString
@@ -33,5 +36,13 @@ public class User {
 
     public User(String login, String lastName, String firstName, String role) {
         this(null, login, lastName, firstName, role);
+    }
+
+    public User(ResultSet resultSet) throws SQLException {
+        userId = resultSet.getLong("userId");
+        login = resultSet.getString("login");
+        lastName = resultSet.getString("lastName");
+        firstName = resultSet.getString("firstName");
+        role = resultSet.getString("role");
     }
 }

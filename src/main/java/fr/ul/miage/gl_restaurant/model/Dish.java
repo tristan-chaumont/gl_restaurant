@@ -4,6 +4,9 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 @Setter
 @Getter
 @ToString
@@ -30,5 +33,12 @@ public class Dish {
 
     public Dish(String text, String menuType, Double price) {
         this(null, text, menuType, price);
+    }
+
+    public Dish(ResultSet resultSet) throws SQLException {
+        dishId = resultSet.getLong("dishId");
+        category = resultSet.getString("category");
+        menuType = resultSet.getString("menuType");
+        price = resultSet.getDouble("price");
     }
 }

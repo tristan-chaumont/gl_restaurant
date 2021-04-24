@@ -34,12 +34,7 @@ public class UserRepositoryImpl extends Repository<User, Long> {
         try (Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(FIND_ALL_SQL)) {
             while (resultSet.next()) {
-                Long userId = resultSet.getLong("userId");
-                String login = resultSet.getString("login");
-                String lastName = resultSet.getString("lastName");
-                String firstName = resultSet.getString("firstName");
-                String role = resultSet.getString("role");
-                users.add(new User(userId, login, lastName, firstName, role));
+                users.add(new User(resultSet));
             }
         } catch (SQLException e) {
             log.error("Exception: " + e.getMessage());
@@ -74,12 +69,7 @@ public class UserRepositoryImpl extends Repository<User, Long> {
         Optional<User> user = Optional.empty();
         try (ResultSet resultSet = preparedStatement.executeQuery()) {
             if (resultSet.first()) {
-                Long userId = resultSet.getLong("userId");
-                String userLogin = resultSet.getString("login");
-                String lastName = resultSet.getString("lastName");
-                String firstName = resultSet.getString("firstName");
-                String role = resultSet.getString("role");
-                user = Optional.of(new User(userId, userLogin, lastName, firstName, role));
+                user = Optional.of(new User(resultSet));
             }
         } catch (SQLException e) {
             log.error("Exception: " + e.getMessage());

@@ -31,11 +31,7 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
         try (Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(FIND_ALL_SQL)) {
             while (resultSet.next()) {
-                Long dishId = resultSet.getLong("dishId");
-                String category = resultSet.getString("category");
-                String menuType = resultSet.getString("menuType");
-                Double price = resultSet.getDouble("price");
-                dishes.add(new Dish(dishId, category, menuType, price));
+                dishes.add(new Dish(resultSet));
             }
         } catch (SQLException e) {
             log.error("Exception: " + e.getMessage());
@@ -50,11 +46,7 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
             preparedStatement.setLong(1, id);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.first()) {
-                    Long dishId = resultSet.getLong("dishId");
-                    String category = resultSet.getString("category");
-                    String menuType = resultSet.getString("menuType");
-                    Double price = resultSet.getDouble("price");
-                    dish = Optional.of(new Dish(dishId, category, menuType, price));
+                    dish = Optional.of(new Dish(resultSet));
                 }
             }
         } catch (SQLException e) {
