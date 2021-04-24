@@ -1,5 +1,6 @@
 package fr.ul.miage.gl_restaurant.jdbc;
 
+import fr.ul.miage.gl_restaurant.constants.Environment;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -21,8 +22,7 @@ public class DbAccess {
 
     private DbAccess() {}
 
-    private static void parseProperties() {
-        String propertiesFileName = "db.properties";
+    private static void parseProperties(String propertiesFileName) {
         Properties properties = new Properties();
         try (InputStream inputStream = new FileInputStream(propertiesFileName)) {
             properties.load(inputStream);
@@ -38,9 +38,10 @@ public class DbAccess {
         }
     }
 
-    public static Connection getInstance() {
+    public static Connection getInstance(Environment environment) {
         if (connection == null) {
-            parseProperties();
+            parseProperties(environment.equals(Environment.PROD) ?
+                    "db.properties" : "db.test.properties");
             try {
                 connection = DriverManager.getConnection(url, username, password);
             } catch (SQLException e) {
