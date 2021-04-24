@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Slf4j
-public class DishRepositoryImpl implements Repository<Dish, Long> {
+public class DishRepositoryImpl extends Repository<Dish, Long> {
 
     private static final String FIND_ALL_SQL = "SELECT dishId, category, menuType, price FROM Dishes";
     private static final String FIND_BY_ID_SQL = "SELECT dishId, category, menuType, price FROM Dishes WHERE dishId = ?";

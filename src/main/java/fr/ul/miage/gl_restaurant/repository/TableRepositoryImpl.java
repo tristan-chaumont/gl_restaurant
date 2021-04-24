@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Slf4j
-public class TableRepositoryImpl implements Repository<Table, Long> {
+public class TableRepositoryImpl extends Repository<Table, Long> {
 
     private static final String FIND_ALL_SQL = "SELECT tableId, floor, state, places, userId FROM Tables";
     private static final String FIND_BY_ID_SQL = "SELECT tableId, floor, state, places, userId FROM Tables WHERE tableId = ?";

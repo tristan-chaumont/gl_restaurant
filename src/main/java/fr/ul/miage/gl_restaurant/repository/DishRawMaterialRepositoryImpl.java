@@ -5,7 +5,7 @@ import fr.ul.miage.gl_restaurant.model.DishRawMaterial;
 import java.util.List;
 import java.util.Optional;
 
-public class DishRawMaterialRepositoryImpl implements Repository<DishRawMaterial, Long> {
+public class DishRawMaterialRepositoryImpl extends Repository<DishRawMaterial, Long> {
 
     @Override
     public List<DishRawMaterial> findAll() {

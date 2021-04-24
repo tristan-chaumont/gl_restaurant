@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Slf4j
-public class RawMaterialRepositoryImpl implements Repository<RawMaterial, Long> {
+public class RawMaterialRepositoryImpl extends Repository<RawMaterial, Long> {
 
     private static final String FIND_ALL_SQL = "SELECT rmId, rmLabel, stockQuantity, unit FROM RawMaterials";
     private static final String FIND_BY_ID_SQL = "SELECT rmId, rmLabel, stockQuantity, unit FROM RawMaterials WHERE rmId = ?";

@@ -3,7 +3,7 @@ package fr.ul.miage.gl_restaurant.repository;
 import java.util.List;
 import java.util.Optional;
 
-public class DishOrderRepositoryImpl implements Repository<DishOrderRepositoryImpl, Long> {
+public class DishOrderRepositoryImpl extends Repository<DishOrderRepositoryImpl, Long> {
 
     @Override
     public List<DishOrderRepositoryImpl> findAll() {

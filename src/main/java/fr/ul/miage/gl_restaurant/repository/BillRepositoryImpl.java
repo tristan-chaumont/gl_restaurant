@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Slf4j
-public class BillRepositoryImpl implements Repository<Bill, Long> {
+public class BillRepositoryImpl extends Repository<Bill, Long> {
 
     private static final String FIND_ALL_SQL = "SELECT billId FROM Bills";
     private static final String FIND_BY_ID_SQL = "SELECT billId FROM Bills WHERE billId = ?";

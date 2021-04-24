@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Slf4j
-public class UserRepositoryImpl implements Repository<User, Long> {
+public class UserRepositoryImpl extends Repository<User, Long> {
 
     private static final String FIND_ALL_SQL = "SELECT userId, login, lastName, firstName, role FROM Users";
     private static final String FIND_BY_ID_SQL = "SELECT userId, login, lastName, firstName, role FROM Users WHERE userId = ?";
