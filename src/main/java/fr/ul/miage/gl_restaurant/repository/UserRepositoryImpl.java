@@ -22,7 +22,7 @@ public class UserRepositoryImpl extends Repository<User, Long> {
     private static final String UPDATE_SQL = "UPDATE Users SET login = ?, lastName = ?, firstName = ?, role = ? WHERE userId = ?";
     private static final String DELETE_SQL = "DELETE FROM Users WHERE userId = ?";
 
-    protected UserRepositoryImpl(Environment environment) {
+    public UserRepositoryImpl(Environment environment) {
         super(environment);
     }
 

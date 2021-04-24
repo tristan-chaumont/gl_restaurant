@@ -1,5 +1,6 @@
 package fr.ul.miage.gl_restaurant.auth;
 
+import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.model.User;
 import fr.ul.miage.gl_restaurant.repository.UserRepositoryImpl;
 import lombok.Getter;
@@ -21,7 +22,7 @@ public class Authentification {
     }
 
     public void signIn(String login) {
-        UserRepositoryImpl userRepository = new UserRepositoryImpl();
+        UserRepositoryImpl userRepository = new UserRepositoryImpl(Environment.TEST);
         Optional<User> loggedUser = userRepository.findByLogin(login);
         loggedUser.ifPresent(value -> this.user = value);
     }
