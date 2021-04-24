@@ -36,7 +36,7 @@ public class TableRepositoryImpl extends Repository<Table, Long> {
                 Integer floor = resultSet.getInt("floor");
                 String state = resultSet.getString("state");
                 Integer places = resultSet.getInt("places");
-                Optional<User> user = new UserRepositoryImpl().findById(resultSet.getLong("userId"));
+                Optional<User> user = new UserRepositoryImpl(Environment.TEST).findById(resultSet.getLong("userId"));
                 user.ifPresent(value -> tables.add(new Table(tableId, floor, state, places, value)));
             }
         } catch (SQLException e) {
@@ -56,7 +56,7 @@ public class TableRepositoryImpl extends Repository<Table, Long> {
                     Integer floor = resultSet.getInt("floor");
                     String state = resultSet.getString("state");
                     Integer places = resultSet.getInt("places");
-                    Optional<User> user = new UserRepositoryImpl().findById(resultSet.getLong("userId"));
+                    Optional<User> user = new UserRepositoryImpl(Environment.TEST).findById(resultSet.getLong("userId"));
                     if (user.isPresent()) {
                         table = Optional.of(new Table(tableId, floor, state, places, user.get()));
                     }

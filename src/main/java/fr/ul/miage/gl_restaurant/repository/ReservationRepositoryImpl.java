@@ -34,7 +34,7 @@ public class ReservationRepositoryImpl extends Repository<Reservation, Long> {
             while (resultSet.next()) {
                 Long reservationId = resultSet.getLong("reservationId");
                 boolean lunch = resultSet.getBoolean("lunch");
-                Optional<Table> table = new TableRepositoryImpl().findById(resultSet.getLong("tableId"));
+                Optional<Table> table = new TableRepositoryImpl(Environment.TEST).findById(resultSet.getLong("tableId"));
                 table.ifPresent(value -> reservations.add(new Reservation(reservationId, lunch, value)));
             }
         } catch (SQLException e) {
@@ -52,7 +52,7 @@ public class ReservationRepositoryImpl extends Repository<Reservation, Long> {
                 if (resultSet.first()) {
                     Long reservationId = resultSet.getLong("reservationId");
                     boolean lunch = resultSet.getBoolean("lunch");
-                    Optional<Table> table = new TableRepositoryImpl().findById(resultSet.getLong("tableId"));
+                    Optional<Table> table = new TableRepositoryImpl(Environment.TEST).findById(resultSet.getLong("tableId"));
                     if (table.isPresent()) {
                         reservation = Optional.of(new Reservation(reservationId, lunch, table.get()));
                     }
