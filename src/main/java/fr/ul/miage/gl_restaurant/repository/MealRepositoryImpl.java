@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Slf4j
-public class MealRepositoryImpl implements Repository<Meal, Long> {
+public class MealRepositoryImpl extends Repository<Meal, Long> {
 
     private static final String FIND_ALL_SQL = "SELECT mealId, customersnb, startDate, mealDuration, tableId, billId FROM Meals";
     private static final String FIND_BY_ID_SQL = "SELECT mealId, customersnb, startDate, mealDuration, tableId, billId FROM Meals WHERE mealId = ?";

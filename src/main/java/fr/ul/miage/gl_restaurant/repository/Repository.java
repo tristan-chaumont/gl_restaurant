@@ -6,18 +6,22 @@ import java.sql.Connection;
 import java.util.List;
 import java.util.Optional;
 
-public interface Repository<T, K> {
+public abstract class Repository<T, K> {
 
     Connection connection = DbAccess.getInstance();
 
-    List<T> findAll();
+    protected Repository() {
+        
+    }
 
-    Optional<T> findById(K id);
+    abstract List<T> findAll();
 
-    T save(T object);
+    abstract Optional<T> findById(K id);
 
-    T update(T object);
+    abstract T save(T object);
 
-    void delete(K id);
+    abstract T update(T object);
+
+    abstract void delete(K id);
 }
 

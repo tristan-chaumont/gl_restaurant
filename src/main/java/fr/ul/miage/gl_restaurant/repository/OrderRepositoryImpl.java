@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Slf4j
-public class OrderRepositoryImpl implements Repository<Order, Long> {
+public class OrderRepositoryImpl extends Repository<Order, Long> {
 
     private static final String FIND_ALL_SQL = "SELECT orderId, orderDate, preparationDate, mealId FROM Orders";
     private static final String FIND_BY_ID_SQL = "SELECT orderId, orderDate, preparationDate, mealId FROM Orders WHERE orderId = ?";
