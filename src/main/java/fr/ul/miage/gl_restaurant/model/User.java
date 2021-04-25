@@ -1,5 +1,6 @@
 package fr.ul.miage.gl_restaurant.model;
 
+import fr.ul.miage.gl_restaurant.constants.Roles;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -22,11 +23,11 @@ public class User {
 
     private String firstName;
 
-    private String role;
+    private Roles role;
 
     public User() {}
 
-    public User(Long userId, String login, String lastName, String firstName, String role) {
+    public User(Long userId, String login, String lastName, String firstName, Roles role) {
         this.userId = userId;
         this.login = login;
         this.lastName = lastName;
@@ -34,7 +35,7 @@ public class User {
         this.role = role;
     }
 
-    public User(String login, String lastName, String firstName, String role) {
+    public User(String login, String lastName, String firstName, Roles role) {
         this(null, login, lastName, firstName, role);
     }
 
@@ -43,6 +44,6 @@ public class User {
         login = resultSet.getString("login");
         lastName = resultSet.getString("lastName");
         firstName = resultSet.getString("firstName");
-        role = resultSet.getString("role");
+        role = Roles.getRole(resultSet.getString("role"));
     }
 }
