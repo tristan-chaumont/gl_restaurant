@@ -60,7 +60,7 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
         if (object != null) {
             try (PreparedStatement preparedStatement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
                 preparedStatement.setString(1, object.getCategory());
-                preparedStatement.setString(2, object.getMenuType());
+                preparedStatement.setString(2, object.getMenuType().toString());
                 preparedStatement.setDouble(3, object.getPrice());
                 int numRowsAffected = preparedStatement.executeUpdate();
                 try (ResultSet resultSet = preparedStatement.getGeneratedKeys()) {
@@ -82,7 +82,7 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
         if (object != null) {
             try (PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_SQL)) {
                 preparedStatement.setString(1, object.getCategory());
-                preparedStatement.setString(2, object.getMenuType());
+                preparedStatement.setString(2, object.getMenuType().toString());
                 preparedStatement.setDouble(3, object.getPrice());
                 preparedStatement.setLong(4, object.getDishId());
                 preparedStatement.executeUpdate();
