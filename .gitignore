@@ -90,3 +90,8 @@ fabric.properties
 # Db connection
 db.properties
 db.test.properties
+
+# Eclipse
+bin/
+.classpath
+.project
