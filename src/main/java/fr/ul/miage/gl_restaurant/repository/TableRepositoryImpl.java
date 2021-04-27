@@ -1,6 +1,7 @@
 package fr.ul.miage.gl_restaurant.repository;
 
 import fr.ul.miage.gl_restaurant.constants.Environment;
+import fr.ul.miage.gl_restaurant.constants.TableStates;
 import fr.ul.miage.gl_restaurant.model.Table;
 import fr.ul.miage.gl_restaurant.model.User;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +35,7 @@ public class TableRepositoryImpl extends Repository<Table, Long> {
             while (resultSet.next()) {
                 Long tableId = resultSet.getLong("tableId");
                 Integer floor = resultSet.getInt("floor");
-                String state = resultSet.getString("state");
+                TableStates state = TableStates.getState(resultSet.getString("state"));
                 Integer places = resultSet.getInt("places");
                 Optional<User> user = new UserRepositoryImpl(Environment.TEST).findById(resultSet.getLong("userId"));
                 user.ifPresent(value -> tables.add(new Table(tableId, floor, state, places, value)));
@@ -54,7 +55,7 @@ public class TableRepositoryImpl extends Repository<Table, Long> {
                 if (resultSet.first()) {
                     Long tableId = resultSet.getLong("tableId");
                     Integer floor = resultSet.getInt("floor");
-                    String state = resultSet.getString("state");
+                    TableStates state = TableStates.getState(resultSet.getString("state"));
                     Integer places = resultSet.getInt("places");
                     Optional<User> user = new UserRepositoryImpl(Environment.TEST).findById(resultSet.getLong("userId"));
                     if (user.isPresent()) {
@@ -73,7 +74,7 @@ public class TableRepositoryImpl extends Repository<Table, Long> {
         if (object != null) {
             try (PreparedStatement preparedStatement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
                 preparedStatement.setInt(1, object.getFloor());
-                preparedStatement.setString(2, object.getState());
+                preparedStatement.setString(2, object.getState().toString());
                 preparedStatement.setInt(3, object.getPlaces());
                 preparedStatement.setLong(4, object.getUser().getUserId());
                 int numRowsAffected = preparedStatement.executeUpdate();
@@ -96,7 +97,7 @@ public class TableRepositoryImpl extends Repository<Table, Long> {
         if (object != null) {
             try (PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_SQL)) {
                 preparedStatement.setInt(1, object.getFloor());
-                preparedStatement.setString(2, object.getState());
+                preparedStatement.setString(2, object.getState().toString());
                 preparedStatement.setInt(3, object.getPlaces());
                 preparedStatement.setLong(4, object.getUser().getUserId());
                 preparedStatement.executeUpdate();

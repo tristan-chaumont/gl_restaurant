@@ -1,5 +1,7 @@
 package fr.ul.miage.gl_restaurant.model;
 
+import fr.ul.miage.gl_restaurant.constants.TableStates;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -7,6 +9,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
+@Data
 public class Table {
 
     private static final String TABLE_NAME = "Tables";
@@ -15,7 +18,7 @@ public class Table {
 
     private Integer floor;
 
-    private String state;
+    private TableStates state;
 
     private Integer places;
 
@@ -23,7 +26,7 @@ public class Table {
 
     public Table() {}
 
-    public Table(Long tableId, Integer floor, String state, Integer places, User user) {
+    public Table(Long tableId, Integer floor, TableStates state, Integer places, User user) {
         this.tableId = tableId;
         this.floor = floor;
         this.state = state;
@@ -31,7 +34,7 @@ public class Table {
         this.user = user;
     }
 
-    public Table(Integer floor, String state, Integer places, User user) {
+    public Table(Integer floor, TableStates state, Integer places, User user) {
         this(null, floor, state, places, user);
     }
 }
