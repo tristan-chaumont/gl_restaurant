@@ -46,6 +46,7 @@ public class DbAccess {
                 connection = DriverManager.getConnection(url, username, password);
             } catch (SQLException e) {
                 log.error("Exception: " + e.getMessage());
+                System.exit(1);
             }
         }
         return connection;

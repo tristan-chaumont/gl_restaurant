@@ -31,23 +31,33 @@ public class Authentification {
         user = null;
     }
 
+    public boolean isConnected() {
+        return user != null;
+    }
+
     public void disconnect() {
         logOut();
         System.out.printf("Vous êtes déconnecté. A bientôt !%n%n");
-        displayInterface();
     }
 
-    public void displayInterface() {
+    public boolean displayInterface() {
         System.out.println("=".repeat(50));
         System.out.println(StringUtils.center("Bonjour et bienvenue !", 50));
         System.out.println("=".repeat(50));
-        System.out.printf("%nPour vous connecter, veuillez entrer votre login : ");
-        signIn(sc.next());
+        System.out.println("Pour quitter l'application, tapez : !q");
+        System.out.println("Pour vous connecter, veuillez entrer votre login.");
+        String input = sc.next();
+        if (input.equals("!q")) {
+            System.out.println("À bientôt !");
+            return false;
+        }
+        signIn(input);
         while (user == null) {
             System.out.print("Login incorrect, veuillez réessayer : ");
             signIn(sc.next());
         }
-        System.out.printf("Vous êtes connecté en tant que '%s' (%s %s, %s)", user.getLogin(), user.getFirstName(), user.getLastName(), user.getRole());
+        System.out.printf("Vous êtes connecté en tant que '%s' (%s %s, %s)%n", user.getLogin(), user.getFirstName(), user.getLastName(), user.getRole());
+        return true;
     }
 
     public static void main(String[] args) {
