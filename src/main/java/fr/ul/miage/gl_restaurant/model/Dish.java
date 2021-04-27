@@ -17,6 +17,8 @@ public class Dish {
 
     private Long dishId;
 
+    private String wording;
+
     private String category;
 
     private MenuTypes menuType;
@@ -25,19 +27,21 @@ public class Dish {
 
     public Dish() {}
 
-    public Dish(Long dishId, String category, MenuTypes menuType, Double price) {
+    public Dish(Long dishId, String wording, String category, MenuTypes menuType, Double price) {
         this.dishId = dishId;
+        this.wording = wording;
         this.category = category;
         this.menuType = menuType;
         this.price = price;
     }
 
-    public Dish(String text, MenuTypes menuType, Double price) {
-        this(null, text, menuType, price);
+    public Dish(String wording, String text, MenuTypes menuType, Double price) {
+        this(null, wording, text, menuType, price);
     }
 
     public Dish(ResultSet resultSet) throws SQLException {
         dishId = resultSet.getLong("dishId");
+        wording = resultSet.getString("wording");
         category = resultSet.getString("category");
         menuType = MenuTypes.getMenuType(resultSet.getString("menuType"));
         price = resultSet.getDouble("price");
