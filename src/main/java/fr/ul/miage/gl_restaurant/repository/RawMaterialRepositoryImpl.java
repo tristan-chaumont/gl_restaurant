@@ -15,10 +15,10 @@ import java.util.Optional;
 @Slf4j
 public class RawMaterialRepositoryImpl extends Repository<RawMaterial, Long> {
 
-    private static final String FIND_ALL_SQL = "SELECT rmId, rmLabel, stockQuantity, unit FROM RawMaterials";
-    private static final String FIND_BY_ID_SQL = "SELECT rmId, rmLabel, stockQuantity, unit FROM RawMaterials WHERE rmId = ?";
-    private static final String SAVE_SQL = "INSERT INTO RawMaterials(rmLabel, stockQuantity, unit) VALUES(?, ?, ?)";
-    private static final String UPDATE_SQL = "UPDATE RawMaterials SET rmLabel = ?, stockQuantity = ?, unit = ? WHERE rmId = ?";
+    private static final String FIND_ALL_SQL = "SELECT rmId, rmName, stockQuantity, unit FROM RawMaterials";
+    private static final String FIND_BY_ID_SQL = "SELECT rmId, rmName, stockQuantity, unit FROM RawMaterials WHERE rmId = ?";
+    private static final String SAVE_SQL = "INSERT INTO RawMaterials(rmName, stockQuantity, unit) VALUES(?, ?, ?)";
+    private static final String UPDATE_SQL = "UPDATE RawMaterials SET rmName = ?, stockQuantity = ?, unit = ? WHERE rmId = ?";
     private static final String DELETE_SQL = "DELETE FROM RawMaterials WHERE rmId = ?";
 
     protected RawMaterialRepositoryImpl(Environment environment) {
@@ -42,24 +42,26 @@ public class RawMaterialRepositoryImpl extends Repository<RawMaterial, Long> {
     @Override
     public Optional<RawMaterial> findById(Long id) {
         Optional<RawMaterial> rawMaterial = Optional.empty();
-        try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_ID_SQL)) {
-            preparedStatement.setLong(1, id);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (resultSet.first()) {
-                    rawMaterial = Optional.of(new RawMaterial(resultSet));
+        if (id != null) {
+            try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_ID_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+                preparedStatement.setLong(1, id);
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    if (resultSet.first()) {
+                        rawMaterial = Optional.of(new RawMaterial(resultSet));
+                    }
                 }
+            } catch (SQLException e) {
+                log.error("Exception: " + e.getMessage());
             }
-        } catch (SQLException e) {
-            log.error("Exception: " + e.getMessage());
         }
         return rawMaterial;
     }
 
     @Override
     public RawMaterial save(RawMaterial object) {
-        if (object != null) {
+        if (object != null && object.getRawMaterialId() == null) {
             try (PreparedStatement preparedStatement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
-                preparedStatement.setString(1, object.getRawMaterialLabel());
+                preparedStatement.setString(1, object.getRawMaterialName());
                 preparedStatement.setInt(2, object.getStockQuantity());
                 preparedStatement.setString(3, object.getUnit());
                 int numRowsAffected = preparedStatement.executeUpdate();
@@ -79,11 +81,12 @@ public class RawMaterialRepositoryImpl extends Repository<RawMaterial, Long> {
 
     @Override
     public RawMaterial update(RawMaterial object) {
-        if (object != null) {
+        if (object != null && object.getRawMaterialId() != null) {
             try (PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_SQL)) {
-                preparedStatement.setString(1, object.getRawMaterialLabel());
+                preparedStatement.setString(1, object.getRawMaterialName());
                 preparedStatement.setInt(2, object.getStockQuantity());
                 preparedStatement.setString(3, object.getUnit());
+                preparedStatement.setLong(4, object.getRawMaterialId());
                 preparedStatement.executeUpdate();
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -94,11 +97,13 @@ public class RawMaterialRepositoryImpl extends Repository<RawMaterial, Long> {
 
     @Override
     public void delete(Long id) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement(DELETE_SQL)) {
-            preparedStatement.setLong(1, id);
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
+        if (id != null) {
+            try (PreparedStatement preparedStatement = connection.prepareStatement(DELETE_SQL)) {
+                preparedStatement.setLong(1, id);
+                preparedStatement.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
     }
 }

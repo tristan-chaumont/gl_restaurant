@@ -1,5 +1,6 @@
 package fr.ul.miage.gl_restaurant.model;
 
+import fr.ul.miage.gl_restaurant.constants.Units;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -16,29 +17,29 @@ public class RawMaterial {
 
     private Long rawMaterialId;
 
-    private String rawMaterialLabel;
+    private String rawMaterialName;
 
     private Integer stockQuantity;
 
-    private String unit;
+    private Units unit;
 
     public RawMaterial() {}
 
-    public RawMaterial(Long rawMaterialId, String rawMaterialLabel, Integer stockQuantity, String unit) {
+    public RawMaterial(Long rawMaterialId, String rawMaterialName, Integer stockQuantity, Units unit) {
         this.rawMaterialId = rawMaterialId;
-        this.rawMaterialLabel = rawMaterialLabel;
+        this.rawMaterialName = rawMaterialName;
         this.stockQuantity = stockQuantity;
         this.unit = unit;
     }
 
-    public RawMaterial(String rawMaterialLabel, Integer stockQuantity, String unit) {
-        this(null, rawMaterialLabel, stockQuantity, unit);
+    public RawMaterial(String rawMaterialName, Integer stockQuantity, Units unit) {
+        this(null, rawMaterialName, stockQuantity, unit);
     }
 
     public RawMaterial(ResultSet resultSet) throws SQLException {
         rawMaterialId = resultSet.getLong("rmId");
-        rawMaterialLabel = resultSet.getString("rmLabel");
+        rawMaterialName = resultSet.getString("rmName");
         stockQuantity = resultSet.getInt("stockQuantity");
-        unit = resultSet.getString("unit");
+        unit = Units.getUnit(resultSet.getString("unit"));
     }
 }
