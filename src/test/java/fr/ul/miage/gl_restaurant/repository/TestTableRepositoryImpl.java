@@ -42,13 +42,12 @@ class TestTableRepositoryImpl {
     @DisplayName("findAll() récupère tous les éléments")
     void verifyFindAllReturnsAllElements() {
         List<Table> result = tableRepository.findAll();
-        // Déjà 5 données de test + les deux insérées
         assertThat(result.size(), is(2));
     }
 
     @Test
     @DisplayName("findById() récupère la bonne table")
-    void verifyFindByIdGetsUser() {
+    void verifyFindByIdGetsTable() {
         Optional<Table> result = tableRepository.findById(table1.getTableId());
         assertThat(result.isPresent(), is(true));
         assertThat(result.get().getTableId(), equalTo(table1.getTableId()));
@@ -91,7 +90,7 @@ class TestTableRepositoryImpl {
 
     @Test
     @DisplayName("La modification ne s'effectue pas car la table n'existe pas")
-    void verifyUpdateFailBecauseUserDoesNotExist() {
+    void verifyUpdateFailBecauseTableDoesNotExist() {
         Table table = new Table(5, TableStates.SALE, 5, null);
         tableRepository.update(table);
         Optional<Table> result = tableRepository.findById(table.getTableId());
@@ -111,7 +110,7 @@ class TestTableRepositoryImpl {
 
     @Test
     @DisplayName("La suppression de ne fonctionne pas car la table n'existe pas")
-    void verifyDeleteFailBecauseUserDoesNotExist() {
+    void verifyDeleteFailBecauseTableDoesNotExist() {
         Table table = new Table(2, TableStates.SALE, 5, null);
         int totalTables = userRepository.findAll().size();
         tableRepository.delete(table.getTableId());

@@ -46,27 +46,29 @@ public class ReservationRepositoryImpl extends Repository<Reservation, Long> {
     @Override
     public Optional<Reservation> findById(Long id) {
         Optional<Reservation> reservation = Optional.empty();
-        try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_ID_SQL)) {
-            preparedStatement.setLong(1, id);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (resultSet.first()) {
-                    Long reservationId = resultSet.getLong("reservationId");
-                    boolean lunch = resultSet.getBoolean("lunch");
-                    Optional<Table> table = new TableRepositoryImpl(Environment.TEST).findById(resultSet.getLong("tableId"));
-                    if (table.isPresent()) {
-                        reservation = Optional.of(new Reservation(reservationId, lunch, table.get()));
+        if (id != null) {
+            try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_ID_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+                preparedStatement.setLong(1, id);
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    if (resultSet.first()) {
+                        Long reservationId = resultSet.getLong("reservationId");
+                        boolean lunch = resultSet.getBoolean("lunch");
+                        Optional<Table> table = new TableRepositoryImpl(Environment.TEST).findById(resultSet.getLong("tableId"));
+                        if (table.isPresent()) {
+                            reservation = Optional.of(new Reservation(reservationId, lunch, table.get()));
+                        }
                     }
                 }
+            } catch (SQLException e) {
+                log.error("Exception: " + e.getMessage());
             }
-        } catch (SQLException e) {
-            log.error("Exception: " + e.getMessage());
         }
         return reservation;
     }
 
     @Override
     public Reservation save(Reservation object) {
-        if (object != null) {
+        if (object != null && object.getReservationId() == null) {
             try (PreparedStatement preparedStatement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
                 preparedStatement.setBoolean(1, object.isLunch());
                 preparedStatement.setLong(2, object.getTable().getTableId());
@@ -87,10 +89,11 @@ public class ReservationRepositoryImpl extends Repository<Reservation, Long> {
 
     @Override
     public Reservation update(Reservation object) {
-        if (object != null) {
+        if (object != null && object.getReservationId() != null) {
             try (PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_SQL)) {
                 preparedStatement.setBoolean(1, object.isLunch());
                 preparedStatement.setLong(2, object.getTable().getTableId());
+                preparedStatement.setLong(3, object.getReservationId());
                 preparedStatement.executeUpdate();
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -101,11 +104,13 @@ public class ReservationRepositoryImpl extends Repository<Reservation, Long> {
 
     @Override
     public void delete(Long id) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement(DELETE_SQL)) {
-            preparedStatement.setLong(1, id);
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
+        if (id != null) {
+            try (PreparedStatement preparedStatement = connection.prepareStatement(DELETE_SQL)) {
+                preparedStatement.setLong(1, id);
+                preparedStatement.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
     }
 }
