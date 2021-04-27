@@ -48,7 +48,7 @@ public class TableRepositoryImpl extends Repository<Table, Long> {
     @Override
     public Optional<Table> findById(Long id) {
         Optional<Table> table = Optional.empty();
-        try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_ID_SQL)) {
+        try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_ID_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
             preparedStatement.setLong(1, id);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.first()) {
