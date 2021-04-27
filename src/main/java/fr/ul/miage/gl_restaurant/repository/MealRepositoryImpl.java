@@ -14,11 +14,11 @@ import java.util.Optional;
 @Slf4j
 public class MealRepositoryImpl extends Repository<Meal, Long> {
 
-    private static final String FIND_ALL_SQL = "SELECT mealId, customersnb, startDate, mealDuration, tableId, billId FROM Meals";
-    private static final String FIND_BY_ID_SQL = "SELECT mealId, customersnb, startDate, mealDuration, tableId, billId FROM Meals WHERE mealId = ?";
-    private static final String SAVE_SQL = "INSERT INTO Meals(customersnb, startDate, mealDuration, tableId, billId) VALUES(?, ?, ?, ?, ?)";
-    private static final String UPDATE_SQL = "UPDATE Meals SET customersnb = ?, startDate = ?, mealDuration = ?, tableId = ?, billId = ? WHERE mealId = ?";
-    private static final String DELETE_SQL = "DELETE FROM Users WHERE userId = ?";
+    private static final String FIND_ALL_SQL = "SELECT mealId, customersNb, startDate, mealDuration, tableId, billId FROM Meals";
+    private static final String FIND_BY_ID_SQL = "SELECT mealId, customersNb, startDate, mealDuration, tableId, billId FROM Meals WHERE mealId = ?";
+    private static final String SAVE_SQL = "INSERT INTO Meals(customersNb, startDate, mealDuration, tableId, billId) VALUES(?, ?, ?, ?, ?)";
+    private static final String UPDATE_SQL = "UPDATE Meals SET customersNb = ?, startDate = ?, mealDuration = ?, tableId = ?, billId = ? WHERE mealId = ?";
+    private static final String DELETE_SQL = "DELETE FROM Meals WHERE mealId = ?";
 
     protected MealRepositoryImpl(Environment environment) {
         super(environment);
@@ -31,15 +31,14 @@ public class MealRepositoryImpl extends Repository<Meal, Long> {
              ResultSet resultSet = statement.executeQuery(FIND_ALL_SQL)) {
             while (resultSet.next()) {
                 Long mealId = resultSet.getLong("mealId");
-                Integer customersnb = resultSet.getInt("customersnb");
+                Integer customersNb = resultSet.getInt("customersNb");
                 Timestamp startDate = resultSet.getTimestamp("startDate");
                 Long mealDuration = resultSet.getLong("mealDuration");
                 Optional<Table> table = new TableRepositoryImpl(Environment.TEST).findById(resultSet.getLong("tableId"));
                 if(table.isPresent()){
                     Optional<Bill> bill = new BillRepositoryImpl(Environment.TEST).findById(resultSet.getLong("billId"));
-                    bill.ifPresent(value -> meals.add(new Meal(mealId, customersnb, startDate, mealDuration, table.get(), value)));
+                    bill.ifPresent(value -> meals.add(new Meal(mealId, customersNb, startDate, mealDuration, table.get(), value)));
                 }
-
             }
         } catch (SQLException e) {
             log.error("Exception: " + e.getMessage());
@@ -50,7 +49,7 @@ public class MealRepositoryImpl extends Repository<Meal, Long> {
     @Override
     public Optional<Meal> findById(Long id) {
         Optional<Meal> meal = Optional.empty();
-        try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_ID_SQL)) {
+        try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_ID_SQL,ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
             preparedStatement.setLong(1, id);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.first()) {
@@ -75,7 +74,7 @@ public class MealRepositoryImpl extends Repository<Meal, Long> {
 
     @Override
     public Meal save(Meal object) {
-        if (object != null) {
+        if (object != null && object.getMealId() == null) {
             try (PreparedStatement preparedStatement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
                 preparedStatement.setInt(1, object.getCustomersNb());
                 preparedStatement.setTimestamp(2, object.getStartDate());
@@ -99,7 +98,7 @@ public class MealRepositoryImpl extends Repository<Meal, Long> {
 
     @Override
     public Meal update(Meal object) {
-        if (object != null) {
+        if (object != null && object.getMealId() != null) {
             try (PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_SQL)) {
                 preparedStatement.setInt(1, object.getCustomersNb());
                 preparedStatement.setTimestamp(2, object.getStartDate());

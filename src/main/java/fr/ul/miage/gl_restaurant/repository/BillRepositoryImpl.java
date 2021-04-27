@@ -2,8 +2,12 @@ package fr.ul.miage.gl_restaurant.repository;
 
 import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.model.Bill;
+import fr.ul.miage.gl_restaurant.model.Meal;
+import fr.ul.miage.gl_restaurant.model.Table;
+import fr.ul.miage.gl_restaurant.model.User;
 import lombok.extern.slf4j.Slf4j;
 
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -28,12 +32,40 @@ public class BillRepositoryImpl extends Repository<Bill, Long> {
 
     @Override
     public Optional<Bill> findById(Long id) {
-        return Optional.empty();
+        Optional<Bill> bill = Optional.empty();
+        try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_ID_SQL,ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+            preparedStatement.setLong(1, id);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.first()) {
+                    Long billId = resultSet.getLong("billId");
+
+                    bill = Optional.of(new Bill(billId));
+                }
+            }
+        } catch (SQLException e) {
+            log.error("Exception: " + e.getMessage());
+        }
+        return bill;
     }
 
     @Override
     public Bill save(Bill object) {
-        return null;
+        if (object != null) {
+            try (PreparedStatement preparedStatement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
+                preparedStatement.setLong(1, object.getBillId());
+                int numRowsAffected = preparedStatement.executeUpdate();
+                try (ResultSet resultSet = preparedStatement.getGeneratedKeys()) {
+                    if (resultSet.next()) {
+                        object.setBillId(resultSet.getLong(1));
+                    }
+                } catch (SQLException s) {
+                    s.printStackTrace();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        return object;
     }
 
     @Override
@@ -43,6 +75,11 @@ public class BillRepositoryImpl extends Repository<Bill, Long> {
 
     @Override
     public void delete(Long id) {
-
+        try (PreparedStatement preparedStatement = connection.prepareStatement(DELETE_SQL)) {
+            preparedStatement.setLong(1, id);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 }
