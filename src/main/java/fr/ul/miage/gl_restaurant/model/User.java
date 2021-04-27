@@ -1,6 +1,7 @@
 package fr.ul.miage.gl_restaurant.model;
 
 import fr.ul.miage.gl_restaurant.constants.Roles;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -11,6 +12,7 @@ import java.sql.SQLException;
 @Setter
 @Getter
 @ToString
+@Data
 public class User {
 
     private static final String TABLE_NAME = "Users";

@@ -51,6 +51,8 @@ class TestUserRepositoryImpl {
     void verifyFindByIdGetsNothing() {
         Optional<User> result = userRepository.findById(999999999999999999L);
         assertThat(result.isPresent(), is(false));
+        result = userRepository.findById(null);
+        assertThat(result.isPresent(), is(false));
     }
 
     @Test

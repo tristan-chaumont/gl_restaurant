@@ -49,29 +49,31 @@ public class TableRepositoryImpl extends Repository<Table, Long> {
     @Override
     public Optional<Table> findById(Long id) {
         Optional<Table> table = Optional.empty();
-        try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_ID_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
-            preparedStatement.setLong(1, id);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (resultSet.first()) {
-                    Long tableId = resultSet.getLong("tableId");
-                    Integer floor = resultSet.getInt("floor");
-                    TableStates state = TableStates.getState(resultSet.getString("state"));
-                    Integer places = resultSet.getInt("places");
-                    Optional<User> user = new UserRepositoryImpl(Environment.TEST).findById(resultSet.getLong("userId"));
-                    if (user.isPresent()) {
-                        table = Optional.of(new Table(tableId, floor, state, places, user.get()));
+        if (id != null) {
+            try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_ID_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+                preparedStatement.setLong(1, id);
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    if (resultSet.first()) {
+                        Long tableId = resultSet.getLong("tableId");
+                        Integer floor = resultSet.getInt("floor");
+                        TableStates state = TableStates.getState(resultSet.getString("state"));
+                        Integer places = resultSet.getInt("places");
+                        Optional<User> user = new UserRepositoryImpl(Environment.TEST).findById(resultSet.getLong("userId"));
+                        if (user.isPresent()) {
+                            table = Optional.of(new Table(tableId, floor, state, places, user.get()));
+                        }
                     }
                 }
+            } catch (SQLException e) {
+                log.error("Exception: " + e.getMessage());
             }
-        } catch (SQLException e) {
-            log.error("Exception: " + e.getMessage());
         }
         return table;
     }
 
     @Override
     public Table save(Table object) {
-        if (object != null) {
+        if (object != null && object.getTableId() == null) {
             try (PreparedStatement preparedStatement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
                 preparedStatement.setInt(1, object.getFloor());
                 preparedStatement.setString(2, object.getState().toString());
@@ -94,12 +96,13 @@ public class TableRepositoryImpl extends Repository<Table, Long> {
 
     @Override
     public Table update(Table object) {
-        if (object != null) {
+        if (object != null && object.getTableId() != null) {
             try (PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_SQL)) {
                 preparedStatement.setInt(1, object.getFloor());
                 preparedStatement.setString(2, object.getState().toString());
                 preparedStatement.setInt(3, object.getPlaces());
                 preparedStatement.setLong(4, object.getUser().getUserId());
+                preparedStatement.setLong(5, object.getTableId());
                 preparedStatement.executeUpdate();
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -110,11 +113,13 @@ public class TableRepositoryImpl extends Repository<Table, Long> {
 
     @Override
     public void delete(Long id) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement(DELETE_SQL)) {
-            preparedStatement.setLong(1, id);
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
+        if (id != null) {
+            try (PreparedStatement preparedStatement = connection.prepareStatement(DELETE_SQL)) {
+                preparedStatement.setLong(1, id);
+                preparedStatement.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
     }
 }
