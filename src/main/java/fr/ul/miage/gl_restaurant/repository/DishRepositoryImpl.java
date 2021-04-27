@@ -2,7 +2,7 @@ package fr.ul.miage.gl_restaurant.repository;
 
 import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.model.Dish;
-import fr.ul.miage.gl_restaurant.model.User;
+import fr.ul.miage.gl_restaurant.model.RawMaterial;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.PreparedStatement;
@@ -16,12 +16,12 @@ import java.util.Optional;
 @Slf4j
 public class DishRepositoryImpl extends Repository<Dish, Long> {
 
-    private static final String FIND_ALL_SQL = "SELECT dishId, wording, category, menuType, price FROM Dishes";
-    private static final String FIND_BY_ID_SQL = "SELECT dishId, wording, category, menuType, price FROM Dishes WHERE dishId = ?";
-    private static final String FIND_BY_WORDING_SQL = "SELECT dishId, wording, category, menuType, price FROM Dishes WHERE wording = ?";
-    private static final String FIND_BY_CATEGORY_SQL = "SELECT dishId, wording, category, menuType, price FROM Dishes WHERE category = ?";
-    private static final String SAVE_SQL = "INSERT INTO Dishes(wording, category, menuType, price) VALUES(?, ?, ?, ?)";
-    private static final String UPDATE_SQL = "UPDATE Dishes SET wording = ?, category = ?, menuType = ?, price = ? WHERE dishId = ?";
+    private static final String FIND_ALL_SQL = "SELECT dishId, dishName, category, menuType, price FROM Dishes";
+    private static final String FIND_BY_ID_SQL = "SELECT dishId, dishName, category, menuType, price FROM Dishes WHERE dishId = ?";
+    private static final String FIND_BY_NAME_SQL = "SELECT dishId, dishName, category, menuType, price FROM Dishes WHERE dishName = ?";
+    private static final String FIND_BY_CATEGORY_SQL = "SELECT dishId, dishName, category, menuType, price FROM Dishes WHERE category = ?";
+    private static final String SAVE_SQL = "INSERT INTO Dishes(dishName, category, menuType, price) VALUES(?, ?, ?, ?)";
+    private static final String UPDATE_SQL = "UPDATE Dishes SET dishName = ?, category = ?, menuType = ?, price = ? WHERE dishId = ?";
     private static final String DELETE_SQL = "DELETE FROM Dishes WHERE dishId = ?";
 
     protected DishRepositoryImpl(Environment environment) {
@@ -45,23 +45,25 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
     @Override
     public Optional<Dish> findById(Long id) {
         Optional<Dish> dish = Optional.empty();
-        try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_ID_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
-            preparedStatement.setLong(1, id);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (resultSet.first()) {
-                    dish = Optional.of(new Dish(resultSet));
+        if (id != null) {
+            try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_ID_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+                preparedStatement.setLong(1, id);
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    if (resultSet.first()) {
+                        dish = Optional.of(new Dish(resultSet));
+                    }
                 }
+            } catch (SQLException e) {
+                log.error("Exception: " + e.getMessage());
             }
-        } catch (SQLException e) {
-            log.error("Exception: " + e.getMessage());
         }
         return dish;
     }
 
-    public Optional<Dish> findByWording(String wording) {
+    public Optional<Dish> findByName(String name) {
         Optional<Dish> dish = Optional.empty();
-        try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_WORDING_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
-            preparedStatement.setString(1, wording);
+        try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_NAME_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+            preparedStatement.setString(1, name);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.first()) {
                     dish = Optional.of(new Dish(resultSet));
@@ -91,10 +93,10 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
     @Override
     public Dish save(Dish object) {
         if (object != null && object.getDishId() == null) {
-            Optional<Dish> dish = findByWording(object.getWording());
-            if(dish.isEmpty()){
+            Optional<Dish> dish = findByName(object.getDishName());
+            if(dish.isEmpty()) {
                 try (PreparedStatement preparedStatement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
-                    preparedStatement.setString(1, object.getWording());
+                    preparedStatement.setString(1, object.getDishName());
                     preparedStatement.setString(2, object.getCategory());
                     preparedStatement.setString(3, object.getMenuType().toString());
                     preparedStatement.setDouble(4, object.getPrice());
@@ -117,10 +119,10 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
     @Override
     public Dish update(Dish object) {
         if (object != null && object.getDishId() != null) {
-            Optional<Dish> dish = findByWording(object.getWording());
+            Optional<Dish> dish = findByName(object.getDishName());
             if (dish.isEmpty()) {
                 try (PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_SQL)) {
-                    preparedStatement.setString(1, object.getWording());
+                    preparedStatement.setString(1, object.getDishName());
                     preparedStatement.setString(2, object.getCategory());
                     preparedStatement.setString(3, object.getMenuType().toString());
                     preparedStatement.setDouble(4, object.getPrice());
@@ -129,6 +131,12 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
+            } else {
+                System.out.println("La mise à jour du plat a échoué, le nom que vous lui avez affecté est déjà existant.");
+                Optional<Dish> dishAlreadyExists = findById(object.getDishId());
+                if (dishAlreadyExists.isPresent()) {
+                    object = dishAlreadyExists.get();
+                }
             }
         }
         return object;
@@ -136,11 +144,13 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
 
     @Override
     public void delete(Long id) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement(DELETE_SQL)) {
-            preparedStatement.setLong(1, id);
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
+        if (id != null) {
+            try (PreparedStatement preparedStatement = connection.prepareStatement(DELETE_SQL)) {
+                preparedStatement.setLong(1, id);
+                preparedStatement.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
     }
 }

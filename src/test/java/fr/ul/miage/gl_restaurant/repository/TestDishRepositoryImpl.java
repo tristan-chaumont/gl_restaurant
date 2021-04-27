@@ -2,9 +2,8 @@ package fr.ul.miage.gl_restaurant.repository;
 
 import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.constants.MenuTypes;
-import fr.ul.miage.gl_restaurant.constants.Roles;
 import fr.ul.miage.gl_restaurant.model.Dish;
-import fr.ul.miage.gl_restaurant.model.User;
+import fr.ul.miage.gl_restaurant.model.RawMaterial;
 import org.junit.jupiter.api.*;
 
 import java.sql.SQLException;
@@ -47,7 +46,7 @@ class TestDishRepositoryImpl {
     void verifyFindByIdGetsDish() {
         Optional<Dish> result = dishRepository.findById(dish1.getDishId());
         assertThat(result.isPresent(), is(true));
-        assertThat(result.get().getWording(), equalTo(dish1.getWording()));
+        assertThat(result.get().getDishName(), equalTo(dish1.getDishName()));
     }
 
     @Test
@@ -58,11 +57,18 @@ class TestDishRepositoryImpl {
     }
 
     @Test
-    @DisplayName("findByWording() récupère le bon plat")
-    void verifyFindByWordingGetsDish() {
-        Optional<Dish> result = dishRepository.findByWording(dish1.getWording());
+    @DisplayName("findByName() récupère le bon plat")
+    void verifyFindByNameGetsDish() {
+        Optional<Dish> result = dishRepository.findByName(dish1.getDishName());
         assertThat(result.isPresent(), is(true));
-        assertThat(result.get().getDishId(), equalTo(dish1.getDishId()));
+        assertThat(result.get().getDishName(), equalTo(dish1.getDishName()));
+    }
+
+    @Test
+    @DisplayName("findByName() ne récupère rien")
+    void verifyFindByLoginGetsNothing() {
+        Optional<Dish> result = dishRepository.findByName("this dish does not exist :)");
+        assertThat(result.isPresent(), is(false));
     }
 
     @Test
@@ -73,12 +79,19 @@ class TestDishRepositoryImpl {
     }
 
     @Test
+    @DisplayName("findByCategory() ne récupère rien")
+    void verifyFindByCategoryGetsNothing() {
+        List<Dish> result = dishRepository.findByCategory("this category does not exist :)");
+        assertThat(result.size(), is(0));
+    }
+
+    @Test
     @DisplayName("L'insertion fonctionne")
     void verifySaveInsertElement() {
         Dish dish = dishRepository.save(new Dish("Poisson pané", "Poisson", MenuTypes.ENFANTS, 4.0));
         assertNotNull(dish.getDishId());
         Dish result = dishRepository.findById(dish.getDishId()).get();
-        assertThat(result.getWording(), equalTo("Poisson pané"));
+        assertThat(result.getDishName(), equalTo("Poisson pané"));
         assertThat(result.getCategory(), equalTo("Poisson"));
         assertThat(result.getMenuType(), is(MenuTypes.ENFANTS));
         assertThat(result.getPrice(), equalTo(4.0));
@@ -86,7 +99,7 @@ class TestDishRepositoryImpl {
     }
 
     @Test
-    @DisplayName("L'insertion échoue à cause d'un libellé dupliqué")
+    @DisplayName("L'insertion échoue à cause d'un nom dupliqué")
     void verifySaveWithSameWordingFail() {
         Dish dish1Bis = new Dish("Saumon", "Poisson", MenuTypes.ADULTES, 9.0);
         Dish result = dishRepository.save(dish1Bis);
@@ -96,11 +109,11 @@ class TestDishRepositoryImpl {
     @Test
     @DisplayName("La modification du plat fonctionne")
     void verifyUpdateSucceed() {
-        dish1.setWording("Poisson pané");
+        dish1.setDishName("Poisson pané");
         dish1.setPrice(3.0);
         dishRepository.update(dish1);
         Dish result = dishRepository.findById(dish1.getDishId()).get();
-        assertThat(result.getWording(), equalTo("Poisson pané"));
+        assertThat(result.getDishName(), equalTo("Poisson pané"));
         assertThat(result.getPrice(), equalTo(3.0));
     }
 
@@ -114,12 +127,12 @@ class TestDishRepositoryImpl {
     }
 
     @Test
-    @DisplayName("La modification ne fonctionne pas car le libellé existe déjà")
+    @DisplayName("La modification ne fonctionne pas car le nom existe déjà")
     void verifyUpdateFailBecauseLoginAlreadyExists() {
-        dish1.setWording("Steak Haché");
+        dish1.setDishName("Steak Haché");
         dish1 = dishRepository.update(dish1);
         Optional<Dish> result = dishRepository.findById(dish1.getDishId());
-        assertThat(result.get().getWording(), equalTo("Saumon"));
+        assertThat(result.get().getDishName(), equalTo("Saumon"));
     }
 
     @Test

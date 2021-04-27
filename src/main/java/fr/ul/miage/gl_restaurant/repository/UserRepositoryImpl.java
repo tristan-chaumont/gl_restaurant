@@ -122,7 +122,7 @@ public class UserRepositoryImpl extends Repository<User, Long> {
                     e.printStackTrace();
                 }
             } else {
-                System.out.println("La mise à jour de l'utilisateur a échoué, le login existe déjà.");
+                System.out.println("La mise à jour de l'utilisateur a échoué, le login que vous lui avez affecté est déjà existant.");
                 Optional<User> userAlreadyExists = findById(object.getUserId());
                 if (userAlreadyExists.isPresent()) {
                     object = userAlreadyExists.get();

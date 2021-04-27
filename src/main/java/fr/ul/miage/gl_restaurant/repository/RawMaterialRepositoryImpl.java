@@ -17,6 +17,7 @@ public class RawMaterialRepositoryImpl extends Repository<RawMaterial, Long> {
 
     private static final String FIND_ALL_SQL = "SELECT rmId, rmName, stockQuantity, unit FROM RawMaterials";
     private static final String FIND_BY_ID_SQL = "SELECT rmId, rmName, stockQuantity, unit FROM RawMaterials WHERE rmId = ?";
+    private static final String FIND_BY_NAME = "SELECT rmId, rmName, stockQuantity, unit FROM RawMaterials WHERE rmName = ?";
     private static final String SAVE_SQL = "INSERT INTO RawMaterials(rmName, stockQuantity, unit) VALUES(?, ?, ?)";
     private static final String UPDATE_SQL = "UPDATE RawMaterials SET rmName = ?, stockQuantity = ?, unit = ? WHERE rmId = ?";
     private static final String DELETE_SQL = "DELETE FROM RawMaterials WHERE rmId = ?";
@@ -57,23 +58,41 @@ public class RawMaterialRepositoryImpl extends Repository<RawMaterial, Long> {
         return rawMaterial;
     }
 
+    public Optional<RawMaterial> findByName(String name) {
+        Optional<RawMaterial> rawMaterial = Optional.empty();
+        try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_NAME, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+            preparedStatement.setString(1,  name);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.first()) {
+                    rawMaterial = Optional.of(new RawMaterial(resultSet));
+                }
+            }
+        } catch (SQLException e) {
+            log.error("Exception: " + e.getMessage());
+        }
+        return rawMaterial;
+    }
+
     @Override
     public RawMaterial save(RawMaterial object) {
         if (object != null && object.getRawMaterialId() == null) {
-            try (PreparedStatement preparedStatement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
-                preparedStatement.setString(1, object.getRawMaterialName());
-                preparedStatement.setInt(2, object.getStockQuantity());
-                preparedStatement.setString(3, object.getUnit());
-                int numRowsAffected = preparedStatement.executeUpdate();
-                try (ResultSet resultSet = preparedStatement.getGeneratedKeys()) {
-                    if (resultSet.next()) {
-                        object.setRawMaterialId(resultSet.getLong(1));
+            Optional<RawMaterial> rawMaterial = findByName(object.getRawMaterialName());
+            if (rawMaterial.isEmpty()) {
+                try (PreparedStatement preparedStatement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
+                    preparedStatement.setString(1, object.getRawMaterialName());
+                    preparedStatement.setInt(2, object.getStockQuantity());
+                    preparedStatement.setString(3, object.getUnit().toString());
+                    int numRowsAffected = preparedStatement.executeUpdate();
+                    try (ResultSet resultSet = preparedStatement.getGeneratedKeys()) {
+                        if (resultSet.next()) {
+                            object.setRawMaterialId(resultSet.getLong(1));
+                        }
+                    } catch (SQLException s) {
+                        s.printStackTrace();
                     }
-                } catch (SQLException s) {
-                    s.printStackTrace();
+                } catch (SQLException e) {
+                    e.printStackTrace();
                 }
-            } catch (SQLException e) {
-                e.printStackTrace();
             }
         }
         return object;
@@ -82,14 +101,23 @@ public class RawMaterialRepositoryImpl extends Repository<RawMaterial, Long> {
     @Override
     public RawMaterial update(RawMaterial object) {
         if (object != null && object.getRawMaterialId() != null) {
-            try (PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_SQL)) {
-                preparedStatement.setString(1, object.getRawMaterialName());
-                preparedStatement.setInt(2, object.getStockQuantity());
-                preparedStatement.setString(3, object.getUnit());
-                preparedStatement.setLong(4, object.getRawMaterialId());
-                preparedStatement.executeUpdate();
-            } catch (SQLException e) {
-                e.printStackTrace();
+            Optional<RawMaterial> rawMaterial = findByName(object.getRawMaterialName());
+            if (rawMaterial.isEmpty()) {
+                try (PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_SQL)) {
+                    preparedStatement.setString(1, object.getRawMaterialName());
+                    preparedStatement.setInt(2, object.getStockQuantity());
+                    preparedStatement.setString(3, object.getUnit().toString());
+                    preparedStatement.setLong(4, object.getRawMaterialId());
+                    preparedStatement.executeUpdate();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                System.out.println("La mise à jour de la matière première a échoué, le nom que vous lui avez affecté est déjà existant.");
+                Optional<RawMaterial> rawMaterialAlreadyExists = findById(object.getRawMaterialId());
+                if (rawMaterialAlreadyExists.isPresent()) {
+                    object = rawMaterialAlreadyExists.get();
+                }
             }
         }
         return object;

@@ -13,6 +13,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class TestRawMaterialRepositoryImpl {
 
@@ -55,6 +56,21 @@ class TestRawMaterialRepositoryImpl {
     }
 
     @Test
+    @DisplayName("findByName() récupère la matière première")
+    void verifyFindByNameGetsRawMaterial() {
+        Optional<RawMaterial> result = rawMaterialRepository.findByName(rawMaterial1.getRawMaterialName());
+        assertThat(result.isPresent(), is(true));
+        assertThat(result.get().getRawMaterialName(), equalTo(rawMaterial1.getRawMaterialName()));
+    }
+
+    @Test
+    @DisplayName("findByName() ne récupère rien")
+    void verifyFindByLoginGetsNothing() {
+        Optional<RawMaterial> result = rawMaterialRepository.findByName("this name does not exist :)");
+        assertThat(result.isPresent(), is(false));
+    }
+
+    @Test
     @DisplayName("L'insertion fonctionne")
     void verifySaveInsertElement() {
         RawMaterial rawMaterial = rawMaterialRepository.save(new RawMaterial("Farine", 100, Units.KG));
@@ -62,8 +78,16 @@ class TestRawMaterialRepositoryImpl {
         RawMaterial result = rawMaterialRepository.findById(rawMaterial.getRawMaterialId()).get();
         assertThat(result.getRawMaterialName(), equalTo("Farine"));
         assertThat(result.getStockQuantity(), is(100));
-        assertThat(result.getUnit(), equalTo("kg"));
+        assertThat(result.getUnit(), is(Units.KG));
         rawMaterialRepository.delete(rawMaterial.getRawMaterialId());
+    }
+
+    @Test
+    @DisplayName("L'insertion échoue à cause d'un nom dupliqué")
+    void verifySaveWithSameNameFail() {
+        RawMaterial rawMaterial= new RawMaterial("Riz", 50, Units.U);
+        RawMaterial result = rawMaterialRepository.save(rawMaterial);
+        assertNull(result.getRawMaterialId());
     }
 
     @Test
@@ -82,6 +106,17 @@ class TestRawMaterialRepositoryImpl {
         rawMaterialRepository.update(rawMaterial);
         Optional<RawMaterial> result = rawMaterialRepository.findById(rawMaterial.getRawMaterialId());
         assertThat(result.isEmpty(), is(true));
+    }
+
+    @Test
+    @DisplayName("La modification ne fonctionne pas car le nom existe déjà")
+    void verifyUpdateFailBecauseNameAlreadyExists() {
+        RawMaterial rawMaterial = new RawMaterial("Farine", 100, Units.KG);
+        rawMaterialRepository.save(rawMaterial);
+        rawMaterial.setRawMaterialName("Riz");
+        rawMaterial = rawMaterialRepository.update(rawMaterial);
+        assertThat(rawMaterial.getRawMaterialName(), equalTo("Farine"));
+        rawMaterialRepository.delete(rawMaterial.getRawMaterialId());
     }
 
     @Test
