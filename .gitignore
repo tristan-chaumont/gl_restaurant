@@ -89,3 +89,4 @@ fabric.properties
 
 # Db connection
 db.properties
+db.test.properties
