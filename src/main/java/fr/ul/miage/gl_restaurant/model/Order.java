@@ -1,5 +1,6 @@
 package fr.ul.miage.gl_restaurant.model;
 
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -9,6 +10,7 @@ import java.sql.Timestamp;
 @Getter
 @Setter
 @ToString
+@Data
 public class Order {
 
     private static final String TABLE_NAME = "Orders";

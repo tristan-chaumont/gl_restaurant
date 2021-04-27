@@ -44,7 +44,7 @@ public class OrderRepositoryImpl extends Repository<Order, Long> {
     @Override
     public Optional<Order> findById(Long id) {
         Optional<Order> order = Optional.empty();
-        try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_ID_SQL)) {
+        try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_ID_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
             preparedStatement.setLong(1, id);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.first()) {
@@ -65,7 +65,7 @@ public class OrderRepositoryImpl extends Repository<Order, Long> {
 
     @Override
     public Order save(Order object) {
-        if (object != null) {
+        if (object != null && object.getOrderId() == null) {
             try (PreparedStatement preparedStatement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
                 preparedStatement.setTimestamp(1, object.getOrderDate());
                 preparedStatement.setTimestamp(2, object.getPreparationDate());
@@ -87,11 +87,12 @@ public class OrderRepositoryImpl extends Repository<Order, Long> {
 
     @Override
     public Order update(Order object) {
-        if (object != null) {
+        if (object != null && object.getOrderId() != null) {
             try (PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_SQL)) {
                 preparedStatement.setTimestamp(1, object.getOrderDate());
                 preparedStatement.setTimestamp(2, object.getPreparationDate());
                 preparedStatement.setLong(3, object.getMeal().getMealId());
+                preparedStatement.setLong(4, object.getOrderId());
                 preparedStatement.executeUpdate();
             } catch (SQLException e) {
                 e.printStackTrace();
