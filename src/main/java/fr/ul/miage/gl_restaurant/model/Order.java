@@ -6,6 +6,8 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -24,6 +26,13 @@ public class Order implements Comparable<Order> {
     private Meal meal;
 
     public Order() {}
+
+    public Order(Long orderId, Meal meal) {
+        this.orderId = orderId;
+        this.orderDate = Timestamp.from(Instant.now());
+        this.preparationDate = null;
+        this.meal = meal;
+    }
 
     public Order(Long orderId, Timestamp orderDate, Timestamp preparationDate, Meal meal) {
         this.orderId = orderId;

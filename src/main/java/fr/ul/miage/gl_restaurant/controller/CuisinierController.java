@@ -15,10 +15,6 @@ public class CuisinierController {
         this.ordersQueue = new TreeSet<>();
     }
 
-    public void addOrder(Order order) {
-        this.ordersQueue.add(order);
-    }
-
     /**
      * Récupère toutes les commandes prises par les serveurs et qui n'ont pas encore été préparées.
      * On fait une requête DB à chaque fois pour actualiser les commandes.
