@@ -11,7 +11,7 @@ import java.sql.Timestamp;
 @Setter
 @ToString
 @Data
-public class Order {
+public class Order implements Comparable<Order> {
 
     private static final String TABLE_NAME = "Orders";
 
@@ -34,5 +34,10 @@ public class Order {
 
     public Order(Timestamp orderDate, Timestamp preparationDate, Meal meal) {
         this(null, orderDate, preparationDate, meal);
+    }
+
+    @Override
+    public int compareTo(Order order) {
+        return this.orderDate.compareTo(order.getOrderDate());
     }
 }
