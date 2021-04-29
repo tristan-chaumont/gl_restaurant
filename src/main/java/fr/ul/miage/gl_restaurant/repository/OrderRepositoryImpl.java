@@ -14,20 +14,29 @@ import java.util.Optional;
 public class OrderRepositoryImpl extends Repository<Order, Long> {
 
     private static final String FIND_ALL_SQL = "SELECT orderId, orderDate, preparationDate, mealId FROM Orders";
+    private static final String FIND_CURRENT_ORDERS = "SELECT orderId, orderDate, preparationDate, mealId FROM Orders WHERE preparationDate IS NULL";
     private static final String FIND_BY_ID_SQL = "SELECT orderId, orderDate, preparationDate, mealId FROM Orders WHERE orderId = ?";
     private static final String SAVE_SQL = "INSERT INTO Orders(orderDate, preparationDate, mealId) VALUES(?, ?, ?)";
     private static final String UPDATE_SQL = "UPDATE Orders SET orderDate = ?, preparationDate = ?, mealId = ? WHERE orderId = ?";
     private static final String DELETE_SQL = "DELETE FROM Orders WHERE orderId = ?";
 
-    protected OrderRepositoryImpl(Environment environment) {
+    public OrderRepositoryImpl(Environment environment) {
         super(environment);
     }
 
     @Override
     public List<Order> findAll() {
+        return findAllHelper(FIND_ALL_SQL);
+    }
+
+    public List<Order> findCurrentOrders() {
+        return findAllHelper(FIND_CURRENT_ORDERS);
+    }
+
+    private List<Order> findAllHelper(String query) {
         List<Order> orders = new ArrayList<>();
         try (Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(FIND_ALL_SQL)) {
+             ResultSet resultSet = statement.executeQuery(query)) {
             while (resultSet.next()) {
                 Long orderId = resultSet.getLong("orderId");
                 Timestamp orderDate = resultSet.getTimestamp("orderDate");

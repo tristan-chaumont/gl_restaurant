@@ -1,8 +1,6 @@
 package fr.ul.miage.gl_restaurant.repository;
 
 import fr.ul.miage.gl_restaurant.constants.Environment;
-import fr.ul.miage.gl_restaurant.constants.MenuTypes;
-import fr.ul.miage.gl_restaurant.constants.Roles;
 import fr.ul.miage.gl_restaurant.constants.TableStates;
 import fr.ul.miage.gl_restaurant.model.*;
 import fr.ul.miage.gl_restaurant.model.Order;
@@ -43,7 +41,7 @@ class TestOrderRepositoryImpl {
     @BeforeEach
     void initializeBeforeEach() {
         user = userRepository.findByLogin("chaumontt").get();
-        table = tableRepository.save(new Table(Integer.valueOf(1), TableStates.LIBRE, Integer.valueOf(4), user));
+        table = tableRepository.save(new Table(1, TableStates.LIBRE, 4, user));
         bill1 = billRepository.save(new Bill(1L));
         bill2 = billRepository.save(new Bill(2L));
         meal1 = mealRepository.save(new Meal(4, Timestamp.valueOf("2021-04-27 12:00:00"), 30L, table ,bill1));
@@ -57,6 +55,17 @@ class TestOrderRepositoryImpl {
     void verifyFindAllReturnsAllElements() {
         List<Order> result = orderRepository.findAll();
         assertThat(result.size(), is(2));
+    }
+
+    @Test
+    @DisplayName("findCurrentOrders() récupère toutes les commandes qui ont une preparationDate à null")
+    void verifyFindCurrentOrdersReturnsRightElements() {
+        Order order3 = orderRepository.save(new Order(Timestamp.valueOf("2021-04-27 12:05:00"), null, meal1));
+        Order order4 = orderRepository.save(new Order(Timestamp.valueOf("2021-04-27 19:35:00"), null, meal2));
+        List<Order> result = orderRepository.findCurrentOrders();
+        assertThat(result.size(), is(2));
+        orderRepository.delete(order3.getOrderId());
+        orderRepository.delete(order4.getOrderId());
     }
 
     @Test
@@ -77,7 +86,7 @@ class TestOrderRepositoryImpl {
     @Test
     @DisplayName("L'insertion fonctionne")
     void verifySaveInsertElement() {
-        Table tableInsert = tableRepository.save(new Table(Integer.valueOf(1),TableStates.LIBRE, Integer.valueOf(4), user));
+        Table tableInsert = tableRepository.save(new Table(1,TableStates.LIBRE, 4, user));
         Bill bill = billRepository.save(new Bill(3L));
         Meal meal = mealRepository.save(new Meal(4, Timestamp.valueOf("2021-04-26 12:00:00"), 30L, tableInsert ,bill));
         Order order = orderRepository.save(new Order(Timestamp.valueOf("2021-04-26 12:05:00"),Timestamp.valueOf("2021-04-26 12:15:00"),meal));
@@ -94,7 +103,7 @@ class TestOrderRepositoryImpl {
     //Faire un test sur le fait que l'on ne peut insérer un objet Meal sur une table occupée
 
     @Test
-    @DisplayName("La modification du repas fonctionne")
+    @DisplayName("La modification de la commande fonctionne")
     void verifyUpdateSucceed() {
         order1.setOrderDate(Timestamp.valueOf("2021-04-26 12:03:00"));
         orderRepository.update(order1);
@@ -103,9 +112,9 @@ class TestOrderRepositoryImpl {
     }
 
     @Test
-    @DisplayName("La modification ne s'effectue pas car le repas n'existe pas")
-    void verifyUpdateFailBecauseUserDoesNotExist() {
-        Table tableInsert = new Table(3L, Integer.valueOf(1),TableStates.LIBRE, Integer.valueOf(4), user);
+    @DisplayName("La modification ne s'effectue pas car la commande n'existe pas")
+    void verifyUpdateFailBecauseOrderDoesNotExist() {
+        Table tableInsert = new Table(3L, 1,TableStates.LIBRE, 4, user);
         Bill bill = new Bill(3L);
         Meal meal = new Meal(3L,4, Timestamp.valueOf("2021-04-25 12:00:00"), 30L, tableInsert ,bill);
         Order order = new Order(3L, Timestamp.valueOf("2021-04-26 12:05:00"),Timestamp.valueOf("2021-04-26 12:15:00"),meal);
@@ -115,9 +124,9 @@ class TestOrderRepositoryImpl {
     }
 
     @Test
-    @DisplayName("La suppression du repas fonctionne")
+    @DisplayName("La suppression de la commande fonctionne")
     void verifyDeleteSucceed() {
-        Table tableInsert = tableRepository.save(new Table(Integer.valueOf(1),TableStates.LIBRE, Integer.valueOf(4), user));
+        Table tableInsert = tableRepository.save(new Table(1,TableStates.LIBRE, 4, user));
         Bill bill = billRepository.save(new Bill(3L));
         Meal meal = mealRepository.save(new Meal(4, Timestamp.valueOf("2021-04-26 12:00:00"), 30L, tableInsert ,bill));
         Order order = orderRepository.save(new Order(Timestamp.valueOf("2021-04-26 12:05:00"),Timestamp.valueOf("2021-04-26 12:15:00"),meal));
@@ -131,9 +140,9 @@ class TestOrderRepositoryImpl {
     }
 
     @Test
-    @DisplayName("La suppression de ne fonctionne pas car le repas n'existe pas")
-    void verifyDeleteFailBecauseUserDoesNotExist() {
-        Table tableInsert = new Table(3L, Integer.valueOf(1),TableStates.LIBRE, Integer.valueOf(4), user);
+    @DisplayName("La suppression ne fonctionne pas car la commande n'existe pas")
+    void verifyDeleteFailBecauseOrderDoesNotExist() {
+        Table tableInsert = new Table(3L, 1,TableStates.LIBRE, 4, user);
         Bill bill = new Bill(3L);
         Meal meal = new Meal(3L,4, Timestamp.valueOf("2021-04-25 12:00:00"), 30L, tableInsert ,bill);
         Order order = new Order(3L,Timestamp.valueOf("2021-04-26 12:05:00"),Timestamp.valueOf("2021-04-26 12:15:00"),meal);
