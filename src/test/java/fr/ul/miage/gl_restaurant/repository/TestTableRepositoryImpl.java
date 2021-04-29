@@ -33,7 +33,7 @@ class TestTableRepositoryImpl {
     @BeforeEach
     void initializeBeforeEach() {
         user1 = userRepository.save(new User("userTableTest1", "Test1", "UserTable1", Roles.SERVEUR));
-        user2 = userRepository.save(new User("userTableTest2", "Test2", "UserTable2", Roles.DIRECTEUR));
+        user2 = userRepository.save(new User("userTableTest2", "Test2", "UserTable2", Roles.SERVEUR));
         table1 = tableRepository.save(new Table(1, TableStates.OCCUPEE, 5, user1));
         table2 = tableRepository.save(new Table(2, TableStates.LIBRE, 3, user2));
     }
@@ -43,6 +43,13 @@ class TestTableRepositoryImpl {
     void verifyFindAllReturnsAllElements() {
         List<Table> result = tableRepository.findAll();
         assertThat(result.size(), is(2));
+    }
+
+    @Test
+    @DisplayName("findByUsrId() récupère tous les éléments lié à cet utilisateur")
+    void verifyFindByUserIdReturnsOneElement() {
+        List<Table> result = tableRepository.findByUserId(user1.getUserId());
+        assertThat(result.size(), is(1));
     }
 
     @Test

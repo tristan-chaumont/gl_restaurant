@@ -9,9 +9,9 @@ import java.util.Optional;
 
 public abstract class Repository<T, K> {
 
-    Connection connection;
+    public Connection connection;
 
-    protected Repository(Environment environment) {
+    public Repository(Environment environment) {
         connection = DbAccess.getInstance(environment);
     }
 

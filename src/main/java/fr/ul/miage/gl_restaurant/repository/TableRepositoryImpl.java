@@ -2,14 +2,10 @@ package fr.ul.miage.gl_restaurant.repository;
 
 import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.constants.TableStates;
-import fr.ul.miage.gl_restaurant.model.Table;
-import fr.ul.miage.gl_restaurant.model.User;
+import fr.ul.miage.gl_restaurant.model.*;
 import lombok.extern.slf4j.Slf4j;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -19,11 +15,12 @@ public class TableRepositoryImpl extends Repository<Table, Long> {
 
     private static final String FIND_ALL_SQL = "SELECT tableId, floor, state, places, userId FROM Tables";
     private static final String FIND_BY_ID_SQL = "SELECT tableId, floor, state, places, userId FROM Tables WHERE tableId = ?";
+    private static final String FIND_BY_USERID_SQL = "SELECT tableId, floor, state, places, userId FROM Tables WHERE userId = ?";
     private static final String SAVE_SQL = "INSERT INTO Tables(floor, state, places, userId) VALUES(?, ?, ?, ?)";
     private static final String UPDATE_SQL = "UPDATE Tables SET floor = ?, state = ?, places = ?, userId = ? WHERE tableId = ?";
     private static final String DELETE_SQL = "DELETE FROM Tables WHERE tableId = ?";
 
-    protected TableRepositoryImpl(Environment environment) {
+    public TableRepositoryImpl(Environment environment) {
         super(environment);
     }
 
@@ -69,6 +66,28 @@ public class TableRepositoryImpl extends Repository<Table, Long> {
             }
         }
         return table;
+    }
+
+    public List<Table> findByUserId(Long id) {
+        List<Table> tables = new ArrayList<>();
+        try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_USERID_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+            preparedStatement.setLong(1, id);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    Long tableId = resultSet.getLong("tableId");
+                    Integer floor = resultSet.getInt("floor");
+                    TableStates state = TableStates.getState(resultSet.getString("state"));
+                    Integer places = resultSet.getInt("places");
+                    Optional<User> user = new UserRepositoryImpl(Environment.TEST).findById(resultSet.getLong("userId"));
+                    if (user.isPresent()) {
+                        tables.add(new Table(tableId, floor, state, places, user.get()));
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            log.error("Exception: " + e.getMessage());
+        }
+        return tables;
     }
 
     @Override
