@@ -2,12 +2,15 @@ package fr.ul.miage.gl_restaurant.repository;
 
 import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.constants.MenuTypes;
+import fr.ul.miage.gl_restaurant.constants.Units;
 import fr.ul.miage.gl_restaurant.model.Dish;
 import fr.ul.miage.gl_restaurant.model.RawMaterial;
 import org.junit.jupiter.api.*;
 
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -19,17 +22,25 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 class TestDishRepositoryImpl {
 
     static DishRepositoryImpl dishRepository;
+    static RawMaterialRepositoryImpl rawMaterialRepository;
     static Dish dish1, dish2;
+    static RawMaterial rawMaterial1;
 
     @BeforeAll
     static void initializeBeforeAll() {
         dishRepository = new DishRepositoryImpl(Environment.TEST);
+        rawMaterialRepository = new RawMaterialRepositoryImpl(Environment.TEST);
     }
 
     @BeforeEach
     void initializeBeforeEach() {
-        dish1 = dishRepository.save(new Dish("Saumon", "Poisson", MenuTypes.ADULTES, 8.5));
-        dish2 = dishRepository.save(new Dish( "Steak Haché", "Viande", MenuTypes.ADULTES, 5.0));
+        rawMaterial1 = rawMaterialRepository.save(new RawMaterial("Riz", 100, Units.KG));
+        dish1 = new Dish("Saumon", "Poisson", MenuTypes.ADULTES, 8.5);
+        dish2 = new Dish( "Steak Haché", "Viande", MenuTypes.ADULTES, 5.0);
+        dish1.addRawMaterial(rawMaterial1, 1);
+        dish2.addRawMaterial(rawMaterial1, 2);
+        dish1 = dishRepository.save(dish1);
+        dish2 = dishRepository.save(dish2);
     }
 
     /* FIND */
@@ -156,15 +167,68 @@ class TestDishRepositoryImpl {
         assertThat(newTotalDishes, equalTo(totalDishes));
     }
 
+    /* RAW MATERIAL */
+
+    @Test
+    @DisplayName("Les matières premières qui composent un plat sont récupérées")
+    void verifyFindRawMaterialsByDishIdReturnsAllElements() {
+        Map<RawMaterial, Integer> rawMaterials = dishRepository.findRawMaterialsByDishId(dish1.getDishId());
+        assertThat(rawMaterials.size(), is(1));
+        assertThat(rawMaterials.get(rawMaterial1), is(1));
+    }
+
+    @Test
+    @DisplayName("Les matières premières d'un nouveau plat sont sauvegardées")
+    void verifySaveRawMaterialsByDishIdSucceed() {
+        Map<RawMaterial, Integer> rawMaterials;
+        Dish dish3 = new Dish("Poiscaille", "Poisson", MenuTypes.ADULTES, 8.5);
+        dish3.addRawMaterial(rawMaterial1, 5);
+        dish3 = dishRepository.save(dish3);
+        assertNotNull(dish3.getDishId());
+        rawMaterials = dishRepository.findRawMaterialsByDishId(dish3.getDishId());
+        assertThat(rawMaterials.size(), is(1));
+        assertThat(rawMaterials.get(rawMaterial1), is(5));
+        dishRepository.delete(dish3.getDishId());
+    }
+
+    @Test
+    @DisplayName("Les matières premières sont mises à jour correctement")
+    void verifyUpdateRawMaterialByDishIdSucceed() {
+        Dish dish3 = new Dish("Poiscaille", "Poisson", MenuTypes.ADULTES, 8.5);
+        dish3.addRawMaterial(rawMaterial1, 5);
+        dish3 = dishRepository.save(dish3);
+        RawMaterial rawMaterial2 = new RawMaterial("Pastis", 50, Units.L);
+        rawMaterialRepository.save(rawMaterial2);
+        dish3.clearRawMaterials();
+        dish3.addRawMaterial(rawMaterial2, 10);
+        dish3 = dishRepository.update(dish3);
+        Map<RawMaterial, Integer> rawMaterials = dishRepository.findRawMaterialsByDishId(dish3.getDishId());
+        assertThat(rawMaterials.size(), is(1));
+        assertThat(rawMaterials.get(rawMaterial2), is(10));
+        dishRepository.delete(dish3.getDishId());
+        rawMaterialRepository.delete(rawMaterial2.getRawMaterialId());
+    }
+
+    @Test
+    @DisplayName("Les matières premières sont supprimées correctement")
+    void verifyDeleteRawMaterialByDishIdSucceed() {
+        dishRepository.delete(dish1.getDishId());
+        Map<RawMaterial, Integer> rawMaterials = dishRepository.findRawMaterialsByDishId(dish1.getDishId());
+        assertThat(rawMaterials.size(), is(0));
+    }
+
     @AfterEach
     void tearDownAfterEach() {
         dishRepository.delete(dish1.getDishId());
         dishRepository.delete(dish2.getDishId());
+        rawMaterialRepository.delete(rawMaterial1.getRawMaterialId());
     }
 
     @AfterAll
     static void tearDownAfterAll() {
         try {
+            rawMaterialRepository.connection.close();
+            rawMaterialRepository = null;
             dishRepository.connection.close();
             dishRepository = null;
         } catch (SQLException e) {

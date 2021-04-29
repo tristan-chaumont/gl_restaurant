@@ -110,7 +110,7 @@ public class UserRepositoryImpl extends Repository<User, Long> {
     public User update(User object) {
         if (object != null && object.getUserId() != null) {
             Optional<User> user = findByLogin(object.getLogin());
-            if (user.isEmpty()) {
+            if (user.isEmpty() || object.getUserId().equals(user.get().getUserId())) {
                 try (PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_SQL)) {
                     preparedStatement.setString(1, object.getLogin());
                     preparedStatement.setString(2, object.getLastName());

@@ -102,7 +102,7 @@ public class RawMaterialRepositoryImpl extends Repository<RawMaterial, Long> {
     public RawMaterial update(RawMaterial object) {
         if (object != null && object.getRawMaterialId() != null) {
             Optional<RawMaterial> rawMaterial = findByName(object.getRawMaterialName());
-            if (rawMaterial.isEmpty()) {
+            if (rawMaterial.isEmpty() || object.getRawMaterialId().equals(rawMaterial.get().getRawMaterialId())) {
                 try (PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_SQL)) {
                     preparedStatement.setString(1, object.getRawMaterialName());
                     preparedStatement.setInt(2, object.getStockQuantity());
