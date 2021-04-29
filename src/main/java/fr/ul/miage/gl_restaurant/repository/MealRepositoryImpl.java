@@ -20,7 +20,7 @@ public class MealRepositoryImpl extends Repository<Meal, Long> {
     private static final String UPDATE_SQL = "UPDATE Meals SET customersNb = ?, startDate = ?, mealDuration = ?, tableId = ?, billId = ? WHERE mealId = ?";
     private static final String DELETE_SQL = "DELETE FROM Meals WHERE mealId = ?";
 
-    protected MealRepositoryImpl(Environment environment) {
+    public MealRepositoryImpl(Environment environment) {
         super(environment);
     }
 

@@ -23,7 +23,7 @@ public class TableRepositoryImpl extends Repository<Table, Long> {
     private static final String UPDATE_SQL = "UPDATE Tables SET floor = ?, state = ?, places = ?, userId = ? WHERE tableId = ?";
     private static final String DELETE_SQL = "DELETE FROM Tables WHERE tableId = ?";
 
-    protected TableRepositoryImpl(Environment environment) {
+    public TableRepositoryImpl(Environment environment) {
         super(environment);
     }
 

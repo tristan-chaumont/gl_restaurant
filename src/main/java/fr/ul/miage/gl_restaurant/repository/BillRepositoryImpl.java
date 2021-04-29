@@ -21,7 +21,7 @@ public class BillRepositoryImpl extends Repository<Bill, Long> {
     private static final String UPDATE_SQL = "UPDATE Bills SET billId = ? WHERE billId = ?";
     private static final String DELETE_SQL = "DELETE FROM Bills WHERE billId = ?";
 
-    protected BillRepositoryImpl(Environment environment) {
+    public BillRepositoryImpl(Environment environment) {
         super(environment);
     }
 
