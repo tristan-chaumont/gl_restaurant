@@ -1,23 +1,16 @@
 package fr.ul.miage.gl_restaurant.model;
 
-import fr.ul.miage.gl_restaurant.constants.MenuTypes;
 import fr.ul.miage.gl_restaurant.constants.TableStates;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 import org.apache.commons.lang3.StringUtils;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 
 @Getter
 @Setter
-@ToString
 @Data
 public class Table {
-
-    private static final String TABLE_NAME = "Tables";
 
     private Long tableId;
 
@@ -27,7 +20,7 @@ public class Table {
 
     private Integer places;
 
-    User user;
+    private User user;
 
     public Table() {}
 
@@ -43,6 +36,7 @@ public class Table {
         this(null, floor, state, places, user);
     }
 
+    @Override
     public String toString(){
         String result = "--------------------";
         result += "|" + StringUtils.center("Table " +tableId, 18) + "|";

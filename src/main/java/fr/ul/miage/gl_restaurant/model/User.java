@@ -15,8 +15,6 @@ import java.sql.SQLException;
 @Data
 public class User {
 
-    private static final String TABLE_NAME = "Users";
-
     private Long userId;
 
     private String login;

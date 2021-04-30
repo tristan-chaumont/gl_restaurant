@@ -1,6 +1,5 @@
 package fr.ul.miage.gl_restaurant.controller;
 
-import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.model.Order;
 import fr.ul.miage.gl_restaurant.repository.OrderRepositoryImpl;
 

@@ -16,8 +16,6 @@ import java.util.Map;
 @Data
 public class Order implements Comparable<Order> {
 
-    private static final String TABLE_NAME = "Orders";
-
     private Long orderId;
 
     private Timestamp orderDate;

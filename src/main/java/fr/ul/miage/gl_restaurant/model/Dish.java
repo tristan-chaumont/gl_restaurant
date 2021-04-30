@@ -18,8 +18,6 @@ import java.util.Map;
 @Data
 public class Dish {
 
-    private static final String TABLE_NAME = "Dishes";
-
     private Long dishId;
 
     private String dishName;

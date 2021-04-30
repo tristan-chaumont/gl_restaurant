@@ -9,8 +9,6 @@ import lombok.ToString;
 @ToString
 public class Reservation {
 
-    private static final String TABLE_NAME = "Reservations";
-
     private Long reservationId;
 
     private boolean lunch;
