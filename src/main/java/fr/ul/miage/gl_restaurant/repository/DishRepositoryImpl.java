@@ -14,19 +14,20 @@ import java.util.*;
 @Slf4j
 public class DishRepositoryImpl extends Repository<Dish, Long> {
 
-    private static final String FIND_ALL_SQL = "SELECT dishId, dishName, category, menuType, price FROM Dishes";
-    private static final String FIND_BY_ID_SQL = "SELECT dishId, dishName, category, menuType, price FROM Dishes WHERE dishId = ?";
-    private static final String FIND_BY_NAME_SQL = "SELECT dishId, dishName, category, menuType, price FROM Dishes WHERE dishName = ?";
-    private static final String FIND_BY_CATEGORY_SQL = "SELECT dishId, dishName, category, menuType, price FROM Dishes WHERE category = ?";
-    private static final String SAVE_SQL = "INSERT INTO Dishes(dishName, category, menuType, price) VALUES(?, ?, ?, ?)";
-    private static final String UPDATE_SQL = "UPDATE Dishes SET dishName = ?, category = ?, menuType = ?, price = ? WHERE dishId = ?";
+    private static final String FIND_ALL_SQL = "SELECT dishId, dishName, category, menuType, price, dailymenu FROM Dishes";
+    private static final String FIND_BY_ID_SQL = "SELECT dishId, dishName, category, menuType, price, dailymenu FROM Dishes WHERE dishId = ?";
+    private static final String FIND_BY_NAME_SQL = "SELECT dishId, dishName, category, menuType, price, dailymenu FROM Dishes WHERE dishName = ?";
+    private static final String FIND_BY_CATEGORY_SQL = "SELECT dishId, dishName, category, menuType, price, dailymenu FROM Dishes WHERE category = ?";
+    private static final String SAVE_SQL = "INSERT INTO Dishes(dishName, category, menuType, price, dailymenu) VALUES(?, ?, ?, ?, ?)";
+    private static final String UPDATE_SQL = "UPDATE Dishes SET dishName = ?, category = ?, menuType = ?, price = ?, dailyMenu = ? WHERE dishId = ?";
+    private static final String UPDATE_DAILY_MENU_SQL = "UPDATE Dishes SET dailyMenu = ? WHERE dishId = ?";
     private static final String DELETE_SQL = "DELETE FROM Dishes WHERE dishId = ?";
 
     private static final String FIND_RM_BY_DISH_ID_SQL = "SELECT dishId, rmId, quantity FROM Dishes_RawMaterials WHERE dishId = ?";
     private static final String SAVE_RM_SQL = "INSERT INTO Dishes_RawMaterials(dishId, rmId, quantity) VALUES(?, ?, ?)";
     private static final String DELETE_RM_SQL = "DELETE FROM Dishes_RawMaterials WHERE dishId = ?";
 
-    protected DishRepositoryImpl(Environment environment) {
+    public DishRepositoryImpl(Environment environment) {
         super(environment);
     }
 
@@ -102,6 +103,7 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
                     preparedStatement.setString(2, object.getCategory());
                     preparedStatement.setString(3, object.getMenuType().toString());
                     preparedStatement.setDouble(4, object.getPrice());
+                    preparedStatement.setBoolean(5, object.isDailyMenu());
                     preparedStatement.executeUpdate();
                     try (ResultSet resultSet = preparedStatement.getGeneratedKeys()) {
                         if (resultSet.next()) {
@@ -129,7 +131,8 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
                     preparedStatement.setString(2, object.getCategory());
                     preparedStatement.setString(3, object.getMenuType().toString());
                     preparedStatement.setDouble(4, object.getPrice());
-                    preparedStatement.setLong(5, object.getDishId());
+                    preparedStatement.setBoolean(5, object.isDailyMenu());
+                    preparedStatement.setLong(6, object.getDishId());
                     updateRawMaterialsByDishId(object.getDishId(), object.getRawMaterials());
                     preparedStatement.executeUpdate();
                 } catch (SQLException e) {
@@ -144,6 +147,22 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
             }
         }
         return object;
+    }
+
+    public Dish updateDailyMenu(Long id, boolean dailyMenu) {
+        if (id != null) {
+            try (PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_DAILY_MENU_SQL)) {
+                preparedStatement.setBoolean(1, dailyMenu);
+                preparedStatement.setLong(2, id);
+                preparedStatement.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println("Erreur : Impossible de mettre à jour un plat qui n'existe pas.");
+        }
+        Optional<Dish> dish = findById(id);
+        return dish.orElse(null);
     }
 
     @Override

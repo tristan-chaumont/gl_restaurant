@@ -18,7 +18,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.CoreMatchers.equalTo;
 
-public class TestTableController {
+class TestTableController {
 
     static TableRepositoryImpl tableRepository;
     static UserRepositoryImpl userRepository;

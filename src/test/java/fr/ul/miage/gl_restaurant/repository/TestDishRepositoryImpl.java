@@ -35,8 +35,8 @@ class TestDishRepositoryImpl {
     @BeforeEach
     void initializeBeforeEach() {
         rawMaterial1 = rawMaterialRepository.save(new RawMaterial("Riz", 100, Units.KG));
-        dish1 = new Dish("Saumon", "Poisson", MenuTypes.ADULTES, 8.5);
-        dish2 = new Dish( "Steak Haché", "Viande", MenuTypes.ADULTES, 5.0);
+        dish1 = new Dish("Saumon", "Poisson", MenuTypes.ADULTES, 8.5, false);
+        dish2 = new Dish( "Steak Haché", "Viande", MenuTypes.ADULTES, 5.0, false);
         dish1.addRawMaterial(rawMaterial1, 1);
         dish2.addRawMaterial(rawMaterial1, 2);
         dish1 = dishRepository.save(dish1);
@@ -99,7 +99,7 @@ class TestDishRepositoryImpl {
     @Test
     @DisplayName("L'insertion fonctionne")
     void verifySaveInsertElement() {
-        Dish dish = dishRepository.save(new Dish("Poisson pané", "Poisson", MenuTypes.ENFANTS, 4.0));
+        Dish dish = dishRepository.save(new Dish("Poisson pané", "Poisson", MenuTypes.ENFANTS, 4.0, false));
         assertNotNull(dish.getDishId());
         Dish result = dishRepository.findById(dish.getDishId()).get();
         assertThat(result.getDishName(), equalTo("Poisson pané"));
@@ -112,7 +112,7 @@ class TestDishRepositoryImpl {
     @Test
     @DisplayName("L'insertion échoue à cause d'un nom dupliqué")
     void verifySaveWithSameWordingFail() {
-        Dish dish1Bis = new Dish("Saumon", "Poisson", MenuTypes.ADULTES, 9.0);
+        Dish dish1Bis = new Dish("Saumon", "Poisson", MenuTypes.ADULTES, 9.0, false);
         Dish result = dishRepository.save(dish1Bis);
         assertNull(result.getDishId());
     }
@@ -131,7 +131,7 @@ class TestDishRepositoryImpl {
     @Test
     @DisplayName("La modification ne s'effectue pas car le plat n'existe pas")
     void verifyUpdateFailBecauseDishDoesNotExist() {
-        Dish dish = new Dish(3L, "TestUpdate1", "TestUpdate1", MenuTypes.ADULTES, 2.0);
+        Dish dish = new Dish(3L, "TestUpdate1", "TestUpdate1", MenuTypes.ADULTES, 2.0, false);
         dishRepository.update(dish);
         Optional<Dish> result = dishRepository.findById(dish.getDishId());
         assertThat(result.isEmpty(), is(true));
@@ -147,9 +147,25 @@ class TestDishRepositoryImpl {
     }
 
     @Test
+    @DisplayName("La modification de la carte du jour fonctionne")
+    void verifyUpdateDailyMenuSucceed() {
+        dish1 = dishRepository.updateDailyMenu(dish1.getDishId(), true);
+        Optional<Dish> result = dishRepository.findById(dish1.getDishId());
+        assertThat(result.get().isDailyMenu(), is(true));
+    }
+
+    @Test
+    @DisplayName("La modification de la carte du jour échoue, car le plat n'existe pas")
+    void verifyUpdateDailyMenuFailBecauseDishDoesNotExist() {
+        Dish newDish = new Dish("Saumon", "Poisson", MenuTypes.ADULTES, 8.5, false);
+        newDish = dishRepository.updateDailyMenu(newDish.getDishId(), true);
+        assertNull(newDish);
+    }
+
+    @Test
     @DisplayName("La suppression de l'utilisateur fonctionne")
     void verifyDeleteSucceed() {
-        Dish dish = new Dish("TestDelete1", "TestDelete1", MenuTypes.ADULTES, 2.0);
+        Dish dish = new Dish("TestDelete1", "TestDelete1", MenuTypes.ADULTES, 2.0, false);
         dish = dishRepository.save(dish);
         int totalUsers = dishRepository.findAll().size();
         dishRepository.delete(dish.getDishId());
@@ -160,7 +176,7 @@ class TestDishRepositoryImpl {
     @Test
     @DisplayName("La suppression de ne fonctionne pas car l'utilisateur n'existe pas")
     void verifyDeleteFailBecauseUserDoesNotExist() {
-        Dish dish = new Dish(3L, "TestDelete1", "TestDelete1", MenuTypes.ADULTES, 2.0);
+        Dish dish = new Dish(3L, "TestDelete1", "TestDelete1", MenuTypes.ADULTES, 2.0, false);
         int totalDishes = dishRepository.findAll().size();
         dishRepository.delete(dish.getDishId());
         int newTotalDishes = dishRepository.findAll().size();
@@ -181,7 +197,7 @@ class TestDishRepositoryImpl {
     @DisplayName("Les matières premières d'un nouveau plat sont sauvegardées")
     void verifySaveRawMaterialsByDishIdSucceed() {
         Map<RawMaterial, Integer> rawMaterials;
-        Dish dish3 = new Dish("Poiscaille", "Poisson", MenuTypes.ADULTES, 8.5);
+        Dish dish3 = new Dish("Poiscaille", "Poisson", MenuTypes.ADULTES, 8.5, false);
         dish3.addRawMaterial(rawMaterial1, 5);
         dish3 = dishRepository.save(dish3);
         assertNotNull(dish3.getDishId());
@@ -194,7 +210,7 @@ class TestDishRepositoryImpl {
     @Test
     @DisplayName("Les matières premières sont mises à jour correctement")
     void verifyUpdateRawMaterialByDishIdSucceed() {
-        Dish dish3 = new Dish("Poiscaille", "Poisson", MenuTypes.ADULTES, 8.5);
+        Dish dish3 = new Dish("Poiscaille", "Poisson", MenuTypes.ADULTES, 8.5, false);
         dish3.addRawMaterial(rawMaterial1, 5);
         dish3 = dishRepository.save(dish3);
         RawMaterial rawMaterial2 = new RawMaterial("Pastis", 50, Units.L);
