@@ -11,8 +11,13 @@ import java.util.Optional;
 
 public class StockController {
 
-    private final DishRepositoryImpl dishRepository = new DishRepositoryImpl(Environment.TEST);
-    private final RawMaterialRepositoryImpl rawMaterialRepository = new RawMaterialRepositoryImpl(Environment.TEST);
+    private final DishRepositoryImpl dishRepository;
+    private final RawMaterialRepositoryImpl rawMaterialRepository;
+
+    public StockController(DishRepositoryImpl dishRepository, RawMaterialRepositoryImpl rawMaterialRepository) {
+        this.dishRepository = dishRepository;
+        this.rawMaterialRepository = rawMaterialRepository;
+    }
 
     /**
      * Met à jour la carte du jour en fonction du stock de matières premières.

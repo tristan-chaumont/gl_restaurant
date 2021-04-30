@@ -12,15 +12,15 @@ import java.util.Optional;
 
 public class TableController {
 
-    TableRepositoryImpl tableRepository;
-    UserRepositoryImpl userRepository;
+    private final TableRepositoryImpl tableRepository;
+    private final UserRepositoryImpl userRepository;
 
-    public TableController(){
-        tableRepository = new TableRepositoryImpl(Environment.TEST);
-        userRepository = new UserRepositoryImpl(Environment.TEST);
+    public TableController(TableRepositoryImpl tableRepository, UserRepositoryImpl userRepository) {
+        this.tableRepository = tableRepository;
+        this.userRepository = userRepository;
     }
 
-    public void assignServer(Table table, User user){
+    public void assignServer(Table table, User user) {
         Optional<User> userTemp = userRepository.findById(user.getUserId());
         if(userTemp.isPresent()) {
             if (user.getRole().equals(Roles.SERVEUR)) {
@@ -30,7 +30,7 @@ public class TableController {
         }
     }
 
-    public void changeState(Table table, TableStates tableStates){
+    public void changeState(Table table, TableStates tableStates) {
         table.setState(tableStates);
         tableRepository.update(table);
     }

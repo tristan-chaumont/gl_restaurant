@@ -1,6 +1,5 @@
 package fr.ul.miage.gl_restaurant.controller;
 
-import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.constants.Roles;
 import fr.ul.miage.gl_restaurant.model.Order;
 import fr.ul.miage.gl_restaurant.model.Table;
@@ -13,11 +12,13 @@ import java.util.HashSet;
 public class ServeurController {
 
     private final CuisinierController cuisinierController;
-    private final OrderRepositoryImpl orderRepository = new OrderRepositoryImpl(Environment.TEST);
-    private final TableRepositoryImpl tableRepository = new TableRepositoryImpl(Environment.TEST);
+    private final OrderRepositoryImpl orderRepository;
+    private final TableRepositoryImpl tableRepository;
 
-    public ServeurController(CuisinierController cuisinierController) {
+    public ServeurController(CuisinierController cuisinierController, OrderRepositoryImpl orderRepository, TableRepositoryImpl tableRepository) {
         this.cuisinierController = cuisinierController;
+        this.orderRepository = orderRepository;
+        this.tableRepository = tableRepository;
     }
 
     public void takeOrder(Order order) {
@@ -25,9 +26,9 @@ public class ServeurController {
     }
 
     public HashSet<Table> getTablesList(User user){
-        HashSet<Table> tablesList = new HashSet<Table>();
-        if(user.getRole().equals(Roles.SERVEUR))
-            tablesList.addAll(tableRepository.findByUserId(user.getUserId())) ;
+        HashSet<Table> tablesList = new HashSet<>();
+        if (user.getRole().equals(Roles.SERVEUR))
+            tablesList.addAll(tableRepository.findByUserId(user.getUserId()));
         return tablesList;
     }
 }

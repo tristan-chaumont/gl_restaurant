@@ -30,7 +30,7 @@ class TestTableController {
     static void initializeBeforeAll(){
         tableRepository = new TableRepositoryImpl(Environment.TEST);
         userRepository = new UserRepositoryImpl(Environment.TEST);
-        tableController = new TableController();
+        tableController = new TableController(tableRepository, userRepository);
     }
 
     @BeforeEach

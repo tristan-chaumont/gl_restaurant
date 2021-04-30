@@ -26,7 +26,7 @@ class TestStockController {
 
     @BeforeAll
     static void initializeBeforeAll() {
-        stockController = new StockController();
+        stockController = new StockController(dishRepository, rawMaterialRepository);
         dishRepository = new DishRepositoryImpl(Environment.TEST);
         rawMaterialRepository = new RawMaterialRepositoryImpl(Environment.TEST);
     }

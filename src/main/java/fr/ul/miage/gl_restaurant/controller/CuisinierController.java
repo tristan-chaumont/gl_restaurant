@@ -9,10 +9,11 @@ import java.util.*;
 public class CuisinierController {
 
     private final TreeSet<Order> ordersQueue;
-    private final OrderRepositoryImpl orderRepository = new OrderRepositoryImpl(Environment.TEST);
+    private final OrderRepositoryImpl orderRepository;
 
-    public CuisinierController() {
+    public CuisinierController(OrderRepositoryImpl orderRepository) {
         this.ordersQueue = new TreeSet<>();
+        this.orderRepository = orderRepository;
     }
 
     /**
