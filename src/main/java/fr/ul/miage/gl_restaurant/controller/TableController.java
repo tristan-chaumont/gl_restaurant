@@ -20,7 +20,7 @@ public class TableController {
         userRepository = new UserRepositoryImpl(Environment.TEST);
     }
 
-    public void affectServer(Table table, User user){
+    public void assignServer(Table table, User user){
         Optional<User> userTemp = userRepository.findById(user.getUserId());
         if(userTemp.isPresent()) {
             if (user.getRole().equals(Roles.SERVEUR)) {
