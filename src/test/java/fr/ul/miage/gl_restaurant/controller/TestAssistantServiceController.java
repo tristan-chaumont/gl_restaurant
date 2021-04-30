@@ -14,7 +14,7 @@ import java.sql.SQLException;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class TestAssistantServiceController {
+class TestAssistantServiceController {
 
     static TableRepositoryImpl tableRepository;
     static UserRepositoryImpl userRepository;
@@ -26,7 +26,7 @@ public class TestAssistantServiceController {
     static void initializeBeforeAll(){
         tableRepository = new TableRepositoryImpl(Environment.TEST);
         userRepository = new UserRepositoryImpl(Environment.TEST);
-        assistantServiceController = new AssistantServiceController();
+        assistantServiceController = new AssistantServiceController(new TableController());
     }
 
     @BeforeEach
@@ -42,7 +42,7 @@ public class TestAssistantServiceController {
     @Test
     @DisplayName("La table change de status car la table est sale")
     void verifyServingTableChangeStatus() {
-        assistantServiceController.servingTable(table);
+        assistantServiceController.serveTable(table);
         Table result = tableRepository.findById(table.getTableId()).get();
         assertThat(result.getState(),equalTo(TableStates.LIBRE));
     }
@@ -50,7 +50,7 @@ public class TestAssistantServiceController {
     @Test
     @DisplayName("La table ne change pas de status car elle est occupée")
     void verifyServingTableDontChangeStatus() {
-        assistantServiceController.servingTable(table2);
+        assistantServiceController.serveTable(table2);
         Table result = tableRepository.findById(table2.getTableId()).get();
         assertThat(result.getState(),equalTo(TableStates.OCCUPEE));
     }
