@@ -46,7 +46,7 @@ public class TestTableController {
     void verifyAffectServerSucceed() {
         User userTest = new User("ttcUser2", "ttc", "User2", Roles.SERVEUR);
         userRepository.save(userTest);
-        tableController.affectServer(table,userTest);
+        tableController.assignServer(table,userTest);
         tableRepository.update(table);
         Table result = tableRepository.findById(table.getTableId()).get();
         assertThat(result.getUser(), equalTo(userTest));
@@ -59,7 +59,7 @@ public class TestTableController {
     void verifyAffectServerFailedBecauseItsNotAServer() {
         User userTest = new User("ttcUser2", "ttc", "User2", Roles.CUISINIER);
         userRepository.save(userTest);
-        tableController.affectServer(table,userTest);
+        tableController.assignServer(table,userTest);
         tableRepository.update(table);
         Table result = tableRepository.findById(table.getTableId()).get();
         assertThat(result.getUser(), equalTo(user));
@@ -70,7 +70,7 @@ public class TestTableController {
     @DisplayName("Le serveur n'est pas affecté car il n'existe pas")
     void verifyAffectServerFailedBecauseUserDoesNotExist() {
         User userTest = new User(999999L,"ttcUser2", "ttc", "User2", Roles.SERVEUR);
-        tableController.affectServer(table,userTest);
+        tableController.assignServer(table,userTest);
         tableRepository.update(table);
         Table result = tableRepository.findById(table.getTableId()).get();
         assertThat(result.getUser(), equalTo(user));
