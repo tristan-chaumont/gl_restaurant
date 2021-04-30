@@ -87,16 +87,4 @@ class TestTableController {
         tableRepository.delete(table.getTableId());
         userRepository.delete(user.getUserId());
     }
-
-    @AfterAll
-    static void tearDownAfterAll() {
-        try {
-            userRepository.connection.close();
-            userRepository = null;
-            tableRepository.connection.close();
-            tableRepository = null;
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
 }

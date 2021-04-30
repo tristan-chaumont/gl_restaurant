@@ -70,22 +70,4 @@ class TestCuisineController {
         tableRepository.delete(table.getTableId());
         billRepository.delete(bill.getBillId());
     }
-
-    @AfterAll
-    static void tearDownAfterAll() {
-        try {
-            orderRepository.connection.close();
-            orderRepository = null;
-            mealRepository.connection.close();
-            mealRepository = null;
-            userRepository.connection.close();
-            userRepository = null;
-            tableRepository.connection.close();
-            tableRepository = null;
-            billRepository.connection.close();
-            billRepository = null;
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
 }

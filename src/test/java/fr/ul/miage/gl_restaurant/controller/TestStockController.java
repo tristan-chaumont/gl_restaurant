@@ -82,16 +82,4 @@ class TestStockController {
         rawMaterialRepository.delete(rawMaterial1.getRawMaterialId());
         rawMaterialRepository.delete(rawMaterial2.getRawMaterialId());
     }
-
-    @AfterAll
-    static void tearDownAfterAll() {
-        try {
-            dishRepository.connection.close();
-            dishRepository = null;
-            rawMaterialRepository.connection.close();
-            rawMaterialRepository = null;
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
 }

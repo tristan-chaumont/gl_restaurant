@@ -60,16 +60,4 @@ class TestAssistantServiceController {
         tableRepository.delete(table2.getTableId());
         userRepository.delete(user.getUserId());
     }
-
-    @AfterAll
-    static void tearDownAfterAll() {
-        try {
-            userRepository.connection.close();
-            userRepository = null;
-            tableRepository.connection.close();
-            tableRepository = null;
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
 }
