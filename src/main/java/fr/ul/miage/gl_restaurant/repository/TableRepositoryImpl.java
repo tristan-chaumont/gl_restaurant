@@ -13,6 +13,8 @@ import java.util.Optional;
 @Slf4j
 public class TableRepositoryImpl extends Repository<Table, Long> {
 
+    private static TableRepositoryImpl instance;
+
     private static final String FIND_ALL_SQL = "SELECT tableId, floor, state, places, userId FROM Tables";
     private static final String FIND_BY_ID_SQL = "SELECT tableId, floor, state, places, userId FROM Tables WHERE tableId = ?";
     private static final String FIND_BY_USERID_SQL = "SELECT tableId, floor, state, places, userId FROM Tables WHERE userId = ?";
@@ -20,7 +22,7 @@ public class TableRepositoryImpl extends Repository<Table, Long> {
     private static final String UPDATE_SQL = "UPDATE Tables SET floor = ?, state = ?, places = ?, userId = ? WHERE tableId = ?";
     private static final String DELETE_SQL = "DELETE FROM Tables WHERE tableId = ?";
 
-    public TableRepositoryImpl(Environment environment) {
+    private TableRepositoryImpl(Environment environment) {
         super(environment);
     }
 
@@ -34,7 +36,7 @@ public class TableRepositoryImpl extends Repository<Table, Long> {
                 Integer floor = resultSet.getInt("floor");
                 TableStates state = TableStates.getState(resultSet.getString("state"));
                 Integer places = resultSet.getInt("places");
-                Optional<User> user = new UserRepositoryImpl(Environment.TEST).findById(resultSet.getLong("userId"));
+                Optional<User> user = UserRepositoryImpl.getInstance().findById(resultSet.getLong("userId"));
                 user.ifPresent(value -> tables.add(new Table(tableId, floor, state, places, value)));
             }
         } catch (SQLException e) {
@@ -55,7 +57,7 @@ public class TableRepositoryImpl extends Repository<Table, Long> {
                         Integer floor = resultSet.getInt("floor");
                         TableStates state = TableStates.getState(resultSet.getString("state"));
                         Integer places = resultSet.getInt("places");
-                        Optional<User> user = new UserRepositoryImpl(Environment.TEST).findById(resultSet.getLong("userId"));
+                        Optional<User> user = UserRepositoryImpl.getInstance().findById(resultSet.getLong("userId"));
                         if (user.isPresent()) {
                             table = Optional.of(new Table(tableId, floor, state, places, user.get()));
                         }
@@ -78,10 +80,8 @@ public class TableRepositoryImpl extends Repository<Table, Long> {
                     Integer floor = resultSet.getInt("floor");
                     TableStates state = TableStates.getState(resultSet.getString("state"));
                     Integer places = resultSet.getInt("places");
-                    Optional<User> user = new UserRepositoryImpl(Environment.TEST).findById(resultSet.getLong("userId"));
-                    if (user.isPresent()) {
-                        tables.add(new Table(tableId, floor, state, places, user.get()));
-                    }
+                    Optional<User> user = UserRepositoryImpl.getInstance().findById(resultSet.getLong("userId"));
+                    user.ifPresent(value -> tables.add(new Table(tableId, floor, state, places, value)));
                 }
             }
         } catch (SQLException e) {
@@ -140,5 +140,12 @@ public class TableRepositoryImpl extends Repository<Table, Long> {
                 e.printStackTrace();
             }
         }
+    }
+
+    public static TableRepositoryImpl getInstance() {
+        if (instance == null) {
+            instance = new TableRepositoryImpl(Environment.TEST);
+        }
+        return instance;
     }
 }

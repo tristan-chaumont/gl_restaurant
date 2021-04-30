@@ -14,6 +14,8 @@ import java.util.*;
 @Slf4j
 public class DishRepositoryImpl extends Repository<Dish, Long> {
 
+    private static DishRepositoryImpl instance;
+
     private static final String FIND_ALL_SQL = "SELECT dishId, dishName, category, menuType, price, dailymenu FROM Dishes";
     private static final String FIND_BY_ID_SQL = "SELECT dishId, dishName, category, menuType, price, dailymenu FROM Dishes WHERE dishId = ?";
     private static final String FIND_BY_NAME_SQL = "SELECT dishId, dishName, category, menuType, price, dailymenu FROM Dishes WHERE dishName = ?";
@@ -27,7 +29,7 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
     private static final String SAVE_RM_SQL = "INSERT INTO Dishes_RawMaterials(dishId, rmId, quantity) VALUES(?, ?, ?)";
     private static final String DELETE_RM_SQL = "DELETE FROM Dishes_RawMaterials WHERE dishId = ?";
 
-    public DishRepositoryImpl(Environment environment) {
+    private DishRepositoryImpl(Environment environment) {
         super(environment);
     }
 
@@ -187,7 +189,7 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
                 preparedStatement.setLong(1, id);
                 try (ResultSet resultSet = preparedStatement.executeQuery()) {
                     while (resultSet.next()) {
-                        Optional<RawMaterial> rawMaterial = new RawMaterialRepositoryImpl(Environment.TEST).findById(resultSet.getLong("rmId"));
+                        Optional<RawMaterial> rawMaterial = RawMaterialRepositoryImpl.getInstance().findById(resultSet.getLong("rmId"));
                         if (rawMaterial.isPresent()) {
                             rawMaterials.put(rawMaterial.get(), resultSet.getInt("quantity"));
                         }
@@ -231,5 +233,12 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
                 e.printStackTrace();
             }
         }
+    }
+
+    public static DishRepositoryImpl getInstance() {
+        if (instance == null) {
+            instance = new DishRepositoryImpl(Environment.TEST);
+        }
+        return instance;
     }
 }

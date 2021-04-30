@@ -16,13 +16,15 @@ import java.util.Optional;
 @Slf4j
 public class ReservationRepositoryImpl extends Repository<Reservation, Long> {
 
+    private static ReservationRepositoryImpl instance;
+
     private static final String FIND_ALL_SQL = "SELECT reservationId, lunch, tableId FROM Reservations";
     private static final String FIND_BY_ID_SQL = "SELECT reservationId, lunch, tableId FROM Reservations WHERE reservationId = ?";
     private static final String SAVE_SQL = "INSERT INTO Reservations(lunch, tableId) VALUES(?, ?)";
     private static final String UPDATE_SQL = "UPDATE Reservations SET lunch = ?, tableId = ? WHERE reservationId = ?";
     private static final String DELETE_SQL = "DELETE FROM Reservations WHERE reservationId = ?";
 
-    protected ReservationRepositoryImpl(Environment environment) {
+    private ReservationRepositoryImpl(Environment environment) {
         super(environment);
     }
 
@@ -34,7 +36,7 @@ public class ReservationRepositoryImpl extends Repository<Reservation, Long> {
             while (resultSet.next()) {
                 Long reservationId = resultSet.getLong("reservationId");
                 boolean lunch = resultSet.getBoolean("lunch");
-                Optional<Table> table = new TableRepositoryImpl(Environment.TEST).findById(resultSet.getLong("tableId"));
+                Optional<Table> table = TableRepositoryImpl.getInstance().findById(resultSet.getLong("tableId"));
                 table.ifPresent(value -> reservations.add(new Reservation(reservationId, lunch, value)));
             }
         } catch (SQLException e) {
@@ -53,7 +55,7 @@ public class ReservationRepositoryImpl extends Repository<Reservation, Long> {
                     if (resultSet.first()) {
                         Long reservationId = resultSet.getLong("reservationId");
                         boolean lunch = resultSet.getBoolean("lunch");
-                        Optional<Table> table = new TableRepositoryImpl(Environment.TEST).findById(resultSet.getLong("tableId"));
+                        Optional<Table> table = TableRepositoryImpl.getInstance().findById(resultSet.getLong("tableId"));
                         if (table.isPresent()) {
                             reservation = Optional.of(new Reservation(reservationId, lunch, table.get()));
                         }
@@ -112,5 +114,12 @@ public class ReservationRepositoryImpl extends Repository<Reservation, Long> {
                 e.printStackTrace();
             }
         }
+    }
+
+    public static ReservationRepositoryImpl getInstance() {
+        if (instance == null) {
+            instance = new ReservationRepositoryImpl(Environment.TEST);
+        }
+        return instance;
     }
 }

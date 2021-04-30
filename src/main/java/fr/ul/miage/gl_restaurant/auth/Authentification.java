@@ -22,7 +22,7 @@ public class Authentification {
     }
 
     public void signIn(String login) {
-        UserRepositoryImpl userRepository = new UserRepositoryImpl(Environment.TEST);
+        UserRepositoryImpl userRepository = UserRepositoryImpl.getInstance();
         Optional<User> loggedUser = userRepository.findByLogin(login);
         loggedUser.ifPresent(value -> this.user = value);
     }

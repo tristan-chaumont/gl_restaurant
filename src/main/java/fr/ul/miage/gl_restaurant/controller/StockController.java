@@ -1,6 +1,5 @@
 package fr.ul.miage.gl_restaurant.controller;
 
-import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.model.Dish;
 import fr.ul.miage.gl_restaurant.model.RawMaterial;
 import fr.ul.miage.gl_restaurant.repository.DishRepositoryImpl;
@@ -14,9 +13,9 @@ public class StockController {
     private final DishRepositoryImpl dishRepository;
     private final RawMaterialRepositoryImpl rawMaterialRepository;
 
-    public StockController(DishRepositoryImpl dishRepository, RawMaterialRepositoryImpl rawMaterialRepository) {
-        this.dishRepository = dishRepository;
-        this.rawMaterialRepository = rawMaterialRepository;
+    public StockController() {
+        this.dishRepository = DishRepositoryImpl.getInstance();
+        this.rawMaterialRepository = RawMaterialRepositoryImpl.getInstance();
     }
 
     /**

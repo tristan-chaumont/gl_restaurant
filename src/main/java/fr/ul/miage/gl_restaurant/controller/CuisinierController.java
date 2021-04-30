@@ -10,9 +10,9 @@ public class CuisinierController {
     private final TreeSet<Order> ordersQueue;
     private final OrderRepositoryImpl orderRepository;
 
-    public CuisinierController(OrderRepositoryImpl orderRepository) {
+    public CuisinierController() {
         this.ordersQueue = new TreeSet<>();
-        this.orderRepository = orderRepository;
+        this.orderRepository = OrderRepositoryImpl.getInstance();
     }
 
     /**

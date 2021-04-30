@@ -6,8 +6,8 @@ public class DirecteurController {
 
     private final DishRepositoryImpl dishRepository;
 
-    public DirecteurController(DishRepositoryImpl dishRepository) {
-        this.dishRepository = dishRepository;
+    public DirecteurController() {
+        this.dishRepository = DishRepositoryImpl.getInstance();
     }
 
     public void addDishToDailyMenu(Long dishId) {

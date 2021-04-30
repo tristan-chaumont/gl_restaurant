@@ -4,7 +4,6 @@ import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.model.Dish;
 import fr.ul.miage.gl_restaurant.model.Meal;
 import fr.ul.miage.gl_restaurant.model.Order;
-import fr.ul.miage.gl_restaurant.model.RawMaterial;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.*;
@@ -12,6 +11,8 @@ import java.util.*;
 
 @Slf4j
 public class OrderRepositoryImpl extends Repository<Order, Long> {
+
+    private static OrderRepositoryImpl instance;
 
     private static final String FIND_ALL_SQL = "SELECT orderId, orderDate, preparationDate, mealId FROM Orders";
     private static final String FIND_CURRENT_ORDERS = "SELECT orderId, orderDate, preparationDate, mealId FROM Orders WHERE preparationDate IS NULL";
@@ -24,7 +25,7 @@ public class OrderRepositoryImpl extends Repository<Order, Long> {
     private static final String SAVE_DISHES_SQL = "INSERT INTO Dishes_Orders(dishId, orderId, quantity) VALUES(?, ?, ?)";
     private static final String DELETE_DISHES_SQL = "DELETE FROM Dishes_Orders WHERE orderId = ?";
 
-    public OrderRepositoryImpl(Environment environment) {
+    private OrderRepositoryImpl(Environment environment) {
         super(environment);
     }
 
@@ -45,7 +46,7 @@ public class OrderRepositoryImpl extends Repository<Order, Long> {
                 Long orderId = resultSet.getLong("orderId");
                 Timestamp orderDate = resultSet.getTimestamp("orderDate");
                 Timestamp preparationDate = resultSet.getTimestamp("preparationDate");
-                Optional<Meal> meal = new MealRepositoryImpl(Environment.TEST).findById(resultSet.getLong("mealId"));
+                Optional<Meal> meal = MealRepositoryImpl.getInstance().findById(resultSet.getLong("mealId"));
                 Map<Dish, Integer> dishes = findDishesByOrderId(orderId);
                 meal.ifPresent(value -> orders.add(new Order(orderId, orderDate, preparationDate, value, dishes)));
             }
@@ -65,7 +66,7 @@ public class OrderRepositoryImpl extends Repository<Order, Long> {
                     Long orderId = resultSet.getLong("orderId");
                     Timestamp orderDate = resultSet.getTimestamp("orderDate");
                     Timestamp preparationDate = resultSet.getTimestamp("preparationDate");
-                    Optional<Meal> meal = new MealRepositoryImpl(Environment.TEST).findById(resultSet.getLong("mealId"));
+                    Optional<Meal> meal = MealRepositoryImpl.getInstance().findById(resultSet.getLong("mealId"));
                     Map<Dish, Integer> dishes = findDishesByOrderId(orderId);
                     if (meal.isPresent()) {
                         order = Optional.of(new Order(orderId, orderDate, preparationDate, meal.get(), dishes));
@@ -140,7 +141,7 @@ public class OrderRepositoryImpl extends Repository<Order, Long> {
                 preparedStatement.setLong(1, id);
                 try (ResultSet resultSet = preparedStatement.executeQuery()) {
                     while (resultSet.next()) {
-                        Optional<Dish> dish = new DishRepositoryImpl(Environment.TEST).findById(resultSet.getLong("dishId"));
+                        Optional<Dish> dish = DishRepositoryImpl.getInstance().findById(resultSet.getLong("dishId"));
                         if (dish.isPresent()) {
                             dishes.put(dish.get(), resultSet.getInt("quantity"));
                         }
@@ -184,5 +185,12 @@ public class OrderRepositoryImpl extends Repository<Order, Long> {
                 e.printStackTrace();
             }
         }
+    }
+
+    public static OrderRepositoryImpl getInstance() {
+        if (instance == null) {
+            instance = new OrderRepositoryImpl(Environment.TEST);
+        }
+        return instance;
     }
 }

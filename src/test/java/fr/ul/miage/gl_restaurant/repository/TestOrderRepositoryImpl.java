@@ -1,6 +1,5 @@
 package fr.ul.miage.gl_restaurant.repository;
 
-import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.constants.MenuTypes;
 import fr.ul.miage.gl_restaurant.constants.TableStates;
 import fr.ul.miage.gl_restaurant.constants.Units;
@@ -8,7 +7,6 @@ import fr.ul.miage.gl_restaurant.model.*;
 import fr.ul.miage.gl_restaurant.model.Order;
 import org.junit.jupiter.api.*;
 
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
@@ -38,13 +36,13 @@ class TestOrderRepositoryImpl {
 
     @BeforeAll
     static void initializeBeforeAll() {
-        tableRepository = new TableRepositoryImpl(Environment.TEST);
-        userRepository = new UserRepositoryImpl(Environment.TEST);
-        billRepository = new BillRepositoryImpl(Environment.TEST);
-        mealRepository = new MealRepositoryImpl(Environment.TEST);
-        orderRepository = new OrderRepositoryImpl(Environment.TEST);
-        dishRepository = new DishRepositoryImpl(Environment.TEST);
-        rawMaterialRepository = new RawMaterialRepositoryImpl(Environment.TEST);
+        tableRepository = TableRepositoryImpl.getInstance();
+        userRepository = UserRepositoryImpl.getInstance();
+        billRepository = BillRepositoryImpl.getInstance();
+        mealRepository = MealRepositoryImpl.getInstance();
+        orderRepository = OrderRepositoryImpl.getInstance();
+        dishRepository = DishRepositoryImpl.getInstance();
+        rawMaterialRepository = RawMaterialRepositoryImpl.getInstance();
     }
 
     @BeforeEach
@@ -229,27 +227,5 @@ class TestOrderRepositoryImpl {
         billRepository.delete(bill2.getBillId());
         dishRepository.delete(dish.getDishId());
         rawMaterialRepository.delete(rawMaterial.getRawMaterialId());
-    }
-
-    @AfterAll
-    static void tearDownAfterAll() {
-        try {
-            orderRepository.connection.close();
-            orderRepository = null;
-            mealRepository.connection.close();
-            mealRepository = null;
-            userRepository.connection.close();
-            userRepository = null;
-            tableRepository.connection.close();
-            tableRepository = null;
-            billRepository.connection.close();
-            billRepository = null;
-            rawMaterialRepository.connection.close();
-            rawMaterialRepository = null;
-            dishRepository.connection.close();
-            dishRepository = null;
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
     }
 }

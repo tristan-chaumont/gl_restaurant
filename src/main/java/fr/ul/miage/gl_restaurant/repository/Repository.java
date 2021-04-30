@@ -11,7 +11,7 @@ public abstract class Repository<T, K> {
 
     public Connection connection;
 
-    public Repository(Environment environment) {
+    protected Repository(Environment environment) {
         connection = DbAccess.getInstance(environment);
     }
 

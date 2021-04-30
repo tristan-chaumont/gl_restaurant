@@ -15,6 +15,8 @@ import java.util.Optional;
 @Slf4j
 public class RawMaterialRepositoryImpl extends Repository<RawMaterial, Long> {
 
+    private static RawMaterialRepositoryImpl instance;
+
     private static final String FIND_ALL_SQL = "SELECT rmId, rmName, stockQuantity, unit FROM RawMaterials";
     private static final String FIND_BY_ID_SQL = "SELECT rmId, rmName, stockQuantity, unit FROM RawMaterials WHERE rmId = ?";
     private static final String FIND_BY_NAME = "SELECT rmId, rmName, stockQuantity, unit FROM RawMaterials WHERE rmName = ?";
@@ -22,7 +24,7 @@ public class RawMaterialRepositoryImpl extends Repository<RawMaterial, Long> {
     private static final String UPDATE_SQL = "UPDATE RawMaterials SET rmName = ?, stockQuantity = ?, unit = ? WHERE rmId = ?";
     private static final String DELETE_SQL = "DELETE FROM RawMaterials WHERE rmId = ?";
 
-    public RawMaterialRepositoryImpl(Environment environment) {
+    private RawMaterialRepositoryImpl(Environment environment) {
         super(environment);
     }
 
@@ -133,5 +135,12 @@ public class RawMaterialRepositoryImpl extends Repository<RawMaterial, Long> {
                 e.printStackTrace();
             }
         }
+    }
+
+    public static RawMaterialRepositoryImpl getInstance() {
+        if (instance == null) {
+            instance = new RawMaterialRepositoryImpl(Environment.TEST);
+        }
+        return instance;
     }
 }

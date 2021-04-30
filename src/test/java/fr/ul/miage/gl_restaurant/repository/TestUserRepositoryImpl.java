@@ -1,11 +1,9 @@
 package fr.ul.miage.gl_restaurant.repository;
 
-import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.constants.Roles;
 import fr.ul.miage.gl_restaurant.model.User;
 import org.junit.jupiter.api.*;
 
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,7 +19,7 @@ class TestUserRepositoryImpl {
 
     @BeforeAll
     static void initializeBeforeAll() {
-        userRepository = new UserRepositoryImpl(Environment.TEST);
+        userRepository = UserRepositoryImpl.getInstance();
     }
 
     @BeforeEach
@@ -144,15 +142,5 @@ class TestUserRepositoryImpl {
     void tearDownAfterEach() {
         userRepository.delete(user1.getUserId());
         userRepository.delete(user2.getUserId());
-    }
-
-    @AfterAll
-    static void tearDownAfterAll() {
-        try {
-            userRepository.connection.close();
-            userRepository = null;
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
     }
 }

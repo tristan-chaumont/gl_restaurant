@@ -1,15 +1,11 @@
 package fr.ul.miage.gl_restaurant.repository;
 
-import fr.ul.miage.gl_restaurant.constants.Environment;
-import fr.ul.miage.gl_restaurant.constants.MenuTypes;
 import fr.ul.miage.gl_restaurant.constants.Roles;
 import fr.ul.miage.gl_restaurant.constants.TableStates;
 import fr.ul.miage.gl_restaurant.model.*;
 import org.junit.jupiter.api.*;
 
-import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,8 +13,6 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class TestMealRepositoryImpl {
 
@@ -33,16 +27,16 @@ class TestMealRepositoryImpl {
 
     @BeforeAll
     static void initializeBeforeAll() {
-        tableRepository = new TableRepositoryImpl(Environment.TEST);
-        userRepository = new UserRepositoryImpl(Environment.TEST);
-        billRepository = new BillRepositoryImpl(Environment.TEST);
-        mealRepository = new MealRepositoryImpl(Environment.TEST);
+        tableRepository = TableRepositoryImpl.getInstance();
+        userRepository = UserRepositoryImpl.getInstance();
+        billRepository = BillRepositoryImpl.getInstance();
+        mealRepository = MealRepositoryImpl.getInstance();
     }
 
     @BeforeEach
     void initializeBeforeEach() {
         user = userRepository.save(new User("userMeal1", "user", "meal", Roles.SERVEUR));
-        table = tableRepository.save(new Table(Integer.valueOf(1), TableStates.LIBRE, Integer.valueOf(4), user));
+        table = tableRepository.save(new Table(1, TableStates.LIBRE, 4, user));
         bill1 = billRepository.save(new Bill(1L));
         bill2 = billRepository.save(new Bill(2L));
         meal1 = mealRepository.save(new Meal(4, Timestamp.valueOf("2021-04-27 12:00:00"), 30L, table ,bill1));
@@ -68,7 +62,7 @@ class TestMealRepositoryImpl {
     @Test
     @DisplayName("L'insertion fonctionne")
     void verifySaveInsertElement() {
-        Table tableInsert = tableRepository.save(new Table(Integer.valueOf(1),TableStates.LIBRE, Integer.valueOf(4), user));
+        Table tableInsert = tableRepository.save(new Table(1,TableStates.LIBRE, 4, user));
         Bill bill = billRepository.save(new Bill(3L));
         Meal meal = mealRepository.save(new Meal(4, Timestamp.valueOf("2021-04-26 12:00:00"), 30L, tableInsert ,bill));
         assertNotNull(meal.getMealId());
@@ -95,7 +89,7 @@ class TestMealRepositoryImpl {
     @Test
     @DisplayName("La modification ne s'effectue pas car le repas n'existe pas")
     void verifyUpdateFailBecauseUserDoesNotExist() {
-        Table tableInsert = new Table(3L, Integer.valueOf(1),TableStates.LIBRE, Integer.valueOf(4), user);
+        Table tableInsert = new Table(3L, 1,TableStates.LIBRE, 4, user);
         Bill bill = new Bill(3L);
         Meal meal = new Meal(3L,4, Timestamp.valueOf("2021-04-25 12:00:00"), 30L, tableInsert ,bill);
         mealRepository.update(meal);
@@ -106,7 +100,7 @@ class TestMealRepositoryImpl {
     @Test
     @DisplayName("La suppression du repas fonctionne")
     void verifyDeleteSucceed() {
-        Table tableInsert = tableRepository.save(new Table(Integer.valueOf(1),TableStates.LIBRE, Integer.valueOf(4), user));
+        Table tableInsert = tableRepository.save(new Table(1,TableStates.LIBRE, 4, user));
         Bill bill = billRepository.save(new Bill(3L));
         Meal meal = mealRepository.save(new Meal(4, Timestamp.valueOf("2021-04-26 12:00:00"), 30L, tableInsert ,bill));
         int totalUsers = mealRepository.findAll().size();
@@ -120,7 +114,7 @@ class TestMealRepositoryImpl {
     @Test
     @DisplayName("La suppression de ne fonctionne pas car le repas n'existe pas")
     void verifyDeleteFailBecauseUserDoesNotExist() {
-        Table tableInsert = new Table(3L, Integer.valueOf(1),TableStates.LIBRE, Integer.valueOf(4), user);
+        Table tableInsert = new Table(3L, 1,TableStates.LIBRE, 4, user);
         Bill bill = new Bill(3L);
         Meal meal = new Meal(3L,4, Timestamp.valueOf("2021-04-25 12:00:00"), 30L, tableInsert ,bill);
         int totalUsers = mealRepository.findAll().size();
@@ -137,21 +131,5 @@ class TestMealRepositoryImpl {
         userRepository.delete(user.getUserId());
         billRepository.delete(bill1.getBillId());
         billRepository.delete(bill2.getBillId());
-    }
-
-    @AfterAll
-    static void tearDownAfterAll() {
-        try {
-            mealRepository.connection.close();
-            mealRepository = null;
-            userRepository.connection.close();
-            userRepository = null;
-            tableRepository.connection.close();
-            tableRepository = null;
-            billRepository.connection.close();
-            billRepository = null;
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
     }
 }

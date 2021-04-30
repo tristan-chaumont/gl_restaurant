@@ -1,14 +1,11 @@
 package fr.ul.miage.gl_restaurant.repository;
 
-import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.constants.MenuTypes;
 import fr.ul.miage.gl_restaurant.constants.Units;
 import fr.ul.miage.gl_restaurant.model.Dish;
 import fr.ul.miage.gl_restaurant.model.RawMaterial;
 import org.junit.jupiter.api.*;
 
-import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -28,8 +25,8 @@ class TestDishRepositoryImpl {
 
     @BeforeAll
     static void initializeBeforeAll() {
-        dishRepository = new DishRepositoryImpl(Environment.TEST);
-        rawMaterialRepository = new RawMaterialRepositoryImpl(Environment.TEST);
+        dishRepository = DishRepositoryImpl.getInstance();
+        rawMaterialRepository = RawMaterialRepositoryImpl.getInstance();
     }
 
     @BeforeEach
@@ -238,17 +235,5 @@ class TestDishRepositoryImpl {
         dishRepository.delete(dish1.getDishId());
         dishRepository.delete(dish2.getDishId());
         rawMaterialRepository.delete(rawMaterial1.getRawMaterialId());
-    }
-
-    @AfterAll
-    static void tearDownAfterAll() {
-        try {
-            rawMaterialRepository.connection.close();
-            rawMaterialRepository = null;
-            dishRepository.connection.close();
-            dishRepository = null;
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
     }
 }

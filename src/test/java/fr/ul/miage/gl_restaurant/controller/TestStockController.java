@@ -1,6 +1,5 @@
 package fr.ul.miage.gl_restaurant.controller;
 
-import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.constants.MenuTypes;
 import fr.ul.miage.gl_restaurant.constants.Units;
 import fr.ul.miage.gl_restaurant.model.Dish;
@@ -26,9 +25,9 @@ class TestStockController {
 
     @BeforeAll
     static void initializeBeforeAll() {
-        stockController = new StockController(dishRepository, rawMaterialRepository);
-        dishRepository = new DishRepositoryImpl(Environment.TEST);
-        rawMaterialRepository = new RawMaterialRepositoryImpl(Environment.TEST);
+        stockController = new StockController();
+        dishRepository = DishRepositoryImpl.getInstance();
+        rawMaterialRepository = RawMaterialRepositoryImpl.getInstance();
     }
 
     @BeforeEach

@@ -1,5 +1,6 @@
 package fr.ul.miage.gl_restaurant.auth;
 
+import fr.ul.miage.gl_restaurant.constants.Roles;
 import fr.ul.miage.gl_restaurant.model.User;
 import org.junit.jupiter.api.*;
 
@@ -25,7 +26,7 @@ class TestAuthentification {
         assertNotNull(user);
         assertThat(user.getFirstName(), equalTo("Tristan"));
         assertThat(user.getLastName(), equalTo("Chaumont"));
-        assertThat(user.getRole(), equalTo("Serveur"));
+        assertThat(user.getRole(), is(Roles.SERVEUR));
     }
 
     @Test

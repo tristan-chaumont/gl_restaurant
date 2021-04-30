@@ -1,6 +1,5 @@
 package fr.ul.miage.gl_restaurant.repository;
 
-import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.constants.Roles;
 import fr.ul.miage.gl_restaurant.constants.TableStates;
 import fr.ul.miage.gl_restaurant.model.Reservation;
@@ -8,7 +7,6 @@ import fr.ul.miage.gl_restaurant.model.Table;
 import fr.ul.miage.gl_restaurant.model.User;
 import org.junit.jupiter.api.*;
 
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,9 +27,9 @@ class TestReservationRepositoryImpl {
 
     @BeforeAll
     static void initializeBeforeAll() {
-        userRepository = new UserRepositoryImpl(Environment.TEST);
-        reservationRepository = new ReservationRepositoryImpl(Environment.TEST);
-        tableRepository = new TableRepositoryImpl(Environment.TEST);
+        userRepository = UserRepositoryImpl.getInstance();
+        reservationRepository = ReservationRepositoryImpl.getInstance();
+        tableRepository = TableRepositoryImpl.getInstance();
     }
 
     @BeforeEach
@@ -124,19 +122,5 @@ class TestReservationRepositoryImpl {
         reservationRepository.delete(reservation1.getReservationId());
         tableRepository.delete(table1.getTableId());
         userRepository.delete(user1.getUserId());
-    }
-
-    @AfterAll
-    static void tearDownAfterAll() {
-        try {
-            reservationRepository.connection.close();
-            reservationRepository = null;
-            tableRepository.connection.close();
-            tableRepository = null;
-            userRepository.connection.close();
-            userRepository = null;
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
     }
 }

@@ -1,11 +1,9 @@
 package fr.ul.miage.gl_restaurant.repository;
 
-import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.constants.Units;
 import fr.ul.miage.gl_restaurant.model.RawMaterial;
 import org.junit.jupiter.api.*;
 
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,7 +21,7 @@ class TestRawMaterialRepositoryImpl {
 
     @BeforeAll
     static void initializeBeforeAll() {
-        rawMaterialRepository = new RawMaterialRepositoryImpl(Environment.TEST);
+        rawMaterialRepository = RawMaterialRepositoryImpl.getInstance();
     }
 
     @BeforeEach
@@ -143,15 +141,5 @@ class TestRawMaterialRepositoryImpl {
     @AfterEach
     void tearDownAfterEach() {
         rawMaterialRepository.delete(rawMaterial1.getRawMaterialId());
-    }
-
-    @AfterAll
-    static void tearDownAfterAll() {
-        try {
-            rawMaterialRepository.connection.close();
-            rawMaterialRepository = null;
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
     }
 }

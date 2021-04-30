@@ -2,9 +2,6 @@ package fr.ul.miage.gl_restaurant.repository;
 
 import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.model.Bill;
-import fr.ul.miage.gl_restaurant.model.Meal;
-import fr.ul.miage.gl_restaurant.model.Table;
-import fr.ul.miage.gl_restaurant.model.User;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.*;
@@ -15,13 +12,15 @@ import java.util.Optional;
 @Slf4j
 public class BillRepositoryImpl extends Repository<Bill, Long> {
 
+    private static BillRepositoryImpl instance;
+
     private static final String FIND_ALL_SQL = "SELECT billId FROM Bills";
     private static final String FIND_BY_ID_SQL = "SELECT billId FROM Bills WHERE billId = ?";
     private static final String SAVE_SQL = "INSERT INTO Bills(billId) VALUES(?)";
     private static final String UPDATE_SQL = "UPDATE Bills SET billId = ? WHERE billId = ?";
     private static final String DELETE_SQL = "DELETE FROM Bills WHERE billId = ?";
 
-    public BillRepositoryImpl(Environment environment) {
+    private BillRepositoryImpl(Environment environment) {
         super(environment);
     }
 
@@ -81,5 +80,12 @@ public class BillRepositoryImpl extends Repository<Bill, Long> {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    public static BillRepositoryImpl getInstance() {
+        if (instance == null) {
+            instance = new BillRepositoryImpl(Environment.TEST);
+        }
+        return instance;
     }
 }

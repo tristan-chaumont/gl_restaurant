@@ -13,6 +13,8 @@ import java.util.Optional;
 
 @Slf4j
 public class MealRepositoryImpl extends Repository<Meal, Long> {
+    
+    private static MealRepositoryImpl instance;
 
     private static final String FIND_ALL_SQL = "SELECT mealId, customersNb, startDate, mealDuration, tableId, billId FROM Meals";
     private static final String FIND_BY_ID_SQL = "SELECT mealId, customersNb, startDate, mealDuration, tableId, billId FROM Meals WHERE mealId = ?";
@@ -20,7 +22,7 @@ public class MealRepositoryImpl extends Repository<Meal, Long> {
     private static final String UPDATE_SQL = "UPDATE Meals SET customersNb = ?, startDate = ?, mealDuration = ?, tableId = ?, billId = ? WHERE mealId = ?";
     private static final String DELETE_SQL = "DELETE FROM Meals WHERE mealId = ?";
 
-    public MealRepositoryImpl(Environment environment) {
+    private MealRepositoryImpl(Environment environment) {
         super(environment);
     }
 
@@ -34,9 +36,9 @@ public class MealRepositoryImpl extends Repository<Meal, Long> {
                 Integer customersNb = resultSet.getInt("customersNb");
                 Timestamp startDate = resultSet.getTimestamp("startDate");
                 Long mealDuration = resultSet.getLong("mealDuration");
-                Optional<Table> table = new TableRepositoryImpl(Environment.TEST).findById(resultSet.getLong("tableId"));
+                Optional<Table> table = TableRepositoryImpl.getInstance().findById(resultSet.getLong("tableId"));
                 if(table.isPresent()){
-                    Optional<Bill> bill = new BillRepositoryImpl(Environment.TEST).findById(resultSet.getLong("billId"));
+                    Optional<Bill> bill = BillRepositoryImpl.getInstance().findById(resultSet.getLong("billId"));
                     bill.ifPresent(value -> meals.add(new Meal(mealId, customersNb, startDate, mealDuration, table.get(), value)));
                 }
             }
@@ -57,9 +59,9 @@ public class MealRepositoryImpl extends Repository<Meal, Long> {
                     Integer customersnb = resultSet.getInt("customersnb");
                     Timestamp startDate = resultSet.getTimestamp("startDate");
                     Long mealDuration = resultSet.getLong("mealDuration");
-                    Optional<Table> table = new TableRepositoryImpl(Environment.TEST).findById(resultSet.getLong("tableId"));
+                    Optional<Table> table = TableRepositoryImpl.getInstance().findById(resultSet.getLong("tableId"));
                     if (table.isPresent()) {
-                        Optional<Bill> bill = new BillRepositoryImpl(Environment.TEST).findById(resultSet.getLong("billId"));
+                        Optional<Bill> bill = BillRepositoryImpl.getInstance().findById(resultSet.getLong("billId"));
                         if (bill.isPresent()) {
                             meal = Optional.of(new Meal(mealId, customersnb, startDate, mealDuration, table.get(), bill.get()));
                         }
@@ -122,5 +124,12 @@ public class MealRepositoryImpl extends Repository<Meal, Long> {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    public static MealRepositoryImpl getInstance() {
+        if (instance == null) {
+            instance = new MealRepositoryImpl(Environment.TEST);
+        }
+        return instance;
     }
 }

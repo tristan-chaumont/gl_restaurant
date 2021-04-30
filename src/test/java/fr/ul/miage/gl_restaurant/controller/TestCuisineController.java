@@ -1,6 +1,5 @@
 package fr.ul.miage.gl_restaurant.controller;
 
-import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.constants.TableStates;
 import fr.ul.miage.gl_restaurant.model.*;
 import fr.ul.miage.gl_restaurant.model.Order;
@@ -30,11 +29,11 @@ class TestCuisineController {
 
     @BeforeAll
     static void initializeBeforeAll() {
-        tableRepository = new TableRepositoryImpl(Environment.TEST);
-        userRepository = new UserRepositoryImpl(Environment.TEST);
-        billRepository = new BillRepositoryImpl(Environment.TEST);
-        mealRepository = new MealRepositoryImpl(Environment.TEST);
-        orderRepository = new OrderRepositoryImpl(Environment.TEST);
+        tableRepository = TableRepositoryImpl.getInstance();
+        userRepository = UserRepositoryImpl.getInstance();
+        billRepository = BillRepositoryImpl.getInstance();
+        mealRepository = MealRepositoryImpl.getInstance();
+        orderRepository = OrderRepositoryImpl.getInstance();
     }
 
     @BeforeEach
@@ -53,7 +52,7 @@ class TestCuisineController {
     @Test
     @DisplayName("La file d'attente des commandes est triée et ne comporte que les commandes non préparées")
     void verifyGetOrdersQueueReturnsOrderedQueue() {
-        CuisinierController cuisinierController = new CuisinierController(orderRepository);
+        CuisinierController cuisinierController = new CuisinierController();
         SortedSet<Order> ordersQueue = cuisinierController.getOrdersQueue();
         assertThat(ordersQueue.size(), is(3));
         assertThat(ordersQueue.first().getOrderDate(), equalTo(order5.getOrderDate()));

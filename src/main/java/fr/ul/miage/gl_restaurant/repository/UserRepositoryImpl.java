@@ -3,7 +3,6 @@ package fr.ul.miage.gl_restaurant.repository;
 import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.model.User;
 import lombok.extern.slf4j.Slf4j;
-import org.postgresql.util.PSQLException;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -16,6 +15,8 @@ import java.util.Optional;
 @Slf4j
 public class UserRepositoryImpl extends Repository<User, Long> {
 
+    private static UserRepositoryImpl instance;
+
     private static final String FIND_ALL_SQL = "SELECT userId, login, lastName, firstName, role FROM Users";
     private static final String FIND_BY_ID_SQL = "SELECT userId, login, lastName, firstName, role FROM Users WHERE userId = ?";
     private static final String FIND_BY_LOGIN = "SELECT userId, login, lastName, firstName, role FROM Users WHERE login = ?";
@@ -23,7 +24,7 @@ public class UserRepositoryImpl extends Repository<User, Long> {
     private static final String UPDATE_SQL = "UPDATE Users SET login = ?, lastName = ?, firstName = ?, role = ? WHERE userId = ?";
     private static final String DELETE_SQL = "DELETE FROM Users WHERE userId = ?";
 
-    public UserRepositoryImpl(Environment environment) {
+    private UserRepositoryImpl(Environment environment) {
         super(environment);
     }
 
@@ -142,5 +143,12 @@ public class UserRepositoryImpl extends Repository<User, Long> {
                 e.printStackTrace();
             }
         }
+    }
+
+    public static UserRepositoryImpl getInstance() {
+        if (instance == null) {
+            instance = new UserRepositoryImpl(Environment.TEST);
+        }
+        return instance;
     }
 }

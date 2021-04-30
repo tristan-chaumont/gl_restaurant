@@ -1,13 +1,10 @@
 package fr.ul.miage.gl_restaurant.model;
 
-import fr.ul.miage.gl_restaurant.constants.MenuTypes;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 
 @Getter

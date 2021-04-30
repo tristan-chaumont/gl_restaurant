@@ -1,6 +1,5 @@
 package fr.ul.miage.gl_restaurant.controller;
 
-import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.constants.Roles;
 import fr.ul.miage.gl_restaurant.constants.TableStates;
 import fr.ul.miage.gl_restaurant.model.Table;
@@ -24,8 +23,8 @@ class TestAssistantServiceController {
 
     @BeforeAll
     static void initializeBeforeAll(){
-        tableRepository = new TableRepositoryImpl(Environment.TEST);
-        userRepository = new UserRepositoryImpl(Environment.TEST);
+        tableRepository = TableRepositoryImpl.getInstance();
+        userRepository = UserRepositoryImpl.getInstance();
         assistantServiceController = new AssistantServiceController(new TableController());
     }
 

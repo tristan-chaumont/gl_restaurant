@@ -1,10 +1,7 @@
 package fr.ul.miage.gl_restaurant.controller;
 
-import fr.ul.miage.gl_restaurant.constants.Environment;
-import fr.ul.miage.gl_restaurant.constants.MenuTypes;
 import fr.ul.miage.gl_restaurant.constants.Roles;
 import fr.ul.miage.gl_restaurant.constants.TableStates;
-import fr.ul.miage.gl_restaurant.model.Dish;
 import fr.ul.miage.gl_restaurant.model.Table;
 import fr.ul.miage.gl_restaurant.model.User;
 import fr.ul.miage.gl_restaurant.repository.TableRepositoryImpl;
@@ -12,9 +9,7 @@ import fr.ul.miage.gl_restaurant.repository.UserRepositoryImpl;
 import org.junit.jupiter.api.*;
 
 import java.sql.SQLException;
-import java.util.List;
 
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.CoreMatchers.equalTo;
 
@@ -28,9 +23,9 @@ class TestTableController {
 
     @BeforeAll
     static void initializeBeforeAll(){
-        tableRepository = new TableRepositoryImpl(Environment.TEST);
-        userRepository = new UserRepositoryImpl(Environment.TEST);
-        tableController = new TableController(tableRepository, userRepository);
+        tableRepository = TableRepositoryImpl.getInstance();
+        userRepository = UserRepositoryImpl.getInstance();
+        tableController = new TableController();
     }
 
     @BeforeEach

@@ -15,10 +15,10 @@ public class ServeurController {
     private final OrderRepositoryImpl orderRepository;
     private final TableRepositoryImpl tableRepository;
 
-    public ServeurController(CuisinierController cuisinierController, OrderRepositoryImpl orderRepository, TableRepositoryImpl tableRepository) {
+    public ServeurController(CuisinierController cuisinierController) {
         this.cuisinierController = cuisinierController;
-        this.orderRepository = orderRepository;
-        this.tableRepository = tableRepository;
+        this.orderRepository = OrderRepositoryImpl.getInstance();
+        this.tableRepository = TableRepositoryImpl.getInstance();
     }
 
     public void takeOrder(Order order) {
