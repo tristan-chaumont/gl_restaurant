@@ -11,4 +11,11 @@ class TestServeurController {
         // Rien pour le moment puisqu'on ne testerait qu'un appel à une autre méthode déjà testée.
         // À voir si la méthode évolue par la suite.
     }
+
+    @Test
+    @DisplayName("La liste des tables correspond à celle du serveur")
+    void verifyGetTablesList() {
+        // Rien pour le moment puisqu'on ne testerait qu'un appel à une autre méthode déjà testée.
+        // À voir si la méthode évolue par la suite.
+    }
 }
