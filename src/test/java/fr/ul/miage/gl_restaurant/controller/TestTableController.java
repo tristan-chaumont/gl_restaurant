@@ -30,6 +30,7 @@ public class TestTableController {
     static void initializeBeforeAll(){
         tableRepository = new TableRepositoryImpl(Environment.TEST);
         userRepository = new UserRepositoryImpl(Environment.TEST);
+        tableController = new TableController();
     }
 
     @BeforeEach
@@ -38,7 +39,6 @@ public class TestTableController {
         userRepository.save(user);
         table = new Table(1, TableStates.LIBRE, 4, user);
         tableRepository.save(table);
-        tableController = new TableController();
     }
 
     @Test
@@ -75,6 +75,14 @@ public class TestTableController {
         Table result = tableRepository.findById(table.getTableId()).get();
         assertThat(result.getUser(), equalTo(user));
         userRepository.delete(userTest.getUserId());
+    }
+
+    @Test
+    @DisplayName("La table change de status")
+    void verifyChangeStatus() {
+        tableController.changeState(table, TableStates.OCCUPEE);
+        Table result = tableRepository.findById(table.getTableId()).get();
+        assertThat(result.getState(),equalTo(TableStates.OCCUPEE));
     }
 
 

@@ -31,6 +31,7 @@ public class TableController {
     }
 
     public void changeState(Table table, TableStates tableStates){
-
+        table.setState(tableStates);
+        tableRepository.update(table);
     }
 }
