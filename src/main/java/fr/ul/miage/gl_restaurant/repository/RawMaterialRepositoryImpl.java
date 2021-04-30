@@ -22,7 +22,7 @@ public class RawMaterialRepositoryImpl extends Repository<RawMaterial, Long> {
     private static final String UPDATE_SQL = "UPDATE RawMaterials SET rmName = ?, stockQuantity = ?, unit = ? WHERE rmId = ?";
     private static final String DELETE_SQL = "DELETE FROM RawMaterials WHERE rmId = ?";
 
-    protected RawMaterialRepositoryImpl(Environment environment) {
+    public RawMaterialRepositoryImpl(Environment environment) {
         super(environment);
     }
 

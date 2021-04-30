@@ -56,7 +56,7 @@ class TestOrderRepositoryImpl {
         meal1 = mealRepository.save(new Meal(4, Timestamp.valueOf("2021-04-27 12:00:00"), 30L, table ,bill1));
         meal2 = mealRepository.save(new Meal( 4, Timestamp.valueOf("2021-04-27 19:30:00"), 45L, table ,bill2));
         rawMaterial = rawMaterialRepository.save(new RawMaterial("Riz", 100, Units.KG));
-        dish = new Dish("Saumon", "Poisson", MenuTypes.ADULTES, 8.5);
+        dish = new Dish("Saumon", "Poisson", MenuTypes.ADULTES, 8.5, false);
         dish.addRawMaterial(rawMaterial, 1);
         dish = dishRepository.save(dish);
         order1 = new Order(Timestamp.valueOf("2021-04-27 12:05:00"), Timestamp.valueOf("2021-04-27 12:10:00"), meal1);
@@ -197,7 +197,7 @@ class TestOrderRepositoryImpl {
         Order newOrder = new Order(Timestamp.valueOf("2021-04-27 12:05:00"), Timestamp.valueOf("2021-04-27 12:10:00"), meal1);
         newOrder.addDish(dish, 50);
         newOrder = orderRepository.save(newOrder);
-        Dish newDish = new Dish("Pastis", "Vinasse", MenuTypes.ADULTES, 8.5);
+        Dish newDish = new Dish("Pastis", "Vinasse", MenuTypes.ADULTES, 8.5, false);
         newDish.addRawMaterial(rawMaterial, 1);
         newDish = dishRepository.save(newDish);
         newOrder.clearDishes();
