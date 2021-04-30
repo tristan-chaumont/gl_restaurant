@@ -1,7 +1,9 @@
 package fr.ul.miage.gl_restaurant.repository;
 
 import fr.ul.miage.gl_restaurant.constants.Environment;
+import fr.ul.miage.gl_restaurant.constants.MenuTypes;
 import fr.ul.miage.gl_restaurant.constants.TableStates;
+import fr.ul.miage.gl_restaurant.constants.Units;
 import fr.ul.miage.gl_restaurant.model.*;
 import fr.ul.miage.gl_restaurant.model.Order;
 import org.junit.jupiter.api.*;
@@ -9,6 +11,7 @@ import org.junit.jupiter.api.*;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -23,11 +26,15 @@ class TestOrderRepositoryImpl {
     static TableRepositoryImpl tableRepository;
     static BillRepositoryImpl billRepository;
     static UserRepositoryImpl userRepository;
+    static DishRepositoryImpl dishRepository;
+    static RawMaterialRepositoryImpl rawMaterialRepository;
     static User user;
     static Meal meal1, meal2;
     static Table table;
     static Bill bill1, bill2;
     static Order order1, order2;
+    static Dish dish;
+    static RawMaterial rawMaterial;
 
     @BeforeAll
     static void initializeBeforeAll() {
@@ -36,6 +43,8 @@ class TestOrderRepositoryImpl {
         billRepository = new BillRepositoryImpl(Environment.TEST);
         mealRepository = new MealRepositoryImpl(Environment.TEST);
         orderRepository = new OrderRepositoryImpl(Environment.TEST);
+        dishRepository = new DishRepositoryImpl(Environment.TEST);
+        rawMaterialRepository = new RawMaterialRepositoryImpl(Environment.TEST);
     }
 
     @BeforeEach
@@ -46,7 +55,13 @@ class TestOrderRepositoryImpl {
         bill2 = billRepository.save(new Bill(2L));
         meal1 = mealRepository.save(new Meal(4, Timestamp.valueOf("2021-04-27 12:00:00"), 30L, table ,bill1));
         meal2 = mealRepository.save(new Meal( 4, Timestamp.valueOf("2021-04-27 19:30:00"), 45L, table ,bill2));
-        order1 = orderRepository.save(new Order(Timestamp.valueOf("2021-04-27 12:05:00"), Timestamp.valueOf("2021-04-27 12:10:00"), meal1));
+        rawMaterial = rawMaterialRepository.save(new RawMaterial("Riz", 100, Units.KG));
+        dish = new Dish("Saumon", "Poisson", MenuTypes.ADULTES, 8.5);
+        dish.addRawMaterial(rawMaterial, 1);
+        dish = dishRepository.save(dish);
+        order1 = new Order(Timestamp.valueOf("2021-04-27 12:05:00"), Timestamp.valueOf("2021-04-27 12:10:00"), meal1);
+        order1.addDish(dish, 2);
+        order1 = orderRepository.save(order1);
         order2 = orderRepository.save(new Order(Timestamp.valueOf("2021-04-27 19:35:00"), Timestamp.valueOf("2021-04-27 19:45:00"), meal2));
     }
 
@@ -152,6 +167,57 @@ class TestOrderRepositoryImpl {
         assertThat(newTotalOrders, equalTo(totalOrders));
     }
 
+    /* DISH */
+
+    @Test
+    @DisplayName("Les plats qui composent une commande sont récupérés")
+    void verifyFindDishesByOrderIdReturnsAllElements() {
+        Map<Dish, Integer> dishes = orderRepository.findDishesByOrderId(order1.getOrderId());
+        assertThat(dishes.size(), is(1));
+        assertThat(dishes.get(dish), is(2));
+    }
+
+    @Test
+    @DisplayName("Les plats d'une nouvelle commande sont insérés")
+    void verifySaveDishesByOrderIdSucceed() {
+        Map<Dish, Integer> dishes;
+        Order newOrder = new Order(Timestamp.valueOf("2021-04-27 12:05:00"), Timestamp.valueOf("2021-04-27 12:10:00"), meal1);
+        newOrder.addDish(dish, 50);
+        newOrder = orderRepository.save(newOrder);
+        assertNotNull(newOrder.getOrderId());
+        dishes = orderRepository.findDishesByOrderId(newOrder.getOrderId());
+        assertThat(dishes.size(), is(1));
+        assertThat(dishes.get(dish), is(50));
+        orderRepository.delete(newOrder.getOrderId());
+    }
+
+    @Test
+    @DisplayName("Les plats sont mis à jour correctement")
+    void verifyUpdateDishesByOrderIdSucceed() {
+        Order newOrder = new Order(Timestamp.valueOf("2021-04-27 12:05:00"), Timestamp.valueOf("2021-04-27 12:10:00"), meal1);
+        newOrder.addDish(dish, 50);
+        newOrder = orderRepository.save(newOrder);
+        Dish newDish = new Dish("Pastis", "Vinasse", MenuTypes.ADULTES, 8.5);
+        newDish.addRawMaterial(rawMaterial, 1);
+        newDish = dishRepository.save(newDish);
+        newOrder.clearDishes();
+        newOrder.addDish(newDish, 100);
+        newOrder = orderRepository.update(newOrder);
+        Map<Dish, Integer> dishes = orderRepository.findDishesByOrderId(newOrder.getOrderId());
+        assertThat(dishes.size(), is(1));
+        assertThat(dishes.get(newDish), is(100));
+        orderRepository.delete(newOrder.getOrderId());
+        dishRepository.delete(newDish.getDishId());
+    }
+
+    @Test
+    @DisplayName("Les plats sont supprimés correctement")
+    void verifyDeleteDishesByOrderIdSucceed() {
+        orderRepository.delete(order1.getOrderId());
+        Map<Dish, Integer> dishes = orderRepository.findDishesByOrderId(order1.getOrderId());
+        assertThat(dishes.size(), is(0));
+    }
+
     @AfterEach
     void tearDownAfterEach() {
         orderRepository.delete(order1.getOrderId());
@@ -161,6 +227,8 @@ class TestOrderRepositoryImpl {
         tableRepository.delete(table.getTableId());
         billRepository.delete(bill1.getBillId());
         billRepository.delete(bill2.getBillId());
+        dishRepository.delete(dish.getDishId());
+        rawMaterialRepository.delete(rawMaterial.getRawMaterialId());
     }
 
     @AfterAll
@@ -176,6 +244,10 @@ class TestOrderRepositoryImpl {
             tableRepository = null;
             billRepository.connection.close();
             billRepository = null;
+            rawMaterialRepository.connection.close();
+            rawMaterialRepository = null;
+            dishRepository.connection.close();
+            dishRepository = null;
         } catch (SQLException e) {
             e.printStackTrace();
         }

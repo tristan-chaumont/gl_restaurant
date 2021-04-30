@@ -6,6 +6,9 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -23,17 +26,47 @@ public class Order implements Comparable<Order> {
 
     private Meal meal;
 
+    private Map<Dish, Integer> dishes;
+
     public Order() {}
+
+    public Order(Long orderId, Meal meal) {
+        this.orderId = orderId;
+        this.orderDate = Timestamp.from(Instant.now());
+        this.preparationDate = null;
+        this.meal = meal;
+    }
 
     public Order(Long orderId, Timestamp orderDate, Timestamp preparationDate, Meal meal) {
         this.orderId = orderId;
         this.orderDate = orderDate;
         this.preparationDate = preparationDate;
         this.meal = meal;
+        this.dishes = new HashMap<>();
+    }
+
+    public Order(Long orderId, Timestamp orderDate, Timestamp preparationDate, Meal meal, Map<Dish, Integer> dishes) {
+        this.orderId = orderId;
+        this.orderDate = orderDate;
+        this.preparationDate = preparationDate;
+        this.meal = meal;
+        this.dishes = dishes;
     }
 
     public Order(Timestamp orderDate, Timestamp preparationDate, Meal meal) {
         this(null, orderDate, preparationDate, meal);
+    }
+
+    public Order(Timestamp orderDate, Timestamp preparationDate, Meal meal, Map<Dish, Integer> dishes) {
+        this(null, orderDate, preparationDate, meal, dishes);
+    }
+
+    public void addDish(Dish dish, Integer quantity) {
+        dishes.put(dish, quantity);
+    }
+
+    public void clearDishes() {
+        dishes.clear();
     }
 
     /**
