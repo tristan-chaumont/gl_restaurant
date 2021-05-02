@@ -12,6 +12,8 @@ public class StockController {
 
     private final DishRepositoryImpl dishRepository;
     private final RawMaterialRepositoryImpl rawMaterialRepository;
+    private static final int THRESHOLDOUT_OF_STOCK_RM = 20;
+    private static final int RESTOCK_QUANTITY = 100;
 
     public StockController() {
         this.dishRepository = DishRepositoryImpl.getInstance();
@@ -37,5 +39,13 @@ public class StockController {
                 });
             }
         });
+    }
+
+    /**
+     * Réapprovisionne les matières premières en rupture de stock de RESTOCK_QUANTITY unités.
+     * Sont considérées en rupture de stock les matières premières en-dessous de THRESHOLD_OF_STOCK_RM unités.
+     */
+    public void restock() {
+        rawMaterialRepository.updateOutOfStock(THRESHOLDOUT_OF_STOCK_RM, RESTOCK_QUANTITY);
     }
 }

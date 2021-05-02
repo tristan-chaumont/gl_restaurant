@@ -1,14 +1,16 @@
 package fr.ul.miage.gl_restaurant.repository;
 
 import fr.ul.miage.gl_restaurant.constants.Units;
+import fr.ul.miage.gl_restaurant.controller.StockController;
 import fr.ul.miage.gl_restaurant.model.RawMaterial;
 import org.junit.jupiter.api.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -69,6 +71,22 @@ class TestRawMaterialRepositoryImpl {
     }
 
     @Test
+    @DisplayName("findOutOfStock() récupère les matières premières en rupture de stock")
+    void verifyFindOutOfStockGetsRightRawMaterials() {
+        final int THRESHOLD = 20;
+        RawMaterial newRM1 = rawMaterialRepository.save(new RawMaterial("Salade", 21, Units.KG));
+        RawMaterial newRM2 = rawMaterialRepository.save(new RawMaterial("Lait", 10, Units.L));
+        RawMaterial newRM3 = rawMaterialRepository.save(new RawMaterial("Oeufs", 19, Units.U));
+        List<RawMaterial> result = rawMaterialRepository.findOutOfStock(THRESHOLD);
+        assertThat(result.size(), is(2));
+        assertThat(result.get(0).getRawMaterialName(), either(equalTo("Lait")).or(equalTo("Oeufs")));
+        assertThat(result.get(1).getRawMaterialName(), either(equalTo("Lait")).or(equalTo("Oeufs")));
+        rawMaterialRepository.delete(newRM1.getRawMaterialId());
+        rawMaterialRepository.delete(newRM2.getRawMaterialId());
+        rawMaterialRepository.delete(newRM3.getRawMaterialId());
+    }
+
+    @Test
     @DisplayName("L'insertion fonctionne")
     void verifySaveInsertElement() {
         RawMaterial rawMaterial = rawMaterialRepository.save(new RawMaterial("Farine", 100, Units.KG));
@@ -115,6 +133,28 @@ class TestRawMaterialRepositoryImpl {
         rawMaterial = rawMaterialRepository.update(rawMaterial);
         assertThat(rawMaterial.getRawMaterialName(), equalTo("Farine"));
         rawMaterialRepository.delete(rawMaterial.getRawMaterialId());
+    }
+
+    @Test
+    @DisplayName("Les matières premières en rupture de stocks sont réincrémentées de 100 unités")
+    void verifyUpdateOutOfStockSucceed() {
+        RawMaterial newRM1 = rawMaterialRepository.save(new RawMaterial("Salade", 21, Units.KG));
+        RawMaterial newRM2 = rawMaterialRepository.save(new RawMaterial("Lait", 10, Units.L));
+        RawMaterial newRM3 = rawMaterialRepository.save(new RawMaterial("Oeufs", 19, Units.U));
+        final int THRESHOLD = 20;
+        final int RESTOCK = 100;
+        List<RawMaterial> outOfStockRawMaterials = rawMaterialRepository.findOutOfStock(THRESHOLD);
+        rawMaterialRepository.updateOutOfStock(THRESHOLD, RESTOCK);
+        List<RawMaterial> result = new ArrayList<>();
+        outOfStockRawMaterials.forEach(
+                rm -> result.add(rawMaterialRepository.findById(rm.getRawMaterialId()).get())
+        );
+        assertThat(result.get(0).getStockQuantity(), is(outOfStockRawMaterials.get(0).getStockQuantity() + RESTOCK));
+        assertThat(result.get(1).getStockQuantity(), is(outOfStockRawMaterials.get(1).getStockQuantity() + RESTOCK));
+        rawMaterialRepository.delete(newRM1.getRawMaterialId());
+        rawMaterialRepository.delete(newRM2.getRawMaterialId());
+        rawMaterialRepository.delete(newRM3.getRawMaterialId());
+
     }
 
     @Test
