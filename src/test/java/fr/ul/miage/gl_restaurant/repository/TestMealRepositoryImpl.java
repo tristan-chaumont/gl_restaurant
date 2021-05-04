@@ -56,6 +56,14 @@ class TestMealRepositoryImpl {
     }
 
     @Test
+    @DisplayName("findById() récupère le bon élément")
+    void verifyFindByIdSucceed() {
+        Optional<Meal> result = mealRepository.findById(meal1.getMealId());
+        assertThat(result.isPresent(), is(true));
+        assertThat(result.get().getCustomersNb(), is(4));
+    }
+
+    @Test
     @DisplayName("findById() ne récupère rien")
     void verifyFindByIdGetsNothing() {
         Optional<Meal> result = mealRepository.findById(999999999999999999L);

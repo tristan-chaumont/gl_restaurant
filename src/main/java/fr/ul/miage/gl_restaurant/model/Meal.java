@@ -39,4 +39,8 @@ public class Meal {
     public Meal(Integer customersNb, Timestamp startDate, Long mealDuration, Table table, Bill bill) {
         this(null, customersNb, startDate, mealDuration, table, bill);
     }
+
+    public Meal(Integer customersNb, Timestamp startDate, Table table){
+        this(null, customersNb, startDate, null, table, null);
+    }
 }

@@ -62,9 +62,7 @@ public class MealRepositoryImpl extends Repository<Meal, Long> {
                     Optional<Table> table = TableRepositoryImpl.getInstance().findById(resultSet.getLong("tableId"));
                     if (table.isPresent()) {
                         Optional<Bill> bill = BillRepositoryImpl.getInstance().findById(resultSet.getLong("billId"));
-                        if (bill.isPresent()) {
-                            meal = Optional.of(new Meal(mealId, customersnb, startDate, mealDuration, table.get(), bill.get()));
-                        }
+                        meal = Optional.of(new Meal(mealId, customersnb, startDate, mealDuration, table.get(), bill.orElse(null)));
                     }
                 }
             }
@@ -80,9 +78,17 @@ public class MealRepositoryImpl extends Repository<Meal, Long> {
             try (PreparedStatement preparedStatement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
                 preparedStatement.setInt(1, object.getCustomersNb());
                 preparedStatement.setTimestamp(2, object.getStartDate());
-                preparedStatement.setDouble(3, object.getMealDuration());
+                if(object.getMealDuration() == null) {
+                    preparedStatement.setNull(3, Types.INTEGER);
+                }else {
+                    preparedStatement.setLong(3, object.getMealDuration());
+                }
                 preparedStatement.setLong(4, object.getTable().getTableId());
-                preparedStatement.setLong(5, object.getBill().getBillId());
+                if(object.getMealDuration() == null) {
+                    preparedStatement.setNull(5, Types.INTEGER);
+                }else {
+                    preparedStatement.setLong(5, object.getBill().getBillId());
+                }
                 int numRowsAffected = preparedStatement.executeUpdate();
                 try (ResultSet resultSet = preparedStatement.getGeneratedKeys()) {
                     if (resultSet.next()) {
