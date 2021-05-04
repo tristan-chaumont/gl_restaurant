@@ -3,8 +3,8 @@ package fr.ul.miage.gl_restaurant.repository;
 import fr.ul.miage.gl_restaurant.constants.MenuTypes;
 import fr.ul.miage.gl_restaurant.constants.TableStates;
 import fr.ul.miage.gl_restaurant.constants.Units;
-import fr.ul.miage.gl_restaurant.model.*;
 import fr.ul.miage.gl_restaurant.model.Order;
+import fr.ul.miage.gl_restaurant.model.*;
 import org.junit.jupiter.api.*;
 
 import java.sql.Timestamp;

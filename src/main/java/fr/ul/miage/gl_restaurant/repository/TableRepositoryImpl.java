@@ -2,10 +2,14 @@ package fr.ul.miage.gl_restaurant.repository;
 
 import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.constants.TableStates;
-import fr.ul.miage.gl_restaurant.model.*;
+import fr.ul.miage.gl_restaurant.model.Table;
+import fr.ul.miage.gl_restaurant.model.User;
 import lombok.extern.slf4j.Slf4j;
 
-import java.sql.*;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;

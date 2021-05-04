@@ -8,10 +8,8 @@ import fr.ul.miage.gl_restaurant.repository.TableRepositoryImpl;
 import fr.ul.miage.gl_restaurant.repository.UserRepositoryImpl;
 import org.junit.jupiter.api.*;
 
-import java.sql.SQLException;
-
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 class TestTableController {
 

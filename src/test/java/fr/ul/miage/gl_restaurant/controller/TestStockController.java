@@ -8,12 +8,11 @@ import fr.ul.miage.gl_restaurant.repository.DishRepositoryImpl;
 import fr.ul.miage.gl_restaurant.repository.RawMaterialRepositoryImpl;
 import org.junit.jupiter.api.*;
 
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Optional;
 
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 class TestStockController {
 

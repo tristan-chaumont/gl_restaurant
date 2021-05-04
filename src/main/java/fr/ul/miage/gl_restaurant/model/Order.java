@@ -22,6 +22,8 @@ public class Order implements Comparable<Order> {
 
     private Timestamp preparationDate;
 
+    private boolean served;
+
     private Meal meal;
 
     private Map<Dish, Integer> dishes;
@@ -32,6 +34,7 @@ public class Order implements Comparable<Order> {
         this.orderId = orderId;
         this.orderDate = Timestamp.from(Instant.now());
         this.preparationDate = null;
+        this.served = false;
         this.meal = meal;
     }
 
@@ -39,6 +42,7 @@ public class Order implements Comparable<Order> {
         this.orderId = orderId;
         this.orderDate = orderDate;
         this.preparationDate = preparationDate;
+        this.served = false;
         this.meal = meal;
         this.dishes = new HashMap<>();
     }
@@ -47,6 +51,16 @@ public class Order implements Comparable<Order> {
         this.orderId = orderId;
         this.orderDate = orderDate;
         this.preparationDate = preparationDate;
+        this.served = false;
+        this.meal = meal;
+        this.dishes = dishes;
+    }
+
+    public Order(Long orderId, Timestamp orderDate, Timestamp preparationDate, boolean served, Meal meal, Map<Dish, Integer> dishes) {
+        this.orderId = orderId;
+        this.orderDate = orderDate;
+        this.preparationDate = preparationDate;
+        this.served = served;
         this.meal = meal;
         this.dishes = dishes;
     }

@@ -1,18 +1,17 @@
 package fr.ul.miage.gl_restaurant.controller;
 
 import fr.ul.miage.gl_restaurant.constants.TableStates;
-import fr.ul.miage.gl_restaurant.model.*;
 import fr.ul.miage.gl_restaurant.model.Order;
+import fr.ul.miage.gl_restaurant.model.*;
 import fr.ul.miage.gl_restaurant.repository.*;
 import org.junit.jupiter.api.*;
 
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.SortedSet;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 class TestCuisineController {
 

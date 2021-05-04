@@ -1,6 +1,5 @@
 package fr.ul.miage.gl_restaurant.auth;
 
-import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.model.User;
 import fr.ul.miage.gl_restaurant.repository.UserRepositoryImpl;
 import lombok.Getter;

@@ -2,7 +2,10 @@ package fr.ul.miage.gl_restaurant.repository;
 
 import fr.ul.miage.gl_restaurant.constants.Roles;
 import fr.ul.miage.gl_restaurant.constants.TableStates;
-import fr.ul.miage.gl_restaurant.model.*;
+import fr.ul.miage.gl_restaurant.model.Bill;
+import fr.ul.miage.gl_restaurant.model.Meal;
+import fr.ul.miage.gl_restaurant.model.Table;
+import fr.ul.miage.gl_restaurant.model.User;
 import org.junit.jupiter.api.*;
 
 import java.sql.Timestamp;

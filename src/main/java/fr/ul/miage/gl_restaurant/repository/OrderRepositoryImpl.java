@@ -14,11 +14,11 @@ public class OrderRepositoryImpl extends Repository<Order, Long> {
 
     private static OrderRepositoryImpl instance;
 
-    private static final String FIND_ALL_SQL = "SELECT orderId, orderDate, preparationDate, mealId FROM Orders";
-    private static final String FIND_CURRENT_ORDERS = "SELECT orderId, orderDate, preparationDate, mealId FROM Orders WHERE preparationDate IS NULL";
-    private static final String FIND_BY_ID_SQL = "SELECT orderId, orderDate, preparationDate, mealId FROM Orders WHERE orderId = ?";
-    private static final String SAVE_SQL = "INSERT INTO Orders(orderDate, preparationDate, mealId) VALUES(?, ?, ?)";
-    private static final String UPDATE_SQL = "UPDATE Orders SET orderDate = ?, preparationDate = ?, mealId = ? WHERE orderId = ?";
+    private static final String FIND_ALL_SQL = "SELECT orderId, orderDate, preparationDate, served, mealId FROM Orders";
+    private static final String FIND_CURRENT_ORDERS = "SELECT orderId, orderDate, preparationDate, served, mealId FROM Orders WHERE preparationDate IS NULL";
+    private static final String FIND_BY_ID_SQL = "SELECT orderId, orderDate, preparationDate, served, mealId FROM Orders WHERE orderId = ?";
+    private static final String SAVE_SQL = "INSERT INTO Orders(orderDate, preparationDate, served, mealId) VALUES(?, ?, ?, ?)";
+    private static final String UPDATE_SQL = "UPDATE Orders SET orderDate = ?, preparationDate = ?, served = ?, mealId = ? WHERE orderId = ?";
     private static final String DELETE_SQL = "DELETE FROM Orders WHERE orderId = ?";
 
     private static final String FIND_DISHES_BY_ORDER_ID = "SELECT dishId, orderId, quantity FROM Dishes_Orders WHERE orderId = ?";
@@ -46,9 +46,10 @@ public class OrderRepositoryImpl extends Repository<Order, Long> {
                 Long orderId = resultSet.getLong("orderId");
                 Timestamp orderDate = resultSet.getTimestamp("orderDate");
                 Timestamp preparationDate = resultSet.getTimestamp("preparationDate");
+                boolean served = resultSet.getBoolean("served");
                 Optional<Meal> meal = MealRepositoryImpl.getInstance().findById(resultSet.getLong("mealId"));
                 Map<Dish, Integer> dishes = findDishesByOrderId(orderId);
-                meal.ifPresent(value -> orders.add(new Order(orderId, orderDate, preparationDate, value, dishes)));
+                meal.ifPresent(value -> orders.add(new Order(orderId, orderDate, preparationDate, served, value, dishes)));
             }
         } catch (SQLException e) {
             log.error("Exception: " + e.getMessage());
@@ -66,10 +67,11 @@ public class OrderRepositoryImpl extends Repository<Order, Long> {
                     Long orderId = resultSet.getLong("orderId");
                     Timestamp orderDate = resultSet.getTimestamp("orderDate");
                     Timestamp preparationDate = resultSet.getTimestamp("preparationDate");
+                    boolean served = resultSet.getBoolean("served");
                     Optional<Meal> meal = MealRepositoryImpl.getInstance().findById(resultSet.getLong("mealId"));
                     Map<Dish, Integer> dishes = findDishesByOrderId(orderId);
                     if (meal.isPresent()) {
-                        order = Optional.of(new Order(orderId, orderDate, preparationDate, meal.get(), dishes));
+                        order = Optional.of(new Order(orderId, orderDate, preparationDate, served, meal.get(), dishes));
                     }
                 }
             }
@@ -85,7 +87,8 @@ public class OrderRepositoryImpl extends Repository<Order, Long> {
             try (PreparedStatement preparedStatement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
                 preparedStatement.setTimestamp(1, object.getOrderDate());
                 preparedStatement.setTimestamp(2, object.getPreparationDate());
-                preparedStatement.setLong(3, object.getMeal().getMealId());
+                preparedStatement.setBoolean(3, object.isServed());
+                preparedStatement.setLong(4, object.getMeal().getMealId());
                 preparedStatement.executeUpdate();
                 try (ResultSet resultSet = preparedStatement.getGeneratedKeys()) {
                     if (resultSet.next()) {
@@ -108,8 +111,9 @@ public class OrderRepositoryImpl extends Repository<Order, Long> {
             try (PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_SQL)) {
                 preparedStatement.setTimestamp(1, object.getOrderDate());
                 preparedStatement.setTimestamp(2, object.getPreparationDate());
-                preparedStatement.setLong(3, object.getMeal().getMealId());
-                preparedStatement.setLong(4, object.getOrderId());
+                preparedStatement.setBoolean(3, object.isServed());
+                preparedStatement.setLong(4, object.getMeal().getMealId());
+                preparedStatement.setLong(5, object.getOrderId());
                 updateDishesByOrderId(object.getOrderId(), object.getDishes());
                 preparedStatement.executeUpdate();
             } catch (SQLException e) {
