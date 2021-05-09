@@ -3,6 +3,8 @@ package fr.ul.miage.gl_restaurant.controller;
 import fr.ul.miage.gl_restaurant.model.Order;
 import fr.ul.miage.gl_restaurant.repository.OrderRepositoryImpl;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -27,5 +29,15 @@ public class CuisinierController {
         List<Order> orders = orderRepository.findCurrentOrders();
         this.ordersQueue.addAll(orders);
         return ordersQueue;
+    }
+
+    /**
+     * Prépare la commande prise par un serveur.
+     * Pas besoin de vérifier les stocks, car ils sont décrémentés lorsque le serveur prend la commande.
+     * @param order Commande à préparer.
+     */
+    public void prepareOrder(Order order) {
+        order.setPreparationDate(Timestamp.from(Instant.now()));
+        orderRepository.update(order);
     }
 }
