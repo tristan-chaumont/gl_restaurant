@@ -5,6 +5,7 @@ import fr.ul.miage.gl_restaurant.model.Order;
 import fr.ul.miage.gl_restaurant.model.Table;
 import fr.ul.miage.gl_restaurant.model.User;
 import fr.ul.miage.gl_restaurant.repository.OrderRepositoryImpl;
+import fr.ul.miage.gl_restaurant.repository.RawMaterialRepositoryImpl;
 import fr.ul.miage.gl_restaurant.repository.TableRepositoryImpl;
 
 import java.util.HashSet;
@@ -14,10 +15,12 @@ public class ServeurController {
 
     private final OrderRepositoryImpl orderRepository;
     private final TableRepositoryImpl tableRepository;
+    private final RawMaterialRepositoryImpl rawMaterialRepository;
 
     public ServeurController() {
         this.orderRepository = OrderRepositoryImpl.getInstance();
         this.tableRepository = TableRepositoryImpl.getInstance();
+        rawMaterialRepository = RawMaterialRepositoryImpl.getInstance();
     }
 
     /**
@@ -25,6 +28,7 @@ public class ServeurController {
      * @param order Commande à prendre.
      */
     public void takeOrder(Order order) {
+        rawMaterialRepository.updateStockBasedOnTakenOrder(order);
         orderRepository.save(order);
     }
 

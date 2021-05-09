@@ -1,12 +1,16 @@
 package fr.ul.miage.gl_restaurant.repository;
 
+import fr.ul.miage.gl_restaurant.constants.MenuTypes;
 import fr.ul.miage.gl_restaurant.constants.Units;
+import fr.ul.miage.gl_restaurant.model.Dish;
+import fr.ul.miage.gl_restaurant.model.Meal;
+import fr.ul.miage.gl_restaurant.model.Order;
 import fr.ul.miage.gl_restaurant.model.RawMaterial;
 import org.junit.jupiter.api.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.*;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -152,7 +156,33 @@ class TestRawMaterialRepositoryImpl {
         rawMaterialRepository.delete(newRM1.getRawMaterialId());
         rawMaterialRepository.delete(newRM2.getRawMaterialId());
         rawMaterialRepository.delete(newRM3.getRawMaterialId());
+    }
 
+    @Test
+    @DisplayName("Le stock de matières premières de chaque plat d'une commande est retiré du stock total")
+    void verifyUpdateStockBasedOnTakenOrderSucceed() {
+        RawMaterial newRM1 = rawMaterialRepository.save(new RawMaterial("Salade", 50, Units.KG));
+        RawMaterial newRM2 = rawMaterialRepository.save(new RawMaterial("Lait", 50, Units.L));
+        RawMaterial newRM3 = rawMaterialRepository.save(new RawMaterial("Oeufs", 50, Units.U));
+        Dish dish1 = new Dish("Test1", "Test1", MenuTypes.ADULTES, 5.0, true);
+        dish1.addRawMaterial(newRM1, 10);
+        dish1.addRawMaterial(newRM2, 20);
+        Dish dish2 = new Dish("Test2", "Test2", MenuTypes.ADULTES, 5.0, true);
+        dish2.addRawMaterial(newRM2, 2);
+        dish2.addRawMaterial(newRM3, 50);
+        Order order = new Order(Timestamp.from(Instant.now()), null, new Meal());
+        order.addDish(dish1, 2);
+        order.addDish(dish2, 1);
+        rawMaterialRepository.updateStockBasedOnTakenOrder(order);
+        newRM1 = rawMaterialRepository.findById(newRM1.getRawMaterialId()).get();
+        newRM2 = rawMaterialRepository.findById(newRM2.getRawMaterialId()).get();
+        newRM3 = rawMaterialRepository.findById(newRM3.getRawMaterialId()).get();
+        assertThat(newRM1.getStockQuantity(), is(30));
+        assertThat(newRM2.getStockQuantity(), is(8));
+        assertThat(newRM3.getStockQuantity(), is(0));
+        rawMaterialRepository.delete(newRM1.getRawMaterialId());
+        rawMaterialRepository.delete(newRM2.getRawMaterialId());
+        rawMaterialRepository.delete(newRM3.getRawMaterialId());
     }
 
     @Test

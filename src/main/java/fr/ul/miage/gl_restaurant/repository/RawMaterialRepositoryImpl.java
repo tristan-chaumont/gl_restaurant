@@ -1,6 +1,7 @@
 package fr.ul.miage.gl_restaurant.repository;
 
 import fr.ul.miage.gl_restaurant.constants.Environment;
+import fr.ul.miage.gl_restaurant.model.Order;
 import fr.ul.miage.gl_restaurant.model.RawMaterial;
 import lombok.extern.slf4j.Slf4j;
 
@@ -10,6 +11,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
 @Slf4j
 public class RawMaterialRepositoryImpl extends Repository<RawMaterial, Long> {
@@ -23,6 +25,7 @@ public class RawMaterialRepositoryImpl extends Repository<RawMaterial, Long> {
     private static final String SAVE_SQL = "INSERT INTO RawMaterials(rmName, stockQuantity, unit) VALUES(?, ?, ?)";
     private static final String UPDATE_SQL = "UPDATE RawMaterials SET rmName = ?, stockQuantity = ?, unit = ? WHERE rmId = ?";
     private static final String UPDATE_OUT_OF_STOCK_SQL = "UPDATE RawMaterials SET stockQuantity = stockQuantity + ? WHERE stockQuantity < ?";
+    private static final String UPDATE_STOCK_SQL = "UPDATE RawMaterials SET stockQuantity = stockQuantity - ? WHERE rmId = ?";
     private static final String DELETE_SQL = "DELETE FROM RawMaterials WHERE rmId = ?";
 
     private RawMaterialRepositoryImpl(Environment environment) {
@@ -141,6 +144,11 @@ public class RawMaterialRepositoryImpl extends Repository<RawMaterial, Long> {
         return object;
     }
 
+    /**
+     * Ajout du stock pour les matières premières en rupture de stock.
+     * @param threshold Seuil où l'on considère une rupture de stock.
+     * @param restock Quantité de matière première à ajouter.
+     */
     public void updateOutOfStock(int threshold, int restock) {
         try (var preparedStatement = connection.prepareStatement(UPDATE_OUT_OF_STOCK_SQL)) {
             preparedStatement.setInt(1, restock);
@@ -149,6 +157,35 @@ public class RawMaterialRepositoryImpl extends Repository<RawMaterial, Long> {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Retire la quantité fournie du stock total de la matière première.
+     * @param quantityToRemove Quantité à retirer.
+     * @param rmId ID de la matière première.
+     */
+    public void updateStock(int quantityToRemove, Long rmId) {
+        try (var preparedStatement = connection.prepareStatement(UPDATE_STOCK_SQL)) {
+            preparedStatement.setInt(1, quantityToRemove);
+            preparedStatement.setLong(2, rmId);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Retire du stock de matières premières total, la quantité utilisée pour chaque plat d'une commande.
+     * @param order Commande à traiter.
+     */
+    public void updateStockBasedOnTakenOrder(Order order) {
+        order.getDishes().forEach((dish, qtDishes) -> {
+            IntStream.range(0, qtDishes).forEach(i -> {
+                dish.getRawMaterials().forEach(((rawMaterial, qtRM) -> {
+                    updateStock(qtRM, rawMaterial.getRawMaterialId());
+                }));
+            });
+        });
     }
 
     @Override
