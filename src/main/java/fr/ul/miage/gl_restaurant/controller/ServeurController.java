@@ -8,27 +8,45 @@ import fr.ul.miage.gl_restaurant.repository.OrderRepositoryImpl;
 import fr.ul.miage.gl_restaurant.repository.TableRepositoryImpl;
 
 import java.util.HashSet;
+import java.util.Set;
 
 public class ServeurController {
 
-    private final CuisinierController cuisinierController;
     private final OrderRepositoryImpl orderRepository;
     private final TableRepositoryImpl tableRepository;
 
-    public ServeurController(CuisinierController cuisinierController) {
-        this.cuisinierController = cuisinierController;
+    public ServeurController() {
         this.orderRepository = OrderRepositoryImpl.getInstance();
         this.tableRepository = TableRepositoryImpl.getInstance();
     }
 
+    /**
+     * Prend une commande et la sauvegarde en base de données.
+     * @param order Commande à prendre.
+     */
     public void takeOrder(Order order) {
         orderRepository.save(order);
     }
 
-    public HashSet<Table> getTablesList(User user){
-        HashSet<Table> tablesList = new HashSet<>();
-        if (user.getRole().equals(Roles.SERVEUR))
+    /**
+     * Récupère la liste des tables d'un serveur.
+     * @param user Serveur.
+     * @return La liste des tables du serveur.
+     */
+    public Set<Table> getTablesList(User user){
+        Set<Table> tablesList = new HashSet<>();
+        if (user.getRole().equals(Roles.SERVEUR)) {
             tablesList.addAll(tableRepository.findByUserId(user.getUserId()));
+        }
         return tablesList;
+    }
+
+    /**
+     * Indique que la commande a été servie par le serveur.
+     * @param order Commande servie.
+     */
+    public void setOrderServed(Order order) {
+        order.setServed(true);
+        orderRepository.update(order);
     }
 }
