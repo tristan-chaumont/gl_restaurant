@@ -20,7 +20,7 @@ public class MaitreHotelController {
         mealRepository = MealRepositoryImpl.getInstance();
     }
 
-    public Meal installClient(Table table, int nbCustomers){
+    public Meal seatClient(Table table, int nbCustomers){
         Meal meal = null;
         if(table.getState().equals(TableStates.LIBRE) && table.getPlaces() >= nbCustomers){
             meal = mealRepository.save(new Meal(nbCustomers, Timestamp.from(Instant.now()), table));

@@ -2,7 +2,6 @@ package fr.ul.miage.gl_restaurant.controller;
 
 import fr.ul.miage.gl_restaurant.constants.TableStates;
 import fr.ul.miage.gl_restaurant.model.Meal;
-import fr.ul.miage.gl_restaurant.model.Order;
 import fr.ul.miage.gl_restaurant.model.Table;
 import fr.ul.miage.gl_restaurant.model.User;
 import fr.ul.miage.gl_restaurant.repository.MealRepositoryImpl;
@@ -11,7 +10,6 @@ import fr.ul.miage.gl_restaurant.repository.UserRepositoryImpl;
 import org.junit.jupiter.api.*;
 
 import java.util.Optional;
-import java.util.SortedSet;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -43,7 +41,7 @@ public class TestMaitreHotelController {
     @Test
     @DisplayName("installClient change le statt de la table et crée le repas")
     void verifyInstallCustomer() {
-        Meal meal = maitreHotelController.installClient(table1,2);
+        Meal meal = maitreHotelController.seatClient(table1,2);
         assertThat(meal, is(notNullValue()));
         Optional<Meal> res = mealRepository.findById(meal.getMealId());
         mealRepository.delete(meal.getMealId());
@@ -56,7 +54,7 @@ public class TestMaitreHotelController {
     @Test
     @DisplayName("Le repas ne peut être créé car la table est réservée")
     void verifyInstallCustomerFailedBecauseReserved(){
-        Meal meal = maitreHotelController.installClient(table2,2);
+        Meal meal = maitreHotelController.seatClient(table2,2);
         assertThat(meal, is(nullValue()));
         assertThat(mealRepository.findAll().size(),is(0));
     }
@@ -64,7 +62,7 @@ public class TestMaitreHotelController {
     @Test
     @DisplayName("Le repas ne peut être créé car la table est trop petite")
     void verifyInstallCustomerFailedBecauseOfNbPlaces(){
-        Meal meal = maitreHotelController.installClient(table1,5);
+        Meal meal = maitreHotelController.seatClient(table1,5);
         assertThat(meal, is(nullValue()));
         assertThat(mealRepository.findAll().size(),is(0));
     }
