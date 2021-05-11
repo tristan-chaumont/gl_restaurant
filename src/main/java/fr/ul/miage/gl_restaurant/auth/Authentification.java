@@ -2,28 +2,28 @@ package fr.ul.miage.gl_restaurant.auth;
 
 import fr.ul.miage.gl_restaurant.model.User;
 import fr.ul.miage.gl_restaurant.repository.UserRepositoryImpl;
+import fr.ul.miage.gl_restaurant.utilities.InputUtils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Optional;
-import java.util.Scanner;
 
 @Slf4j
 @Getter
 public class Authentification {
 
     private User user;
-    private static final Scanner sc = new Scanner(System.in);
 
     public Authentification() {
         this.user = null;
     }
 
     public void signIn(String login) {
-        UserRepositoryImpl userRepository = UserRepositoryImpl.getInstance();
+        var userRepository = UserRepositoryImpl.getInstance();
         Optional<User> loggedUser = userRepository.findByLogin(login);
-        loggedUser.ifPresent(value -> this.user = value);
+        loggedUser.ifPresentOrElse(value -> this.user = value,
+                () -> System.out.print("Login incorrect, veuillez réessayer : "));
     }
 
     public void logOut() {
@@ -44,23 +44,17 @@ public class Authentification {
         System.out.println(StringUtils.center("Bonjour et bienvenue !", 50));
         System.out.println("=".repeat(50));
         System.out.println("Pour quitter l'application, tapez : !q");
-        System.out.println("Pour vous connecter, veuillez entrer votre login.");
-        String input = sc.next();
+        System.out.print("Pour vous connecter, veuillez entrer votre login : ");
+        String input = InputUtils.readInput();
         if (input.equals("!q")) {
             System.out.println("À bientôt !");
             return false;
         }
         signIn(input);
         while (user == null) {
-            System.out.print("Login incorrect, veuillez réessayer : ");
-            signIn(sc.next());
+            signIn(InputUtils.readInput());
         }
-        System.out.printf("Vous êtes connecté en tant que '%s' (%s %s, %s)%n", user.getLogin(), user.getFirstName(), user.getLastName(), user.getRole());
+        System.out.printf("Vous êtes connecté en tant que '%s' (%s %s, %s)%n%n", user.getLogin(), user.getFirstName(), user.getLastName(), user.getRole());
         return true;
-    }
-
-    public static void main(String[] args) {
-        Authentification auth = new Authentification();
-        auth.displayInterface();
     }
 }

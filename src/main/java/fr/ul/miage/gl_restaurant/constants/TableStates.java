@@ -4,7 +4,6 @@ import java.util.Arrays;
 import java.util.Optional;
 
 public enum TableStates {
-
     OCCUPEE("Occupée"),
     LIBRE("Libre"),
     RESERVEE("Réservée"),
