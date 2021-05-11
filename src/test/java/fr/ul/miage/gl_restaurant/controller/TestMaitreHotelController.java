@@ -1,5 +1,6 @@
 package fr.ul.miage.gl_restaurant.controller;
 
+import fr.ul.miage.gl_restaurant.auth.Authentification;
 import fr.ul.miage.gl_restaurant.constants.TableStates;
 import fr.ul.miage.gl_restaurant.model.Meal;
 import fr.ul.miage.gl_restaurant.model.Table;
@@ -25,7 +26,7 @@ public class TestMaitreHotelController {
 
     @BeforeAll
     static void initializeBeforeAll() {
-        maitreHotelController = new MaitreHotelController();
+        maitreHotelController = new MaitreHotelController(new Authentification());
         tableRepository = TableRepositoryImpl.getInstance();
         mealRepository = MealRepositoryImpl.getInstance();
         userRepository = UserRepositoryImpl.getInstance();

@@ -1,5 +1,6 @@
 package fr.ul.miage.gl_restaurant.controller;
 
+import fr.ul.miage.gl_restaurant.auth.Authentification;
 import fr.ul.miage.gl_restaurant.constants.Roles;
 import fr.ul.miage.gl_restaurant.constants.TableStates;
 import fr.ul.miage.gl_restaurant.model.Table;
@@ -23,7 +24,7 @@ class TestAssistantServiceController {
     static void initializeBeforeAll(){
         tableRepository = TableRepositoryImpl.getInstance();
         userRepository = UserRepositoryImpl.getInstance();
-        assistantServiceController = new AssistantServiceController(new TableController());
+        assistantServiceController = new AssistantServiceController(new Authentification());
     }
 
     @BeforeEach

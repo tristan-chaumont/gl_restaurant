@@ -1,5 +1,6 @@
 package fr.ul.miage.gl_restaurant.controller;
 
+import fr.ul.miage.gl_restaurant.auth.Authentification;
 import fr.ul.miage.gl_restaurant.model.Order;
 import fr.ul.miage.gl_restaurant.repository.OrderRepositoryImpl;
 
@@ -9,12 +10,13 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-public class CuisinierController {
+public class CuisinierController extends UserController {
 
     private final TreeSet<Order> ordersQueue;
     private final OrderRepositoryImpl orderRepository;
 
-    public CuisinierController() {
+    public CuisinierController(Authentification auth) {
+        super(auth);
         this.ordersQueue = new TreeSet<>();
         this.orderRepository = OrderRepositoryImpl.getInstance();
     }
@@ -39,5 +41,22 @@ public class CuisinierController {
     public void prepareOrder(Order order) {
         order.setPreparationDate(Timestamp.from(Instant.now()));
         orderRepository.update(order);
+    }
+
+    @Override
+    public String displayActions() {
+        //TODO
+        return "";
+    }
+
+    @Override
+    public void callAction(int action) {
+        switch (action) {
+            case 0:
+                auth.disconnect();
+                break;
+            default:
+                break;
+        }
     }
 }
