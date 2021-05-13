@@ -6,16 +6,13 @@ import fr.ul.miage.gl_restaurant.model.Table;
 
 public class AssistantServiceController extends UserController {
 
-    private final TableController tableController;
-
     public AssistantServiceController(Authentification auth) {
         super(auth);
-        this.tableController = new TableController();
     }
 
     public void serveTable(Table table) {
         if (table.getState().equals(TableStates.SALE)) {
-            tableController.changeState(table, TableStates.LIBRE);
+            table.changeState(TableStates.LIBRE);
         }
     }
 

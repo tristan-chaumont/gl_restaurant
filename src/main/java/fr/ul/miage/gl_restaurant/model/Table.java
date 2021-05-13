@@ -1,6 +1,7 @@
 package fr.ul.miage.gl_restaurant.model;
 
 import fr.ul.miage.gl_restaurant.constants.TableStates;
+import fr.ul.miage.gl_restaurant.repository.TableRepositoryImpl;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -34,6 +35,11 @@ public class Table {
 
     public Table(Integer floor, TableStates state, Integer places, User user) {
         this(null, floor, state, places, user);
+    }
+
+    public void changeState(TableStates tableStates) {
+        this.setState(tableStates);
+        TableRepositoryImpl.getInstance().update(this);
     }
 
     @Override

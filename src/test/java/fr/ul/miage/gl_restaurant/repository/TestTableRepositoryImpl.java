@@ -40,7 +40,7 @@ class TestTableRepositoryImpl {
     @DisplayName("findAll() récupère tous les éléments")
     void verifyFindAllReturnsAllElements() {
         List<Table> result = tableRepository.findAll();
-        assertThat(result.size(), is(2));
+        assertThat(result.size(), is(14));
     }
 
     @Test

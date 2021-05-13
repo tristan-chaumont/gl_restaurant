@@ -6,10 +6,7 @@ import fr.ul.miage.gl_restaurant.model.Table;
 import fr.ul.miage.gl_restaurant.model.User;
 import lombok.extern.slf4j.Slf4j;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -41,7 +38,7 @@ public class TableRepositoryImpl extends Repository<Table, Long> {
                 TableStates state = TableStates.getState(resultSet.getString("state"));
                 Integer places = resultSet.getInt("places");
                 Optional<User> user = UserRepositoryImpl.getInstance().findById(resultSet.getLong("userId"));
-                user.ifPresent(value -> tables.add(new Table(tableId, floor, state, places, value)));
+                tables.add(new Table(tableId, floor, state, places, user.orElse(null)));
             }
         } catch (SQLException e) {
             log.error("Exception: " + e.getMessage());
@@ -62,9 +59,7 @@ public class TableRepositoryImpl extends Repository<Table, Long> {
                         TableStates state = TableStates.getState(resultSet.getString("state"));
                         Integer places = resultSet.getInt("places");
                         Optional<User> user = UserRepositoryImpl.getInstance().findById(resultSet.getLong("userId"));
-                        if (user.isPresent()) {
-                            table = Optional.of(new Table(tableId, floor, state, places, user.get()));
-                        }
+                        table = Optional.of(new Table(tableId, floor, state, places, user.orElse(null)));
                     }
                 }
             } catch (SQLException e) {
@@ -85,7 +80,7 @@ public class TableRepositoryImpl extends Repository<Table, Long> {
                     TableStates state = TableStates.getState(resultSet.getString("state"));
                     Integer places = resultSet.getInt("places");
                     Optional<User> user = UserRepositoryImpl.getInstance().findById(resultSet.getLong("userId"));
-                    user.ifPresent(value -> tables.add(new Table(tableId, floor, state, places, value)));
+                    tables.add(new Table(tableId, floor, state, places, user.orElse(null)));
                 }
             }
         } catch (SQLException e) {
@@ -101,8 +96,12 @@ public class TableRepositoryImpl extends Repository<Table, Long> {
                 preparedStatement.setInt(1, object.getFloor());
                 preparedStatement.setString(2, object.getState().toString());
                 preparedStatement.setInt(3, object.getPlaces());
-                preparedStatement.setLong(4, object.getUser().getUserId());
-                int numRowsAffected = preparedStatement.executeUpdate();
+                if (object.getUser() == null) {
+                    preparedStatement.setNull(4, Types.INTEGER);
+                } else {
+                    preparedStatement.setLong(4, object.getUser().getUserId());
+                }
+                preparedStatement.executeUpdate();
                 try (ResultSet resultSet = preparedStatement.getGeneratedKeys()) {
                     if (resultSet.next()) {
                         object.setTableId(resultSet.getLong(1));
@@ -124,7 +123,11 @@ public class TableRepositoryImpl extends Repository<Table, Long> {
                 preparedStatement.setInt(1, object.getFloor());
                 preparedStatement.setString(2, object.getState().toString());
                 preparedStatement.setInt(3, object.getPlaces());
-                preparedStatement.setLong(4, object.getUser().getUserId());
+                if (object.getUser() == null) {
+                    preparedStatement.setNull(4, Types.INTEGER);
+                } else {
+                    preparedStatement.setLong(4, object.getUser().getUserId());
+                }
                 preparedStatement.setLong(5, object.getTableId());
                 preparedStatement.executeUpdate();
             } catch (SQLException e) {
