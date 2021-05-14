@@ -20,6 +20,7 @@ public class OrderRepositoryImpl extends Repository<Order, Long> {
     private static final String SAVE_SQL = "INSERT INTO Orders(orderDate, preparationDate, served, mealId) VALUES(?, ?, ?, ?)";
     private static final String UPDATE_SQL = "UPDATE Orders SET orderDate = ?, preparationDate = ?, served = ?, mealId = ? WHERE orderId = ?";
     private static final String DELETE_SQL = "DELETE FROM Orders WHERE orderId = ?";
+    private static final String FIND_BY_DISH_SQL = "SELECT distinct Orders.orderId, orderDate, preparationDate, served, mealId FROM Orders INNER JOIN Dishes_Orders ON Orders.orderID = Dishes_Orders.orderId WHERE dishId = ?";
 
     private static final String FIND_DISHES_BY_ORDER_ID = "SELECT dishId, orderId, quantity FROM Dishes_Orders WHERE orderId = ?";
     private static final String SAVE_DISHES_SQL = "INSERT INTO Dishes_Orders(dishId, orderId, quantity) VALUES(?, ?, ?)";
@@ -79,6 +80,30 @@ public class OrderRepositoryImpl extends Repository<Order, Long> {
             log.error("Exception: " + e.getMessage());
         }
         return order;
+    }
+
+
+    public List<Order> findByDish(Long dishId){
+        List<Order> orders = new ArrayList<>();
+        try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_DISH_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+            preparedStatement.setLong(1, dishId);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.first()) {
+                    Long orderId = resultSet.getLong("orderId");
+                    Timestamp orderDate = resultSet.getTimestamp("orderDate");
+                    Timestamp preparationDate = resultSet.getTimestamp("preparationDate");
+                    boolean served = resultSet.getBoolean("served");
+                    Optional<Meal> meal = MealRepositoryImpl.getInstance().findById(resultSet.getLong("mealId"));
+                    Map<Dish, Integer> dishes = findDishesByOrderId(orderId);
+                    if (meal.isPresent()) {
+                         orders.add(new Order(orderId, orderDate, preparationDate, served, meal.get(), dishes));
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            log.error("Exception: " + e.getMessage());
+        }
+        return orders;
     }
 
     @Override

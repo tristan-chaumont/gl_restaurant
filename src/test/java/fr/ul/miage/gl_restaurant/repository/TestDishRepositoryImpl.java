@@ -94,6 +94,20 @@ class TestDishRepositoryImpl {
     }
 
     @Test
+    @DisplayName("findByRM() récupère le bon plat")
+    void verifyFindByRMGetsDish() {
+        List<Dish> result = dishRepository.findByRM(rawMaterial1.getRawMaterialId());
+        assertThat(result.size(), is(2));
+    }
+
+    @Test
+    @DisplayName("findByRM() ne récupère rien")
+    void verifyFindByRMGetsNothing() {
+        List<Dish> result = dishRepository.findByRM(9999L);
+        assertThat(result.size(), is(0));
+    }
+
+    @Test
     @DisplayName("L'insertion fonctionne")
     void verifySaveInsertElement() {
         Dish dish = dishRepository.save(new Dish("Poisson pané", "Poisson", MenuTypes.ENFANTS, 4.0, false));

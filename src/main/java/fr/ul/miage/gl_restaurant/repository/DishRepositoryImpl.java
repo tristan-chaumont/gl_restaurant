@@ -16,14 +16,15 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
 
     private static DishRepositoryImpl instance;
 
-    private static final String FIND_ALL_SQL = "SELECT dishId, dishName, category, menuType, price, dailymenu FROM Dishes";
-    private static final String FIND_BY_ID_SQL = "SELECT dishId, dishName, category, menuType, price, dailymenu FROM Dishes WHERE dishId = ?";
-    private static final String FIND_BY_NAME_SQL = "SELECT dishId, dishName, category, menuType, price, dailymenu FROM Dishes WHERE dishName = ?";
-    private static final String FIND_BY_CATEGORY_SQL = "SELECT dishId, dishName, category, menuType, price, dailymenu FROM Dishes WHERE category = ?";
-    private static final String SAVE_SQL = "INSERT INTO Dishes(dishName, category, menuType, price, dailymenu) VALUES(?, ?, ?, ?, ?)";
+    private static final String FIND_ALL_SQL = "SELECT dishId, dishName, category, menuType, price, dailyMenu FROM Dishes";
+    private static final String FIND_BY_ID_SQL = "SELECT dishId, dishName, category, menuType, price, dailyMenu FROM Dishes WHERE dishId = ?";
+    private static final String FIND_BY_NAME_SQL = "SELECT dishId, dishName, category, menuType, price, dailyMenu FROM Dishes WHERE dishName = ?";
+    private static final String FIND_BY_CATEGORY_SQL = "SELECT dishId, dishName, category, menuType, price, dailyMenu FROM Dishes WHERE category = ?";
+    private static final String SAVE_SQL = "INSERT INTO Dishes(dishName, category, menuType, price, dailyMenu) VALUES(?, ?, ?, ?, ?)";
     private static final String UPDATE_SQL = "UPDATE Dishes SET dishName = ?, category = ?, menuType = ?, price = ?, dailyMenu = ? WHERE dishId = ?";
     private static final String UPDATE_DAILY_MENU_SQL = "UPDATE Dishes SET dailyMenu = ? WHERE dishId = ?";
     private static final String DELETE_SQL = "DELETE FROM Dishes WHERE dishId = ?";
+    private static final String FIND_BY_RM_SQL = "SELECT Dishes.dishId, dishName, category, menuType, price, dailyMenu FROM Dishes INNER JOIN Dishes_RawMaterials ON Dishes.dishID = Dishes_RawMaterials.dishId WHERE rmId = ?";
 
     private static final String FIND_RM_BY_DISH_ID_SQL = "SELECT dishId, rmId, quantity FROM Dishes_RawMaterials WHERE dishId = ?";
     private static final String SAVE_RM_SQL = "INSERT INTO Dishes_RawMaterials(dishId, rmId, quantity) VALUES(?, ?, ?)";
@@ -84,6 +85,21 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
         List<Dish> dishes = new ArrayList<>();
         try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_CATEGORY_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
             preparedStatement.setString(1, category);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    dishes.add(new Dish(resultSet, findRawMaterialsByDishId(resultSet.getLong("dishId"))));
+                }
+            }
+        } catch (SQLException e) {
+            log.error("Exception: " + e.getMessage());
+        }
+        return dishes;
+    }
+
+    public List<Dish> findByRM(Long rmId) {
+        List<Dish> dishes = new ArrayList<>();
+        try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_RM_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+            preparedStatement.setLong(1, rmId);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
                     dishes.add(new Dish(resultSet, findRawMaterialsByDishId(resultSet.getLong("dishId"))));

@@ -97,6 +97,20 @@ class TestOrderRepositoryImpl {
     }
 
     @Test
+    @DisplayName("findAll() récupère tous les éléments")
+    void verifyFindByDishReturnsElements() {
+        List<Order> result = orderRepository.findByDish(dish.getDishId());
+        assertThat(result.size(), is(1));
+    }
+
+    @Test
+    @DisplayName("findAll() ne récupère rien")
+    void verifyFindByDishReturnsNothing() {
+        List<Order> result = orderRepository.findByDish(9999L);
+        assertThat(result.size(), is(0));
+    }
+
+    @Test
     @DisplayName("L'insertion fonctionne")
     void verifySaveInsertElement() {
         Table tableInsert = tableRepository.save(new Table(1,TableStates.LIBRE, 4, user));
