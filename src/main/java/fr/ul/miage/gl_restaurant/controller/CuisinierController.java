@@ -13,12 +13,11 @@ import java.util.TreeSet;
 public class CuisinierController extends UserController {
 
     private final TreeSet<Order> ordersQueue;
-    private final OrderRepositoryImpl orderRepository;
+    private final OrderRepositoryImpl orderRepository = OrderRepositoryImpl.getInstance();
 
     public CuisinierController(Authentification auth) {
         super(auth);
         this.ordersQueue = new TreeSet<>();
-        this.orderRepository = OrderRepositoryImpl.getInstance();
     }
 
     /**

@@ -35,9 +35,9 @@ public class BillRepositoryImpl extends Repository<Bill, Long> {
     @Override
     public Optional<Bill> findById(Long id) {
         Optional<Bill> bill = Optional.empty();
-        try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_ID_SQL,ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+        try (var preparedStatement = connection.prepareStatement(FIND_BY_ID_SQL,ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
             preparedStatement.setLong(1, id);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+            try (var resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.first()) {
                     Long billId = resultSet.getLong("billId");
 
@@ -45,7 +45,7 @@ public class BillRepositoryImpl extends Repository<Bill, Long> {
                 }
             }
         } catch (SQLException e) {
-            log.error("Exception: " + e.getMessage());
+            log.error(e.getMessage());
         }
         return bill;
     }
@@ -53,21 +53,25 @@ public class BillRepositoryImpl extends Repository<Bill, Long> {
     @Override
     public Bill save(Bill object) {
         if (object != null) {
-            try (PreparedStatement preparedStatement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
+            try (var preparedStatement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
                 preparedStatement.setLong(1, object.getBillId());
-                int numRowsAffected = preparedStatement.executeUpdate();
-                try (ResultSet resultSet = preparedStatement.getGeneratedKeys()) {
-                    if (resultSet.next()) {
-                        object.setBillId(resultSet.getLong(1));
-                    }
-                } catch (SQLException s) {
-                    s.printStackTrace();
-                }
+                preparedStatement.executeUpdate();
+                generateKey(object, preparedStatement);
             } catch (SQLException e) {
-                e.printStackTrace();
+                log.error(e.getMessage());
             }
         }
         return object;
+    }
+
+    private void generateKey(Bill object, PreparedStatement preparedStatement) {
+        try (var resultSet = preparedStatement.getGeneratedKeys()) {
+            if (resultSet.next()) {
+                object.setBillId(resultSet.getLong(1));
+            }
+        } catch (SQLException s) {
+            log.error(s.getMessage());
+        }
     }
 
     @Override
@@ -75,14 +79,8 @@ public class BillRepositoryImpl extends Repository<Bill, Long> {
         return null;
     }
 
-    @Override
     public void delete(Long id) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement(DELETE_SQL)) {
-            preparedStatement.setLong(1, id);
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        super.delete(id, DELETE_SQL);
     }
 
     public static BillRepositoryImpl getInstance() {

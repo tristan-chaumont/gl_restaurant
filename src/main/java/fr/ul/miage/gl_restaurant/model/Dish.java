@@ -29,9 +29,7 @@ public class Dish {
 
     private boolean dailyMenu;
 
-    private HashMap<RawMaterial, Integer> rawMaterials;
-
-    public Dish() {}
+    private Map<RawMaterial, Integer> rawMaterials;
 
     public Dish(Long dishId, String dishName, String category, MenuTypes menuType, Double price, boolean dailyMenu) {
         this.dishId = dishId;
@@ -47,7 +45,7 @@ public class Dish {
         this(null, dishName, category, menuType, price, dailyMenu);
     }
 
-    public Dish(String dishName, String category, MenuTypes menuType, Double price, boolean dailyMenu, HashMap<RawMaterial, Integer> rawMaterials) {
+    public Dish(String dishName, String category, MenuTypes menuType, Double price, boolean dailyMenu, Map<RawMaterial, Integer> rawMaterials) {
         this(null, dishName, category, menuType, price, dailyMenu);
         this.rawMaterials = rawMaterials;
     }
@@ -59,7 +57,7 @@ public class Dish {
         menuType = MenuTypes.getMenuType(resultSet.getString("menuType"));
         price = resultSet.getDouble("price");
         dailyMenu = resultSet.getBoolean("dailyMenu");
-        this.rawMaterials = (HashMap<RawMaterial, Integer>) rawMaterials;
+        this.rawMaterials = rawMaterials;
     }
 
     public void addRawMaterial(RawMaterial rawMaterial, Integer quantity) {

@@ -16,6 +16,8 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
 
     private static DishRepositoryImpl instance;
 
+    private static final String DISHID_COLUMN_NAME = "dishId";
+
     private static final String FIND_ALL_SQL = "SELECT dishId, dishName, category, menuType, price, dailymenu FROM Dishes";
     private static final String FIND_BY_ID_SQL = "SELECT dishId, dishName, category, menuType, price, dailymenu FROM Dishes WHERE dishId = ?";
     private static final String FIND_BY_NAME_SQL = "SELECT dishId, dishName, category, menuType, price, dailymenu FROM Dishes WHERE dishName = ?";
@@ -36,13 +38,13 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
     @Override
     public List<Dish> findAll() {
         List<Dish> dishes = new ArrayList<>();
-        try (Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(FIND_ALL_SQL)) {
+        try (var statement = connection.createStatement();
+             var resultSet = statement.executeQuery(FIND_ALL_SQL)) {
             while (resultSet.next()) {
-                dishes.add(new Dish(resultSet, findRawMaterialsByDishId(resultSet.getLong("dishId"))));
+                dishes.add(new Dish(resultSet, findRawMaterialsByDishId(resultSet.getLong(DISHID_COLUMN_NAME))));
             }
         } catch (SQLException e) {
-            log.error("Exception: " + e.getMessage());
+            log.error(e.getMessage());
         }
         return dishes;
     }
@@ -51,15 +53,15 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
     public Optional<Dish> findById(Long id) {
         Optional<Dish> dish = Optional.empty();
         if (id != null) {
-            try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_ID_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+            try (var preparedStatement = connection.prepareStatement(FIND_BY_ID_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
                 preparedStatement.setLong(1, id);
-                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                try (var resultSet = preparedStatement.executeQuery()) {
                     if (resultSet.first()) {
-                        dish = Optional.of(new Dish(resultSet, findRawMaterialsByDishId(resultSet.getLong("dishId"))));
+                        dish = Optional.of(new Dish(resultSet, findRawMaterialsByDishId(resultSet.getLong(DISHID_COLUMN_NAME))));
                     }
                 }
             } catch (SQLException e) {
-                log.error("Exception: " + e.getMessage());
+                log.error(e.getMessage());
             }
         }
         return dish;
@@ -67,30 +69,30 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
 
     public Optional<Dish> findByName(String name) {
         Optional<Dish> dish = Optional.empty();
-        try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_NAME_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+        try (var preparedStatement = connection.prepareStatement(FIND_BY_NAME_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
             preparedStatement.setString(1, name);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+            try (var resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.first()) {
-                    dish = Optional.of(new Dish(resultSet, findRawMaterialsByDishId(resultSet.getLong("dishId"))));
+                    dish = Optional.of(new Dish(resultSet, findRawMaterialsByDishId(resultSet.getLong(DISHID_COLUMN_NAME))));
                 }
             }
         } catch (SQLException e) {
-            log.error("Exception: " + e.getMessage());
+            log.error(e.getMessage());
         }
         return dish;
     }
 
     public List<Dish> findByCategory(String category) {
         List<Dish> dishes = new ArrayList<>();
-        try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_CATEGORY_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+        try (var preparedStatement = connection.prepareStatement(FIND_BY_CATEGORY_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
             preparedStatement.setString(1, category);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+            try (var resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
-                    dishes.add(new Dish(resultSet, findRawMaterialsByDishId(resultSet.getLong("dishId"))));
+                    dishes.add(new Dish(resultSet, findRawMaterialsByDishId(resultSet.getLong(DISHID_COLUMN_NAME))));
                 }
             }
         } catch (SQLException e) {
-            log.error("Exception: " + e.getMessage());
+            log.error(e.getMessage());
         }
         return dishes;
     }
@@ -100,27 +102,31 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
         if (object != null && object.getDishId() == null) {
             Optional<Dish> dish = findByName(object.getDishName());
             if(dish.isEmpty()) {
-                try (PreparedStatement preparedStatement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
+                try (var preparedStatement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
                     preparedStatement.setString(1, object.getDishName());
                     preparedStatement.setString(2, object.getCategory());
                     preparedStatement.setString(3, object.getMenuType().toString());
                     preparedStatement.setDouble(4, object.getPrice());
                     preparedStatement.setBoolean(5, object.isDailyMenu());
                     preparedStatement.executeUpdate();
-                    try (ResultSet resultSet = preparedStatement.getGeneratedKeys()) {
-                        if (resultSet.next()) {
-                            object.setDishId(resultSet.getLong(1));
-                            saveRawMaterialsByDishId(object.getDishId(), object.getRawMaterials());
-                        }
-                    } catch (SQLException s) {
-                        s.printStackTrace();
-                    }
+                    generateKey(object, preparedStatement);
                 } catch (SQLException e) {
-                    e.printStackTrace();
+                    log.error(e.getMessage());
                 }
             }
         }
         return object;
+    }
+
+    private void generateKey(Dish object, PreparedStatement preparedStatement) {
+        try (var resultSet = preparedStatement.getGeneratedKeys()) {
+            if (resultSet.next()) {
+                object.setDishId(resultSet.getLong(1));
+                saveRawMaterialsByDishId(object.getDishId(), object.getRawMaterials());
+            }
+        } catch (SQLException s) {
+            log.error(s.getMessage());
+        }
     }
 
     @Override
@@ -128,7 +134,7 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
         if (object != null && object.getDishId() != null) {
             Optional<Dish> dish = findByName(object.getDishName());
             if (dish.isEmpty() || object.getDishId().equals(dish.get().getDishId())) {
-                try (PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_SQL)) {
+                try (var preparedStatement = connection.prepareStatement(UPDATE_SQL)) {
                     preparedStatement.setString(1, object.getDishName());
                     preparedStatement.setString(2, object.getCategory());
                     preparedStatement.setString(3, object.getMenuType().toString());
@@ -138,10 +144,10 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
                     updateRawMaterialsByDishId(object.getDishId(), object.getRawMaterials());
                     preparedStatement.executeUpdate();
                 } catch (SQLException e) {
-                    e.printStackTrace();
+                    log.error(e.getMessage());
                 }
             } else {
-                System.out.println("La mise à jour du plat a échoué, le nom que vous lui avez affecté est déjà existant.");
+                // La mise à jour du plat a échoué, le nom que vous lui avez affecté est déjà existant.
                 Optional<Dish> dishAlreadyExists = findById(object.getDishId());
                 if (dishAlreadyExists.isPresent()) {
                     object = dishAlreadyExists.get();
@@ -153,29 +159,26 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
 
     public Dish updateDailyMenu(Long id, boolean dailyMenu) {
         if (id != null) {
-            try (PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_DAILY_MENU_SQL)) {
+            try (var preparedStatement = connection.prepareStatement(UPDATE_DAILY_MENU_SQL)) {
                 preparedStatement.setBoolean(1, dailyMenu);
                 preparedStatement.setLong(2, id);
                 preparedStatement.executeUpdate();
             } catch (SQLException e) {
-                e.printStackTrace();
+                log.error(e.getMessage());
             }
-        } else {
-            System.out.println("Erreur : Impossible de mettre à jour un plat qui n'existe pas.");
         }
         Optional<Dish> dish = findById(id);
         return dish.orElse(null);
     }
 
-    @Override
     public void delete(Long id) {
         if (id != null) {
-            try (PreparedStatement preparedStatement = connection.prepareStatement(DELETE_SQL)) {
+            try (var preparedStatement = connection.prepareStatement(DELETE_SQL)) {
                 deleteRawMaterialsByDishId(id);
                 preparedStatement.setLong(1, id);
                 preparedStatement.executeUpdate();
             } catch (SQLException e) {
-                e.printStackTrace();
+                log.error(e.getMessage());
             }
         }
     }
@@ -185,9 +188,9 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
     public Map<RawMaterial, Integer> findRawMaterialsByDishId(Long id) {
         Map<RawMaterial, Integer> rawMaterials = new HashMap<>();
         if (id != null) {
-            try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_RM_BY_DISH_ID_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+            try (var preparedStatement = connection.prepareStatement(FIND_RM_BY_DISH_ID_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
                 preparedStatement.setLong(1, id);
-                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                try (var resultSet = preparedStatement.executeQuery()) {
                     while (resultSet.next()) {
                         Optional<RawMaterial> rawMaterial = RawMaterialRepositoryImpl.getInstance().findById(resultSet.getLong("rmId"));
                         if (rawMaterial.isPresent()) {
@@ -196,7 +199,7 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
                     }
                 }
             } catch (SQLException e) {
-                log.error("Exception: " + e.getMessage());
+                log.error(e.getMessage());
             }
         }
         return rawMaterials;
@@ -206,13 +209,13 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
         if (dishId != null && rawMaterials != null) {
             rawMaterials.forEach((rm, quantity) -> {
                 if (rm.getRawMaterialId() != null) {
-                    try (PreparedStatement preparedStatement = connection.prepareStatement(SAVE_RM_SQL)) {
+                    try (var preparedStatement = connection.prepareStatement(SAVE_RM_SQL)) {
                         preparedStatement.setLong(1, dishId);
                         preparedStatement.setLong(2, rm.getRawMaterialId());
                         preparedStatement.setInt(3, quantity);
                         preparedStatement.executeUpdate();
                     } catch (SQLException e) {
-                        e.printStackTrace();
+                        log.error(e.getMessage());
                     }
                 }
             });
@@ -226,12 +229,7 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
 
     public void deleteRawMaterialsByDishId(Long dishId) {
         if (dishId != null) {
-            try (PreparedStatement preparedStatement = connection.prepareStatement(DELETE_RM_SQL)) {
-                preparedStatement.setLong(1, dishId);
-                preparedStatement.executeUpdate();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            super.delete(dishId, DELETE_RM_SQL);
         }
     }
 

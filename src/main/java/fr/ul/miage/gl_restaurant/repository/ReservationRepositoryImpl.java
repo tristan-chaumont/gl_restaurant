@@ -31,16 +31,16 @@ public class ReservationRepositoryImpl extends Repository<Reservation, Long> {
     @Override
     public List<Reservation> findAll() {
         List<Reservation> reservations = new ArrayList<>();
-        try (Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(FIND_ALL_SQL)) {
+        try (var statement = connection.createStatement();
+             var resultSet = statement.executeQuery(FIND_ALL_SQL)) {
             while (resultSet.next()) {
                 Long reservationId = resultSet.getLong("reservationId");
-                boolean lunch = resultSet.getBoolean("lunch");
+                var lunch = resultSet.getBoolean("lunch");
                 Optional<Table> table = TableRepositoryImpl.getInstance().findById(resultSet.getLong("tableId"));
                 table.ifPresent(value -> reservations.add(new Reservation(reservationId, lunch, value)));
             }
         } catch (SQLException e) {
-            log.error("Exception: " + e.getMessage());
+            log.error(e.getMessage());
         }
         return reservations;
     }
@@ -49,12 +49,12 @@ public class ReservationRepositoryImpl extends Repository<Reservation, Long> {
     public Optional<Reservation> findById(Long id) {
         Optional<Reservation> reservation = Optional.empty();
         if (id != null) {
-            try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_ID_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+            try (var preparedStatement = connection.prepareStatement(FIND_BY_ID_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
                 preparedStatement.setLong(1, id);
-                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                try (var resultSet = preparedStatement.executeQuery()) {
                     if (resultSet.first()) {
                         Long reservationId = resultSet.getLong("reservationId");
-                        boolean lunch = resultSet.getBoolean("lunch");
+                        var lunch = resultSet.getBoolean("lunch");
                         Optional<Table> table = TableRepositoryImpl.getInstance().findById(resultSet.getLong("tableId"));
                         if (table.isPresent()) {
                             reservation = Optional.of(new Reservation(reservationId, lunch, table.get()));
@@ -62,7 +62,7 @@ public class ReservationRepositoryImpl extends Repository<Reservation, Long> {
                     }
                 }
             } catch (SQLException e) {
-                log.error("Exception: " + e.getMessage());
+                log.error(e.getMessage());
             }
         }
         return reservation;
@@ -71,49 +71,45 @@ public class ReservationRepositoryImpl extends Repository<Reservation, Long> {
     @Override
     public Reservation save(Reservation object) {
         if (object != null && object.getReservationId() == null) {
-            try (PreparedStatement preparedStatement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
+            try (var preparedStatement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
                 preparedStatement.setBoolean(1, object.isLunch());
                 preparedStatement.setLong(2, object.getTable().getTableId());
-                int numRowsAffected = preparedStatement.executeUpdate();
-                try (ResultSet resultSet = preparedStatement.getGeneratedKeys()) {
-                    if (resultSet.next()) {
-                        object.setReservationId(resultSet.getLong(1));
-                    }
-                } catch (SQLException s) {
-                    s.printStackTrace();
-                }
+                preparedStatement.executeUpdate();
+                generateKey(object, preparedStatement);
             } catch (SQLException e) {
-                e.printStackTrace();
+                log.error(e.getMessage());
             }
         }
         return object;
+    }
+
+    private void generateKey(Reservation object, PreparedStatement preparedStatement) {
+        try (var resultSet = preparedStatement.getGeneratedKeys()) {
+            if (resultSet.next()) {
+                object.setReservationId(resultSet.getLong(1));
+            }
+        } catch (SQLException s) {
+            log.error(s.getMessage());
+        }
     }
 
     @Override
     public Reservation update(Reservation object) {
         if (object != null && object.getReservationId() != null) {
-            try (PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_SQL)) {
+            try (var preparedStatement = connection.prepareStatement(UPDATE_SQL)) {
                 preparedStatement.setBoolean(1, object.isLunch());
                 preparedStatement.setLong(2, object.getTable().getTableId());
                 preparedStatement.setLong(3, object.getReservationId());
                 preparedStatement.executeUpdate();
             } catch (SQLException e) {
-                e.printStackTrace();
+                log.error(e.getMessage());
             }
         }
         return object;
     }
 
-    @Override
     public void delete(Long id) {
-        if (id != null) {
-            try (PreparedStatement preparedStatement = connection.prepareStatement(DELETE_SQL)) {
-                preparedStatement.setLong(1, id);
-                preparedStatement.executeUpdate();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
+        super.delete(id, DELETE_SQL);
     }
 
     public static ReservationRepositoryImpl getInstance() {

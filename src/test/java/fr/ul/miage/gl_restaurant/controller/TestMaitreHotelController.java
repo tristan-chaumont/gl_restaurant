@@ -16,7 +16,7 @@ import java.util.*;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class TestMaitreHotelController {
+class TestMaitreHotelController {
 
     static MaitreHotelController maitreHotelController;
     static TableRepositoryImpl tableRepository;

@@ -136,9 +136,7 @@ public class MaitreHotelController extends UserController {
 
     public String displayUsers(Set<User> users) {
         var stringBuilder = new TextStringBuilder();
-        users.forEach(u -> {
-            stringBuilder.appendln("[%d] %s %s", u.getUserId(), u.getFirstName(), u.getLastName());
-        });
+        users.forEach(u -> stringBuilder.appendln("[%d] %s %s", u.getUserId(), u.getFirstName(), u.getLastName()));
         return stringBuilder.toString();
     }
 

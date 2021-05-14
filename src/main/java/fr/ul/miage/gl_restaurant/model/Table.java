@@ -2,11 +2,16 @@ package fr.ul.miage.gl_restaurant.model;
 
 import fr.ul.miage.gl_restaurant.constants.TableStates;
 import fr.ul.miage.gl_restaurant.repository.TableRepositoryImpl;
+import fr.ul.miage.gl_restaurant.repository.UserRepositoryImpl;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.TextStringBuilder;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Optional;
 
 
 @Getter
@@ -36,6 +41,14 @@ public class Table {
 
     public Table(Integer floor, TableStates state, Integer places, User user) {
         this(null, floor, state, places, user);
+    }
+    public Table(ResultSet resultSet) throws SQLException {
+        tableId = resultSet.getLong("tableId");
+        floor = resultSet.getInt("floor");
+        state = TableStates.getState(resultSet.getString("state"));
+        places = resultSet.getInt("places");
+        Optional<User> optionalUser = UserRepositoryImpl.getInstance().findById(resultSet.getLong("userId"));
+        user = optionalUser.orElse(null);
     }
 
     public void changeState(TableStates tableStates) {

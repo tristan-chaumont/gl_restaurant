@@ -29,12 +29,12 @@ public class MealRepositoryImpl extends Repository<Meal, Long> {
     @Override
     public List<Meal> findAll() {
         List<Meal> meals = new ArrayList<>();
-        try (Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(FIND_ALL_SQL)) {
+        try (var statement = connection.createStatement();
+             var resultSet = statement.executeQuery(FIND_ALL_SQL)) {
             while (resultSet.next()) {
                 Long mealId = resultSet.getLong("mealId");
                 Integer customersNb = resultSet.getInt("customersNb");
-                Timestamp startDate = resultSet.getTimestamp("startDate");
+                var startDate = resultSet.getTimestamp("startDate");
                 Long mealDuration = resultSet.getLong("mealDuration");
                 Optional<Table> table = TableRepositoryImpl.getInstance().findById(resultSet.getLong("tableId"));
                 if(table.isPresent()){
@@ -43,7 +43,7 @@ public class MealRepositoryImpl extends Repository<Meal, Long> {
                 }
             }
         } catch (SQLException e) {
-            log.error("Exception: " + e.getMessage());
+            log.error(e.getMessage());
         }
         return meals;
     }
@@ -51,23 +51,23 @@ public class MealRepositoryImpl extends Repository<Meal, Long> {
     @Override
     public Optional<Meal> findById(Long id) {
         Optional<Meal> meal = Optional.empty();
-        try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_ID_SQL,ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+        try (var preparedStatement = connection.prepareStatement(FIND_BY_ID_SQL,ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
             preparedStatement.setLong(1, id);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+            try (var resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.first()) {
                     Long mealId = resultSet.getLong("mealId");
-                    Integer customersnb = resultSet.getInt("customersnb");
-                    Timestamp startDate = resultSet.getTimestamp("startDate");
+                    var customersNb = resultSet.getInt("customersNb");
+                    var startDate = resultSet.getTimestamp("startDate");
                     Long mealDuration = resultSet.getLong("mealDuration");
                     Optional<Table> table = TableRepositoryImpl.getInstance().findById(resultSet.getLong("tableId"));
                     if (table.isPresent()) {
                         Optional<Bill> bill = BillRepositoryImpl.getInstance().findById(resultSet.getLong("billId"));
-                        meal = Optional.of(new Meal(mealId, customersnb, startDate, mealDuration, table.get(), bill.orElse(null)));
+                        meal = Optional.of(new Meal(mealId, customersNb, startDate, mealDuration, table.get(), bill.orElse(null)));
                     }
                 }
             }
         } catch (SQLException e) {
-            log.error("Exception: " + e.getMessage());
+            log.error(e.getMessage());
         }
         return meal;
     }
@@ -75,7 +75,7 @@ public class MealRepositoryImpl extends Repository<Meal, Long> {
     @Override
     public Meal save(Meal object) {
         if (object != null && object.getMealId() == null) {
-            try (PreparedStatement preparedStatement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
+            try (var preparedStatement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
                 preparedStatement.setInt(1, object.getCustomersNb());
                 preparedStatement.setTimestamp(2, object.getStartDate());
                 if(object.getMealDuration() == null) {
@@ -89,25 +89,29 @@ public class MealRepositoryImpl extends Repository<Meal, Long> {
                 }else {
                     preparedStatement.setLong(5, object.getBill().getBillId());
                 }
-                int numRowsAffected = preparedStatement.executeUpdate();
-                try (ResultSet resultSet = preparedStatement.getGeneratedKeys()) {
-                    if (resultSet.next()) {
-                        object.setMealId(resultSet.getLong(1));
-                    }
-                } catch (SQLException s) {
-                    s.printStackTrace();
-                }
+                preparedStatement.executeUpdate();
+                generateKey(object, preparedStatement);
             } catch (SQLException e) {
-                e.printStackTrace();
+                log.error(e.getMessage());
             }
         }
         return object;
     }
 
+    private void generateKey(Meal object, PreparedStatement preparedStatement) {
+        try (var resultSet = preparedStatement.getGeneratedKeys()) {
+            if (resultSet.next()) {
+                object.setMealId(resultSet.getLong(1));
+            }
+        } catch (SQLException s) {
+            log.error(s.getMessage());
+        }
+    }
+
     @Override
     public Meal update(Meal object) {
         if (object != null && object.getMealId() != null) {
-            try (PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_SQL)) {
+            try (var preparedStatement = connection.prepareStatement(UPDATE_SQL)) {
                 preparedStatement.setInt(1, object.getCustomersNb());
                 preparedStatement.setTimestamp(2, object.getStartDate());
                 preparedStatement.setLong(3, object.getMealDuration());
@@ -116,20 +120,14 @@ public class MealRepositoryImpl extends Repository<Meal, Long> {
                 preparedStatement.setLong(6, object.getMealId());
                 preparedStatement.executeUpdate();
             } catch (SQLException e) {
-                e.printStackTrace();
+                log.error(e.getMessage());
             }
         }
         return object;
     }
 
-    @Override
     public void delete(Long id) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement(DELETE_SQL)) {
-            preparedStatement.setLong(1, id);
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        super.delete(id, DELETE_SQL);
     }
 
     public static MealRepositoryImpl getInstance() {

@@ -107,19 +107,23 @@ public class UserRepositoryImpl extends Repository<User, Long> {
                     preparedStatement.setString(3, object.getFirstName());
                     preparedStatement.setString(4, object.getRole().toString());
                     preparedStatement.executeUpdate();
-                    try (var resultSet = preparedStatement.getGeneratedKeys()) {
-                        if (resultSet.next()) {
-                            object.setUserId(resultSet.getLong(1));
-                        }
-                    } catch (SQLException s) {
-                        log.error(s.getMessage());
-                    }
+                    generateKey(object, preparedStatement);
                 } catch (SQLException e) {
                     log.error(e.getMessage());
                 }
             }
         }
         return object;
+    }
+
+    private void generateKey(User object, PreparedStatement preparedStatement) {
+        try (var resultSet = preparedStatement.getGeneratedKeys()) {
+            if (resultSet.next()) {
+                object.setUserId(resultSet.getLong(1));
+            }
+        } catch (SQLException s) {
+            log.error(s.getMessage());
+        }
     }
 
     @Override
@@ -148,16 +152,8 @@ public class UserRepositoryImpl extends Repository<User, Long> {
         return object;
     }
 
-    @Override
     public void delete(Long id) {
-        if (id != null) {
-            try (var preparedStatement = connection.prepareStatement(DELETE_SQL)) {
-                preparedStatement.setLong(1, id);
-                preparedStatement.executeUpdate();
-            } catch (SQLException e) {
-                log.error(e.getMessage());
-            }
-        }
+        super.delete(id, DELETE_SQL);
     }
 
     public static UserRepositoryImpl getInstance() {
