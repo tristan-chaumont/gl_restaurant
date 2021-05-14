@@ -30,10 +30,11 @@ public class MaitreHotelController extends UserController {
     private static final String ACTION_1 = "1 : Prendre une réservation";
     private static final String ACTION_2 = "2 : Affecter un client à une table";
     private static final String ACTION_3 = "3 : Affecter un serveur à une table";
+    private static final String ACTION_4 = "4 : Afficher la liste des tables ainsi que leur serveur";
 
     public MaitreHotelController(Authentification auth) {
         super(auth);
-        this.actions.addAll(Arrays.asList(ACTION_1, ACTION_2, ACTION_3));
+        this.actions.addAll(Arrays.asList(ACTION_1, ACTION_2, ACTION_3, ACTION_4));
     }
 
     protected long askTableId(List<Table> tables) {
@@ -83,9 +84,7 @@ public class MaitreHotelController extends UserController {
                 stringBuilder.append("Étage %d : ", k);
                 v.forEach(t -> {
                     if (t.getTableId() != null) {
-                        stringBuilder.append(
-                                "[n°%d]",
-                                t.getTableId());
+                        stringBuilder.append("[n°%d]", t.getTableId());
                     }
                 });
                 stringBuilder.appendNewLine();
@@ -186,6 +185,26 @@ public class MaitreHotelController extends UserController {
         }
     }
 
+    public String displayTablesAndServers() {
+        var stringBuilder = new TextStringBuilder();
+        Map<Integer, Set<Table>> floors = getFloorsTables(tableRepository.findAll());
+        floors.forEach((k, v) -> {
+            stringBuilder.appendln("Étage %d", k);
+            v.forEach(t -> {
+                if (t.getTableId() != null) {
+                    stringBuilder.append("\t[n°%d]", t.getTableId());
+                    if (t.getUser() != null) {
+                        stringBuilder.appendln(" - Serveur : %s %s", t.getUser().getFirstName(), t.getUser().getLastName());
+                    } else {
+                        stringBuilder.appendNewLine();
+                    }
+                }
+            });
+            stringBuilder.appendNewLine();
+        });
+        return stringBuilder.toString();
+    }
+
     @Override
     public String displayActions() {
         var stringBuilder = new TextStringBuilder();
@@ -203,11 +222,17 @@ public class MaitreHotelController extends UserController {
             case 0:
                 auth.disconnect();
                 break;
+            case 1:
+                // TODO: Prendre une réservation
+                break;
             case 2:
                 seatClient();
                 break;
             case 3:
                 assignServer();
+                break;
+            case 4:
+                System.out.println(displayTablesAndServers());
                 break;
             default:
                 break;
