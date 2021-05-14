@@ -73,6 +73,10 @@ public class Order implements Comparable<Order> {
         this(null, orderDate, preparationDate, meal, dishes);
     }
 
+    public Order(Timestamp orderDate,  Meal meal, Map<Dish, Integer> dishes) {
+        this(null, orderDate, null, meal, dishes);
+    }
+
     public void addDish(Dish dish, Integer quantity) {
         dishes.put(dish, quantity);
     }

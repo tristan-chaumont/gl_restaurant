@@ -1,11 +1,15 @@
 package fr.ul.miage.gl_restaurant.controller;
 
 import fr.ul.miage.gl_restaurant.auth.Authentification;
+import fr.ul.miage.gl_restaurant.constants.MenuTypes;
+import fr.ul.miage.gl_restaurant.model.Dish;
 import fr.ul.miage.gl_restaurant.model.Order;
+import fr.ul.miage.gl_restaurant.model.RawMaterial;
 import fr.ul.miage.gl_restaurant.repository.OrderRepositoryImpl;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -41,6 +45,18 @@ public class CuisinierController extends UserController {
     public void prepareOrder(Order order) {
         order.setPreparationDate(Timestamp.from(Instant.now()));
         orderRepository.update(order);
+    }
+
+    public void createDish(String dishName, String category, MenuTypes menuType, Double price, HashMap<RawMaterial, Integer> rawMaterials){
+
+    }
+
+    public void updateDish(Dish dish, String dishName, String category, MenuTypes menuType, Double price, HashMap<RawMaterial, Integer> rawMaterials){
+
+    }
+
+    public void deleteDish(Dish dish){
+
     }
 
     @Override

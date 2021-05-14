@@ -53,6 +53,13 @@ class TestCuisineController {
     @DisplayName("La file d'attente des commandes est triée et ne comporte que les commandes non préparées")
     void verifyGetOrdersQueueReturnsOrderedQueue() {
         CuisinierController cuisinierController = new CuisinierController(new Authentification());
+
+    }
+
+    @Test
+    @DisplayName("Le plat est bien ajouté à la base de données")
+    void verifyAddDishSucceed() {
+        CuisinierController cuisinierController = new CuisinierController(new Authentification());
         SortedSet<Order> ordersQueue = cuisinierController.getOrdersQueue();
         assertThat(ordersQueue.size(), is(3));
         assertThat(ordersQueue.first().getOrderDate(), equalTo(order5.getOrderDate()));
