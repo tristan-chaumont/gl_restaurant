@@ -10,6 +10,7 @@ import fr.ul.miage.gl_restaurant.repository.MealRepositoryImpl;
 import fr.ul.miage.gl_restaurant.repository.TableRepositoryImpl;
 import fr.ul.miage.gl_restaurant.repository.UserRepositoryImpl;
 import fr.ul.miage.gl_restaurant.utilities.InputUtils;
+import fr.ul.miage.gl_restaurant.utilities.PrintUtils;
 import org.apache.commons.text.TextStringBuilder;
 
 import java.sql.Timestamp;
@@ -35,6 +36,22 @@ public class MaitreHotelController extends UserController {
         this.actions.addAll(Arrays.asList(ACTION_1, ACTION_2, ACTION_3));
     }
 
+    protected long askTableId(List<Table> tables) {
+        return Long.parseLong(
+                InputUtils.readInputInArray(
+                        tables.stream().map(t -> t.getTableId().toString()).collect(Collectors.toList())
+                )
+        );
+    }
+
+    protected long askServerId(Set<User> users) {
+        return Long.parseLong(
+                InputUtils.readInputInArray(
+                        users.stream().map(u -> u.getUserId().toString()).collect(Collectors.toList())
+                )
+        );
+    }
+
     protected List<Table> getAvailableTables(List<Table> tables) {
         return tables.stream().filter(t -> t.getState().equals(TableStates.LIBRE)).collect(Collectors.toList());
     }
@@ -58,9 +75,9 @@ public class MaitreHotelController extends UserController {
     /**
      * Renvoie un string contenant l'étage et les tables associées à cet étage.
      */
-    public String displayAvailableTables(List<Table> tables) {
+    public String displayTables(List<Table> tables) {
         var stringBuilder = new TextStringBuilder();
-        Map<Integer, Set<Table>> floors = getFloorsTables(getAvailableTables(tables));
+        Map<Integer, Set<Table>> floors = getFloorsTables(tables);
         floors.forEach((k, v) -> {
             if (!v.isEmpty()) {
                 stringBuilder.append("Étage %d : ", k);
@@ -77,6 +94,12 @@ public class MaitreHotelController extends UserController {
         return stringBuilder.toString();
     }
 
+    /**
+     * Affecte des clients à une table.
+     * @param table Table à laquelle affecter les clients.
+     * @param nbCustomers Nombre de clients.
+     * @return Le lien entre les clients et la table.
+     */
     public Meal seatClient(Table table, int nbCustomers) {
         Meal meal = null;
         if (table.getState().equals(TableStates.LIBRE) && table.getPlaces() >= nbCustomers) {
@@ -87,40 +110,81 @@ public class MaitreHotelController extends UserController {
         return meal;
     }
 
+    /**
+     * Interface pour affecter les clients à une table.
+     * Appelle la méthode seatClient(table, nbCustomers).
+     */
     public void seatClient() {
         List<Table> availableTables = getAvailableTables(tableRepository.findAll());
-        System.out.println(displayAvailableTables(availableTables));
-        System.out.print("Veuillez saisir le numéro de la table : ");
-        var tableId = Long.parseLong(
-                InputUtils.readInputInArray(
-                        availableTables.stream().map(t -> t.getTableId().toString()).collect(Collectors.toList())
-                )
-        );
+        PrintUtils.print("%s%n", displayTables(availableTables));
+        PrintUtils.print("Veuillez saisir le numéro de la table : ");
+        var tableId = askTableId(availableTables);
         Optional<Table> table = tableRepository.findById(tableId);
         if (table.isPresent()) {
-            System.out.printf("Veuillez saisir le nombre de personnes (de 1 à %d) : ", table.get().getPlaces());
+            PrintUtils.print("Veuillez saisir le nombre de personnes (de 1 à %d) : ", table.get().getPlaces());
             var nbCustomers = InputUtils.readIntegerInputInRange(1, table.get().getPlaces() + 1);
 
             if (seatClient(table.get(), nbCustomers) != null) {
-                System.out.printf("Les clients ont bien été installés.%n%n");
+                PrintUtils.print("Les clients ont bien été installés.%n%n");
             } else {
-                System.out.printf("Problème lors de l'installation des clients, veuillez réessayer.%n%n");
+                PrintUtils.print("Problème lors de l'installation des clients, veuillez réessayer.%n%n");
             }
         } else {
-            System.out.println("Cette table n'existe pas.");
+            PrintUtils.print("Cette table n'existe pas.%n");
         }
+    }
+
+    public String displayUsers(Set<User> users) {
+        var stringBuilder = new TextStringBuilder();
+        users.forEach(u -> {
+            stringBuilder.appendln("[%d] %s %s", u.getUserId(), u.getFirstName(), u.getLastName());
+        });
+        return stringBuilder.toString();
     }
 
     /**
      * Affecte un serveur à une table.
      * @param table Table à laquelle affecter un serveur.
      * @param user Serveur à affecter.
+     * @return True, si l'affectation a été faite.
      */
-    public void assignServer(Table table, User user) {
+    public boolean assignServer(Table table, User user) {
         Optional<User> userTemp = userRepository.findById(user.getUserId());
         if(userTemp.isPresent() && user.getRole().equals(Roles.SERVEUR)) {
             table.setUser(user);
             tableRepository.update(table);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Interface pour affecter un serveur à une table.
+     * Appelle assignServer(table, user).
+     */
+    public void assignServer() {
+        List<Table> tables = tableRepository.findAll();
+        PrintUtils.print("%s%n", displayTables(tables));
+        PrintUtils.print("Veuillez saisir le numéro de la table : ");
+        var tableId = askTableId(tables);
+        Optional<Table> table = tableRepository.findById(tableId);
+        if (table.isPresent()) {
+            Set<User> servers = userRepository.findByRole(Roles.SERVEUR);
+            PrintUtils.print("%n%s%n", displayUsers(servers));
+            PrintUtils.print("Veuillez saisir le numéro du serveur : ");
+            var serverId = askServerId(servers);
+            Optional<User> server = userRepository.findById(serverId);
+            if (server.isPresent()) {
+                if (assignServer(table.get(), server.get())) {
+                    PrintUtils.print("Le serveur a bien été affecté à la table.%n%n");
+                } else {
+                    PrintUtils.print("Problème lors de l'affectation du serveur à la table, veuillez réessayer.%n%n");
+                }
+            } else {
+                PrintUtils.print("Cet utilisateur n'existe pas.%n");
+            }
+        } else {
+            PrintUtils.print("Cette table n'existe pas.%n");
         }
     }
 
@@ -136,6 +200,7 @@ public class MaitreHotelController extends UserController {
 
     @Override
     public void callAction(int action) {
+        PrintUtils.print("%n");
         switch (action) {
             case 0:
                 auth.disconnect();
@@ -144,22 +209,10 @@ public class MaitreHotelController extends UserController {
                 seatClient();
                 break;
             case 3:
-
+                assignServer();
                 break;
             default:
                 break;
         }
-    }
-
-    public static void main(String[] args) {
-        List<Table> tables = new ArrayList<>() {{
-            add(new Table(20L, 1, TableStates.LIBRE, 4, null));
-            add(new Table(100L, 2, TableStates.OCCUPEE, 5, null));
-            add(new Table(59L, 2, TableStates.LIBRE, 6, null));
-            add(new Table(77L, 1, TableStates.LIBRE, 7, null));
-            add(new Table(3L, 1, TableStates.SALE, 8, null));
-            add(new Table(7L, 3, TableStates.LIBRE, 9, null));
-            add(new Table(12L, 3, TableStates.LIBRE, 10, null));
-        }};
     }
 }

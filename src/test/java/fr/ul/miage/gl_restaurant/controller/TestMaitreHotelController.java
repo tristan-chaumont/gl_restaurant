@@ -71,37 +71,38 @@ public class TestMaitreHotelController {
 
     @Test
     @DisplayName("Le serveur a bien été affecté")
-    void verifyAffectServerSucceed() {
+    void verifyAssignServerSucceed() {
         User userTest = new User("ttcUser2", "ttc", "User2", Roles.SERVEUR);
-        userRepository.save(userTest);
-        maitreHotelController.assignServer(table1, userTest);
-        tableRepository.update(table1);
-        Table result = tableRepository.findById(table1.getTableId()).get();
-        assertThat(result.getUser(), equalTo(userTest));
+        userTest = userRepository.save(userTest);
+        boolean result = maitreHotelController.assignServer(table1, userTest);
+        assertThat(result, is(true));
+        Table tableResult = tableRepository.findById(table1.getTableId()).get();
+        assertThat(tableResult.getUser(), equalTo(userTest));
+        tableRepository.delete(table1.getTableId());
         userRepository.delete(userTest.getUserId());
     }
 
     @Test
     @DisplayName("Le serveur n'a pas été affecté car ce n'est pas un serveur")
-    void verifyAffectServerFailedBecauseItsNotAServer() {
+    void verifyAssignServerFailedBecauseItsNotAServer() {
         User userTest = new User("ttcUser2", "ttc", "User2", Roles.CUISINIER);
         userRepository.save(userTest);
-        maitreHotelController.assignServer(table1, userTest);
-        tableRepository.update(table1);
-        Table result = tableRepository.findById(table1.getTableId()).get();
-        assertThat(result.getUser(), equalTo(user));
+        boolean result = maitreHotelController.assignServer(table1, userTest);
+        assertThat(result, is(false));
+        Table tableResult = tableRepository.findById(table1.getTableId()).get();
+        assertThat(tableResult.getUser(), equalTo(user));
         tableRepository.delete(table1.getTableId());
         userRepository.delete(userTest.getUserId());
     }
 
     @Test
     @DisplayName("Le serveur n'est pas affecté car il n'existe pas")
-    void verifyAffectServerFailedBecauseUserDoesNotExist() {
+    void verifyAssignServerFailedBecauseUserDoesNotExist() {
         User userTest = new User(999999L,"ttcUser2", "ttc", "User2", Roles.SERVEUR);
-        maitreHotelController.assignServer(table1, userTest);
-        tableRepository.update(table1);
-        Table result = tableRepository.findById(table1.getTableId()).get();
-        assertThat(result.getUser(), equalTo(user));
+        boolean result = maitreHotelController.assignServer(table1, userTest);
+        assertThat(result, is(false));
+        Table tableResult = tableRepository.findById(table1.getTableId()).get();
+        assertThat(tableResult.getUser(), equalTo(user));
         tableRepository.delete(table1.getTableId());
         userRepository.delete(userTest.getUserId());
     }

@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.TextStringBuilder;
 
 
 @Getter
@@ -43,14 +44,15 @@ public class Table {
     }
 
     @Override
-    public String toString(){
-        String result = "--------------------";
-        result += "|" + StringUtils.center("Table " +tableId, 18) + "|";
-        result += "--------------------";
-        result += "Etage : " + floor;
-        result += "Serveur : " + user.getFirstName() + " " + user.getLastName();
-        result += "Nombres de places : " + places;
-        result += "Statut : " + state.toString();
-        return result;
+    public String toString() {
+        var stringBuilder = new TextStringBuilder();
+        stringBuilder.appendln("-".repeat(20))
+                .appendln("|" + StringUtils.center("Table " +tableId, 18) + "|")
+                .appendln("-".repeat(20))
+                .appendln("Étage : %d", floor)
+                .appendln("Serveur : %s %s", user.getFirstName(), user.getLastName())
+                .appendln("Nombre de places : %d", places)
+                .appendln("Statut : %s", state.toString());
+        return stringBuilder.toString();
     }
 }
