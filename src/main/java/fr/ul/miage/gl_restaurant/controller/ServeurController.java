@@ -14,15 +14,12 @@ import java.util.Set;
 
 public class ServeurController extends UserController {
 
-    private final OrderRepositoryImpl orderRepository;
-    private final TableRepositoryImpl tableRepository;
-    private final RawMaterialRepositoryImpl rawMaterialRepository;
+    private final OrderRepositoryImpl orderRepository = OrderRepositoryImpl.getInstance();
+    private final TableRepositoryImpl tableRepository = TableRepositoryImpl.getInstance();
+    private final RawMaterialRepositoryImpl rawMaterialRepository = RawMaterialRepositoryImpl.getInstance();
 
     public ServeurController(Authentification auth) {
         super(auth);
-        this.orderRepository = OrderRepositoryImpl.getInstance();
-        this.tableRepository = TableRepositoryImpl.getInstance();
-        rawMaterialRepository = RawMaterialRepositoryImpl.getInstance();
     }
 
     /**

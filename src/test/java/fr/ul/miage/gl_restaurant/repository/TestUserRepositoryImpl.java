@@ -6,6 +6,7 @@ import org.junit.jupiter.api.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
@@ -67,6 +68,15 @@ class TestUserRepositoryImpl {
     void verifyFindByLoginGetsNothing() {
         Optional<User> result = userRepository.findByLogin("this login does not exist :)");
         assertThat(result.isPresent(), is(false));
+    }
+
+    @Test
+    @DisplayName("findByRole() récupère tous les utilisateurs qui ont un le rôle Serveur")
+    void verifyFindByRoleReturnsAllElements() {
+        Set<User> users = userRepository.findByRole(Roles.SERVEUR);
+        assertThat(users.size(), is(2));
+        assertThat(users.stream().findFirst().isPresent(), is(true));
+        assertThat(users.stream().findFirst().get().getLogin(), equalTo("chaumontt"));
     }
 
     @Test

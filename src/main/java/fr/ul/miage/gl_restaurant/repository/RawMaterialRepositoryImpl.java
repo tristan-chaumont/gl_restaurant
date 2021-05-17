@@ -5,6 +5,7 @@ import fr.ul.miage.gl_restaurant.model.Order;
 import fr.ul.miage.gl_restaurant.model.RawMaterial;
 import lombok.extern.slf4j.Slf4j;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -41,7 +42,7 @@ public class RawMaterialRepositoryImpl extends Repository<RawMaterial, Long> {
                 rawMaterials.add(new RawMaterial(resultSet));
             }
         } catch (SQLException e) {
-            log.error("Exception: " + e.getMessage());
+            log.error(e.getMessage());
         }
         return rawMaterials;
     }
@@ -58,7 +59,7 @@ public class RawMaterialRepositoryImpl extends Repository<RawMaterial, Long> {
                     }
                 }
             } catch (SQLException e) {
-                log.error("Exception: " + e.getMessage());
+                log.error(e.getMessage());
             }
         }
         return rawMaterial;
@@ -74,7 +75,7 @@ public class RawMaterialRepositoryImpl extends Repository<RawMaterial, Long> {
                 }
             }
         } catch (SQLException e) {
-            log.error("Exception: " + e.getMessage());
+            log.error(e.getMessage());
         }
         return rawMaterial;
     }
@@ -89,7 +90,7 @@ public class RawMaterialRepositoryImpl extends Repository<RawMaterial, Long> {
                 }
             }
         } catch (SQLException e) {
-            log.error("Exception: " + e.getMessage());
+            log.error(e.getMessage());
         }
         return  outOfStockRawMaterials;
     }
@@ -104,19 +105,23 @@ public class RawMaterialRepositoryImpl extends Repository<RawMaterial, Long> {
                     preparedStatement.setInt(2, object.getStockQuantity());
                     preparedStatement.setString(3, object.getUnit().toString());
                     preparedStatement.executeUpdate();
-                    try (var resultSet = preparedStatement.getGeneratedKeys()) {
-                        if (resultSet.next()) {
-                            object.setRawMaterialId(resultSet.getLong(1));
-                        }
-                    } catch (SQLException s) {
-                        s.printStackTrace();
-                    }
+                    generateKey(object, preparedStatement);
                 } catch (SQLException e) {
-                    e.printStackTrace();
+                    log.error(e.getMessage());
                 }
             }
         }
         return object;
+    }
+
+    private void generateKey(RawMaterial object, PreparedStatement preparedStatement) {
+        try (var resultSet = preparedStatement.getGeneratedKeys()) {
+            if (resultSet.next()) {
+                object.setRawMaterialId(resultSet.getLong(1));
+            }
+        } catch (SQLException s) {
+            log.error(s.getMessage());
+        }
     }
 
     @Override
@@ -131,10 +136,10 @@ public class RawMaterialRepositoryImpl extends Repository<RawMaterial, Long> {
                     preparedStatement.setLong(4, object.getRawMaterialId());
                     preparedStatement.executeUpdate();
                 } catch (SQLException e) {
-                    e.printStackTrace();
+                    log.error(e.getMessage());
                 }
             } else {
-                System.out.println("La mise à jour de la matière première a échoué, le nom que vous lui avez affecté est déjà existant.");
+                // La mise à jour de la matière première a échoué, le nom que vous lui avez affecté est déjà existant.
                 Optional<RawMaterial> rawMaterialAlreadyExists = findById(object.getRawMaterialId());
                 if (rawMaterialAlreadyExists.isPresent()) {
                     object = rawMaterialAlreadyExists.get();
@@ -155,7 +160,7 @@ public class RawMaterialRepositoryImpl extends Repository<RawMaterial, Long> {
             preparedStatement.setInt(2, threshold);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error(e.getMessage());
         }
     }
 
@@ -170,7 +175,7 @@ public class RawMaterialRepositoryImpl extends Repository<RawMaterial, Long> {
             preparedStatement.setLong(2, rmId);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error(e.getMessage());
         }
     }
 
@@ -179,25 +184,14 @@ public class RawMaterialRepositoryImpl extends Repository<RawMaterial, Long> {
      * @param order Commande à traiter.
      */
     public void updateStockBasedOnTakenOrder(Order order) {
-        order.getDishes().forEach((dish, qtDishes) -> {
-            IntStream.range(0, qtDishes).forEach(i -> {
-                dish.getRawMaterials().forEach(((rawMaterial, qtRM) -> {
-                    updateStock(qtRM, rawMaterial.getRawMaterialId());
-                }));
-            });
-        });
+        order.getDishes().forEach((dish, qtDishes) ->
+                IntStream.range(0, qtDishes).forEach(i ->
+                        dish.getRawMaterials().forEach(((rawMaterial, qtRM) ->
+                                updateStock(qtRM, rawMaterial.getRawMaterialId())))));
     }
 
-    @Override
     public void delete(Long id) {
-        if (id != null) {
-            try (var preparedStatement = connection.prepareStatement(DELETE_SQL)) {
-                preparedStatement.setLong(1, id);
-                preparedStatement.executeUpdate();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
+        super.delete(id, DELETE_SQL);
     }
 
     public static RawMaterialRepositoryImpl getInstance() {

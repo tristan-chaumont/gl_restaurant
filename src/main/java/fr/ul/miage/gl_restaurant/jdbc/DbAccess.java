@@ -18,12 +18,14 @@ import java.util.Properties;
 public class DbAccess {
 
     private static Connection connection;
-    private static String url, username, password;
+    private static String url;
+    private static String username;
+    private static String password;
 
     private DbAccess() {}
 
     private static void parseProperties(String propertiesFileName) {
-        Properties properties = new Properties();
+        var properties = new Properties();
         try (InputStream inputStream = new FileInputStream(propertiesFileName)) {
             properties.load(inputStream);
 
@@ -34,7 +36,7 @@ public class DbAccess {
             log.error(String.format("Property file '%s' not found in the classpath.", propertiesFileName));
         } catch (IOException e) {
             log.error(String.format("Could not open file '%s'", propertiesFileName));
-            log.error("Exception: " + e);
+            log.error(e.getMessage());
         }
     }
 
@@ -45,7 +47,7 @@ public class DbAccess {
             try {
                 connection = DriverManager.getConnection(url, username, password);
             } catch (SQLException e) {
-                log.error("Exception: " + e.getMessage());
+                log.error(e.getMessage());
                 System.exit(1);
             }
         }

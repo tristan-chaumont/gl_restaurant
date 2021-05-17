@@ -14,6 +14,8 @@ public class OrderRepositoryImpl extends Repository<Order, Long> {
 
     private static OrderRepositoryImpl instance;
 
+    private static final String ORDERID_COLUMN_NAME = "orderId";
+
     private static final String FIND_ALL_SQL = "SELECT orderId, orderDate, preparationDate, served, mealId FROM Orders";
     private static final String FIND_CURRENT_ORDERS = "SELECT orderId, orderDate, preparationDate, served, mealId FROM Orders WHERE preparationDate IS NULL";
     private static final String FIND_BY_ID_SQL = "SELECT orderId, orderDate, preparationDate, served, mealId FROM Orders WHERE orderId = ?";
@@ -41,19 +43,19 @@ public class OrderRepositoryImpl extends Repository<Order, Long> {
 
     private List<Order> findAllHelper(String query) {
         List<Order> orders = new ArrayList<>();
-        try (Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(query)) {
+        try (var statement = connection.createStatement();
+             var resultSet = statement.executeQuery(query)) {
             while (resultSet.next()) {
-                Long orderId = resultSet.getLong("orderId");
-                Timestamp orderDate = resultSet.getTimestamp("orderDate");
-                Timestamp preparationDate = resultSet.getTimestamp("preparationDate");
-                boolean served = resultSet.getBoolean("served");
+                Long orderId = resultSet.getLong(ORDERID_COLUMN_NAME);
+                var orderDate = resultSet.getTimestamp("orderDate");
+                var preparationDate = resultSet.getTimestamp("preparationDate");
+                var served = resultSet.getBoolean("served");
                 Optional<Meal> meal = MealRepositoryImpl.getInstance().findById(resultSet.getLong("mealId"));
                 Map<Dish, Integer> dishes = findDishesByOrderId(orderId);
                 meal.ifPresent(value -> orders.add(new Order(orderId, orderDate, preparationDate, served, value, dishes)));
             }
         } catch (SQLException e) {
-            log.error("Exception: " + e.getMessage());
+            log.error(e.getMessage());
         }
         return orders;
     }
@@ -61,14 +63,14 @@ public class OrderRepositoryImpl extends Repository<Order, Long> {
     @Override
     public Optional<Order> findById(Long id) {
         Optional<Order> order = Optional.empty();
-        try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_ID_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+        try (var preparedStatement = connection.prepareStatement(FIND_BY_ID_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
             preparedStatement.setLong(1, id);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+            try (var resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.first()) {
-                    Long orderId = resultSet.getLong("orderId");
-                    Timestamp orderDate = resultSet.getTimestamp("orderDate");
-                    Timestamp preparationDate = resultSet.getTimestamp("preparationDate");
-                    boolean served = resultSet.getBoolean("served");
+                    Long orderId = resultSet.getLong(ORDERID_COLUMN_NAME);
+                    var orderDate = resultSet.getTimestamp("orderDate");
+                    var preparationDate = resultSet.getTimestamp("preparationDate");
+                    var served = resultSet.getBoolean("served");
                     Optional<Meal> meal = MealRepositoryImpl.getInstance().findById(resultSet.getLong("mealId"));
                     Map<Dish, Integer> dishes = findDishesByOrderId(orderId);
                     if (meal.isPresent()) {
@@ -77,7 +79,7 @@ public class OrderRepositoryImpl extends Repository<Order, Long> {
                 }
             }
         } catch (SQLException e) {
-            log.error("Exception: " + e.getMessage());
+            log.error(e.getMessage());
         }
         return order;
     }
@@ -109,31 +111,35 @@ public class OrderRepositoryImpl extends Repository<Order, Long> {
     @Override
     public Order save(Order object) {
         if (object != null && object.getOrderId() == null) {
-            try (PreparedStatement preparedStatement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
+            try (var preparedStatement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
                 preparedStatement.setTimestamp(1, object.getOrderDate());
                 preparedStatement.setTimestamp(2, object.getPreparationDate());
                 preparedStatement.setBoolean(3, object.isServed());
                 preparedStatement.setLong(4, object.getMeal().getMealId());
                 preparedStatement.executeUpdate();
-                try (ResultSet resultSet = preparedStatement.getGeneratedKeys()) {
-                    if (resultSet.next()) {
-                        object.setOrderId(resultSet.getLong("orderId"));
-                        saveDishesByOrderId(object.getOrderId(), object.getDishes());
-                    }
-                } catch (SQLException s) {
-                    s.printStackTrace();
-                }
+                generateKey(object, preparedStatement);
             } catch (SQLException e) {
-                e.printStackTrace();
+                log.error(e.getMessage());
             }
         }
         return object;
     }
 
+    private void generateKey(Order object, PreparedStatement preparedStatement) {
+        try (var resultSet = preparedStatement.getGeneratedKeys()) {
+            if (resultSet.next()) {
+                object.setOrderId(resultSet.getLong(ORDERID_COLUMN_NAME));
+                saveDishesByOrderId(object.getOrderId(), object.getDishes());
+            }
+        } catch (SQLException s) {
+            log.error(s.getMessage());
+        }
+    }
+
     @Override
     public Order update(Order object) {
         if (object != null && object.getOrderId() != null) {
-            try (PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_SQL)) {
+            try (var preparedStatement = connection.prepareStatement(UPDATE_SQL)) {
                 preparedStatement.setTimestamp(1, object.getOrderDate());
                 preparedStatement.setTimestamp(2, object.getPreparationDate());
                 preparedStatement.setBoolean(3, object.isServed());
@@ -142,21 +148,20 @@ public class OrderRepositoryImpl extends Repository<Order, Long> {
                 updateDishesByOrderId(object.getOrderId(), object.getDishes());
                 preparedStatement.executeUpdate();
             } catch (SQLException e) {
-                e.printStackTrace();
+                log.error(e.getMessage());
             }
         }
         return object;
     }
 
-    @Override
     public void delete(Long id) {
         if (id != null) {
-            try (PreparedStatement preparedStatement = connection.prepareStatement(DELETE_SQL)) {
+            try (var preparedStatement = connection.prepareStatement(DELETE_SQL)) {
                 deleteDishesByOrderId(id);
                 preparedStatement.setLong(1, id);
                 preparedStatement.executeUpdate();
             } catch (SQLException e) {
-                e.printStackTrace();
+                log.error(e.getMessage());
             }
         }
     }
@@ -166,9 +171,9 @@ public class OrderRepositoryImpl extends Repository<Order, Long> {
     public Map<Dish, Integer> findDishesByOrderId(Long id) {
         Map<Dish, Integer> dishes = new HashMap<>();
         if (id != null) {
-            try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_DISHES_BY_ORDER_ID, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+            try (var preparedStatement = connection.prepareStatement(FIND_DISHES_BY_ORDER_ID, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
                 preparedStatement.setLong(1, id);
-                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                try (var resultSet = preparedStatement.executeQuery()) {
                     while (resultSet.next()) {
                         Optional<Dish> dish = DishRepositoryImpl.getInstance().findById(resultSet.getLong("dishId"));
                         if (dish.isPresent()) {
@@ -177,7 +182,7 @@ public class OrderRepositoryImpl extends Repository<Order, Long> {
                     }
                 }
             } catch (SQLException e) {
-                log.error("Exception: " + e.getMessage());
+                log.error(e.getMessage());
             }
         }
         return dishes;
@@ -187,13 +192,13 @@ public class OrderRepositoryImpl extends Repository<Order, Long> {
         if (orderId != null && dishes != null) {
             dishes.forEach((dish, quantity) -> {
                 if (dish.getDishId() != null) {
-                    try (PreparedStatement preparedStatement = connection.prepareStatement(SAVE_DISHES_SQL)) {
+                    try (var preparedStatement = connection.prepareStatement(SAVE_DISHES_SQL)) {
                         preparedStatement.setLong(1, dish.getDishId());
                         preparedStatement.setLong(2, orderId);
                         preparedStatement.setInt(3, quantity);
                         preparedStatement.executeUpdate();
                     } catch (SQLException e) {
-                        e.printStackTrace();
+                        log.error(e.getMessage());
                     }
                 }
             });
@@ -207,11 +212,11 @@ public class OrderRepositoryImpl extends Repository<Order, Long> {
 
     public void deleteDishesByOrderId(Long orderId) {
         if (orderId != null) {
-            try (PreparedStatement preparedStatement = connection.prepareStatement(DELETE_DISHES_SQL)) {
+            try (var preparedStatement = connection.prepareStatement(DELETE_DISHES_SQL)) {
                 preparedStatement.setLong(1, orderId);
                 preparedStatement.executeUpdate();
             } catch (SQLException e) {
-                e.printStackTrace();
+                log.error(e.getMessage());
             }
         }
     }

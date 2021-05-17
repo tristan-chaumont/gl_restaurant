@@ -5,6 +5,7 @@ import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.jdbc.DbAccess;
 import fr.ul.miage.gl_restaurant.utilities.ControllerUtils;
 import fr.ul.miage.gl_restaurant.utilities.InputUtils;
+import fr.ul.miage.gl_restaurant.utilities.PrintUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.SQLException;
@@ -21,8 +22,8 @@ public class Main {
         while (!quit) {
             if (auth.isConnected()) {
                 var userController = ControllerUtils.getController(auth);
-                System.out.println(userController.displayActions());
-                System.out.print("Veuillez renseigner le numéro de l'action à effectuer : ");
+                PrintUtils.print("%s%n", userController.displayActions());
+                PrintUtils.print("Veuillez renseigner le numéro de l'action à effectuer : ");
                 userController.callAction(InputUtils.readIntegerInputInRange(0, userController.getActions().size() + 1));
             } else {
                 if (!auth.displayInterface()) {
@@ -35,7 +36,7 @@ public class Main {
             connection.close();
             log.info("Connection closed");
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error(e.getMessage());
         }
     }
 }

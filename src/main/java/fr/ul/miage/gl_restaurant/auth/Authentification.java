@@ -3,6 +3,7 @@ package fr.ul.miage.gl_restaurant.auth;
 import fr.ul.miage.gl_restaurant.model.User;
 import fr.ul.miage.gl_restaurant.repository.UserRepositoryImpl;
 import fr.ul.miage.gl_restaurant.utilities.InputUtils;
+import fr.ul.miage.gl_restaurant.utilities.PrintUtils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -23,7 +24,7 @@ public class Authentification {
         var userRepository = UserRepositoryImpl.getInstance();
         Optional<User> loggedUser = userRepository.findByLogin(login);
         loggedUser.ifPresentOrElse(value -> this.user = value,
-                () -> System.out.print("Login incorrect, veuillez réessayer : "));
+                () -> PrintUtils.print("Login incorrect, veuillez réessayer : "));
     }
 
     public void logOut() {
@@ -36,25 +37,25 @@ public class Authentification {
 
     public void disconnect() {
         logOut();
-        System.out.printf("Vous êtes déconnecté. A bientôt !%n%n");
+        PrintUtils.print("Vous êtes déconnecté. A bientôt !%n%n");
     }
 
     public boolean displayInterface() {
-        System.out.println("=".repeat(50));
-        System.out.println(StringUtils.center("Bonjour et bienvenue !", 50));
-        System.out.println("=".repeat(50));
-        System.out.println("Pour quitter l'application, tapez : !q");
-        System.out.print("Pour vous connecter, veuillez entrer votre login : ");
+        PrintUtils.print("%s%n", "=".repeat(50));
+        PrintUtils.print("%s%n", StringUtils.center("Bonjour et bienvenue !", 50));
+        PrintUtils.print("%s%n", "=".repeat(50));
+        PrintUtils.print("Pour quitter l'application, tapez : !q%n");
+        PrintUtils.print("Pour vous connecter, veuillez entrer votre login : ");
         String input = InputUtils.readInput();
         if (input.equals("!q")) {
-            System.out.println("À bientôt !");
+            PrintUtils.print("À bientôt !%n");
             return false;
         }
         signIn(input);
         while (user == null) {
             signIn(InputUtils.readInput());
         }
-        System.out.printf("Vous êtes connecté en tant que '%s' (%s %s, %s)%n%n", user.getLogin(), user.getFirstName(), user.getLastName(), user.getRole());
+        PrintUtils.print("Vous êtes connecté en tant que '%s' (%s %s, %s)%n%n", user.getLogin(), user.getFirstName(), user.getLastName(), user.getRole());
         return true;
     }
 }

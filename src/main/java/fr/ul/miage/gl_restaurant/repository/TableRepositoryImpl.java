@@ -16,6 +16,8 @@ public class TableRepositoryImpl extends Repository<Table, Long> {
 
     private static TableRepositoryImpl instance;
 
+    private static final String TABLEID_COLUMN_NAME = "tableId";
+
     private static final String FIND_ALL_SQL = "SELECT tableId, floor, state, places, userId FROM Tables";
     private static final String FIND_BY_ID_SQL = "SELECT tableId, floor, state, places, userId FROM Tables WHERE tableId = ?";
     private static final String FIND_BY_USERID_SQL = "SELECT tableId, floor, state, places, userId FROM Tables WHERE userId = ?";
@@ -30,18 +32,13 @@ public class TableRepositoryImpl extends Repository<Table, Long> {
     @Override
     public List<Table> findAll() {
         List<Table> tables = new ArrayList<>();
-        try (Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(FIND_ALL_SQL)) {
+        try (var statement = connection.createStatement();
+             var resultSet = statement.executeQuery(FIND_ALL_SQL)) {
             while (resultSet.next()) {
-                Long tableId = resultSet.getLong("tableId");
-                Integer floor = resultSet.getInt("floor");
-                TableStates state = TableStates.getState(resultSet.getString("state"));
-                Integer places = resultSet.getInt("places");
-                Optional<User> user = UserRepositoryImpl.getInstance().findById(resultSet.getLong("userId"));
-                tables.add(new Table(tableId, floor, state, places, user.orElse(null)));
+                tables.add(new Table(resultSet));
             }
         } catch (SQLException e) {
-            log.error("Exception: " + e.getMessage());
+            log.error(e.getMessage());
         }
         return tables;
     }
@@ -50,20 +47,15 @@ public class TableRepositoryImpl extends Repository<Table, Long> {
     public Optional<Table> findById(Long id) {
         Optional<Table> table = Optional.empty();
         if (id != null) {
-            try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_ID_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+            try (var preparedStatement = connection.prepareStatement(FIND_BY_ID_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
                 preparedStatement.setLong(1, id);
-                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                try (var resultSet = preparedStatement.executeQuery()) {
                     if (resultSet.first()) {
-                        Long tableId = resultSet.getLong("tableId");
-                        Integer floor = resultSet.getInt("floor");
-                        TableStates state = TableStates.getState(resultSet.getString("state"));
-                        Integer places = resultSet.getInt("places");
-                        Optional<User> user = UserRepositoryImpl.getInstance().findById(resultSet.getLong("userId"));
-                        table = Optional.of(new Table(tableId, floor, state, places, user.orElse(null)));
+                        table = Optional.of(new Table(resultSet));
                     }
                 }
             } catch (SQLException e) {
-                log.error("Exception: " + e.getMessage());
+                log.error(e.getMessage());
             }
         }
         return table;
@@ -71,20 +63,20 @@ public class TableRepositoryImpl extends Repository<Table, Long> {
 
     public List<Table> findByUserId(Long id) {
         List<Table> tables = new ArrayList<>();
-        try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_USERID_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+        try (var preparedStatement = connection.prepareStatement(FIND_BY_USERID_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
             preparedStatement.setLong(1, id);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+            try (var resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
-                    Long tableId = resultSet.getLong("tableId");
+                    Long tableId = resultSet.getLong(TABLEID_COLUMN_NAME);
                     Integer floor = resultSet.getInt("floor");
-                    TableStates state = TableStates.getState(resultSet.getString("state"));
+                    var state = TableStates.getState(resultSet.getString("state"));
                     Integer places = resultSet.getInt("places");
                     Optional<User> user = UserRepositoryImpl.getInstance().findById(resultSet.getLong("userId"));
                     tables.add(new Table(tableId, floor, state, places, user.orElse(null)));
                 }
             }
         } catch (SQLException e) {
-            log.error("Exception: " + e.getMessage());
+            log.error(e.getMessage());
         }
         return tables;
     }
@@ -92,61 +84,54 @@ public class TableRepositoryImpl extends Repository<Table, Long> {
     @Override
     public Table save(Table object) {
         if (object != null && object.getTableId() == null) {
-            try (PreparedStatement preparedStatement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
-                preparedStatement.setInt(1, object.getFloor());
-                preparedStatement.setString(2, object.getState().toString());
-                preparedStatement.setInt(3, object.getPlaces());
-                if (object.getUser() == null) {
-                    preparedStatement.setNull(4, Types.INTEGER);
-                } else {
-                    preparedStatement.setLong(4, object.getUser().getUserId());
-                }
+            try (var preparedStatement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
+                addAllTableFields(object, preparedStatement);
                 preparedStatement.executeUpdate();
-                try (ResultSet resultSet = preparedStatement.getGeneratedKeys()) {
-                    if (resultSet.next()) {
-                        object.setTableId(resultSet.getLong(1));
-                    }
-                } catch (SQLException s) {
-                    s.printStackTrace();
-                }
+                generateKey(object, preparedStatement);
             } catch (SQLException e) {
-                e.printStackTrace();
+                log.error(e.getMessage());
             }
         }
         return object;
+    }
+
+    private void addAllTableFields(Table object, PreparedStatement preparedStatement) throws SQLException {
+        preparedStatement.setInt(1, object.getFloor());
+        preparedStatement.setString(2, object.getState().toString());
+        preparedStatement.setInt(3, object.getPlaces());
+        if (object.getUser() == null) {
+            preparedStatement.setNull(4, Types.INTEGER);
+        } else {
+            preparedStatement.setLong(4, object.getUser().getUserId());
+        }
+    }
+
+    private void generateKey(Table object, PreparedStatement preparedStatement) {
+        try (var resultSet = preparedStatement.getGeneratedKeys()) {
+            if (resultSet.next()) {
+                object.setTableId(resultSet.getLong(1));
+            }
+        } catch (SQLException s) {
+            log.error(s.getMessage());
+        }
     }
 
     @Override
     public Table update(Table object) {
         if (object != null && object.getTableId() != null) {
-            try (PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_SQL)) {
-                preparedStatement.setInt(1, object.getFloor());
-                preparedStatement.setString(2, object.getState().toString());
-                preparedStatement.setInt(3, object.getPlaces());
-                if (object.getUser() == null) {
-                    preparedStatement.setNull(4, Types.INTEGER);
-                } else {
-                    preparedStatement.setLong(4, object.getUser().getUserId());
-                }
+            try (var preparedStatement = connection.prepareStatement(UPDATE_SQL)) {
+                addAllTableFields(object, preparedStatement);
                 preparedStatement.setLong(5, object.getTableId());
                 preparedStatement.executeUpdate();
             } catch (SQLException e) {
-                e.printStackTrace();
+                log.error(e.getMessage());
             }
         }
         return object;
     }
 
-    @Override
     public void delete(Long id) {
-        if (id != null) {
-            try (PreparedStatement preparedStatement = connection.prepareStatement(DELETE_SQL)) {
-                preparedStatement.setLong(1, id);
-                preparedStatement.executeUpdate();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
+        super.delete(id, DELETE_SQL);
     }
 
     public static TableRepositoryImpl getInstance() {

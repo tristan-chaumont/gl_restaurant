@@ -15,8 +15,8 @@ public class InputUtils {
     public static String readInputInArray(List<String> values) {
         String input = readInput();
         while (!values.contains(input)) {
-            System.out.println("Votre saisie doit correspondre à l'un des éléments suivants : " + String.join(", ", values));
-            System.out.print("Veuillez réessayer : ");
+            PrintUtils.print("Votre saisie doit correspondre à l'un des éléments suivants : %s%n", String.join(", ", values));
+            PrintUtils.print("Veuillez réessayer : ");
             input = readInput();
         }
         return input;
@@ -51,7 +51,7 @@ public class InputUtils {
         if (startInclusive <= input && endExclusive > input) {
             return true;
         }
-        System.out.print("La valeur est trop petite ou trop grande, veuillez réessayer : ");
+        PrintUtils.print("La valeur est trop petite ou trop grande, veuillez réessayer : ");
         return false;
     }
 
@@ -64,7 +64,7 @@ public class InputUtils {
         try {
             Integer.parseInt(input);
         } catch (NumberFormatException e) {
-            System.out.print("Problème lors de la saisie de la valeur, veuillez réessayer : ");
+            PrintUtils.print("Problème lors de la saisie de la valeur, veuillez réessayer : ");
             return false;
         }
         return true;

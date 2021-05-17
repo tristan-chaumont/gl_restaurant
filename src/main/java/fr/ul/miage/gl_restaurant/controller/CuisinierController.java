@@ -15,14 +15,14 @@ import java.util.*;
 public class CuisinierController extends UserController {
 
     private final TreeSet<Order> ordersQueue;
-    private final OrderRepositoryImpl orderRepository;
-    private final DishRepositoryImpl dishRepository;
+
+    private final DishRepositoryImpl dishRepository = DishRepositoryImpl.getInstance();
+    private final OrderRepositoryImpl orderRepository = OrderRepositoryImpl.getInstance();
+
 
     public CuisinierController(Authentification auth) {
         super(auth);
         this.ordersQueue = new TreeSet<>();
-        this.orderRepository = OrderRepositoryImpl.getInstance();
-        this.dishRepository = DishRepositoryImpl.getInstance();
     }
 
     /**
