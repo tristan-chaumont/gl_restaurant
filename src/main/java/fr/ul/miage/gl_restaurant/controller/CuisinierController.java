@@ -5,24 +5,24 @@ import fr.ul.miage.gl_restaurant.constants.MenuTypes;
 import fr.ul.miage.gl_restaurant.model.Dish;
 import fr.ul.miage.gl_restaurant.model.Order;
 import fr.ul.miage.gl_restaurant.model.RawMaterial;
+import fr.ul.miage.gl_restaurant.repository.DishRepositoryImpl;
 import fr.ul.miage.gl_restaurant.repository.OrderRepositoryImpl;
 
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.List;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 
 public class CuisinierController extends UserController {
 
     private final TreeSet<Order> ordersQueue;
     private final OrderRepositoryImpl orderRepository;
+    private final DishRepositoryImpl dishRepository;
 
     public CuisinierController(Authentification auth) {
         super(auth);
         this.ordersQueue = new TreeSet<>();
         this.orderRepository = OrderRepositoryImpl.getInstance();
+        this.dishRepository = DishRepositoryImpl.getInstance();
     }
 
     /**
@@ -48,15 +48,32 @@ public class CuisinierController extends UserController {
     }
 
     public void createDish(String dishName, String category, MenuTypes menuType, Double price, HashMap<RawMaterial, Integer> rawMaterials){
-
+        Optional<Dish> dish = dishRepository.findByName(dishName);
+        if(dish.isEmpty()){
+            dishRepository.save(new Dish(dishName, category, menuType, price, false, rawMaterials));
+        }
     }
 
     public void updateDish(Dish dish, String dishName, String category, MenuTypes menuType, Double price, HashMap<RawMaterial, Integer> rawMaterials){
-
+        Optional<Dish> resDish = dishRepository.findByName(dishName);
+        if(resDish.isEmpty() || dishName.equals(dish.getDishName())){
+            List<Order> orders = orderRepository.findByDish(dish.getDishId());
+            if(orders.isEmpty()){
+                dish.setDishName(dishName);
+                dish.setCategory(category);
+                dish.setPrice(price);
+                dish.setMenuType(menuType);
+                dish.setRawMaterials(rawMaterials);
+                dishRepository.update(dish);
+            }
+        }
     }
 
     public void deleteDish(Dish dish){
-
+        List<Order> orders = orderRepository.findByDish(dish.getDishId());
+        if (orders.isEmpty()){
+            dishRepository.delete(dish.getDishId());
+        }
     }
 
     @Override

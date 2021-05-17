@@ -1,17 +1,19 @@
 package fr.ul.miage.gl_restaurant.controller;
 
 import fr.ul.miage.gl_restaurant.auth.Authentification;
+import fr.ul.miage.gl_restaurant.constants.MenuTypes;
 import fr.ul.miage.gl_restaurant.constants.TableStates;
+import fr.ul.miage.gl_restaurant.constants.Units;
 import fr.ul.miage.gl_restaurant.model.Order;
 import fr.ul.miage.gl_restaurant.model.*;
 import fr.ul.miage.gl_restaurant.repository.*;
 import org.junit.jupiter.api.*;
 
 import java.sql.Timestamp;
-import java.util.SortedSet;
+import java.time.Instant;
+import java.util.*;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 class TestCuisineController {
@@ -21,6 +23,8 @@ class TestCuisineController {
     static TableRepositoryImpl tableRepository;
     static BillRepositoryImpl billRepository;
     static UserRepositoryImpl userRepository;
+    static RawMaterialRepositoryImpl rawMaterialRepository;
+    static DishRepositoryImpl dishRepository;
     static User user;
     static Meal meal;
     static Table table;
@@ -34,6 +38,8 @@ class TestCuisineController {
         billRepository = BillRepositoryImpl.getInstance();
         mealRepository = MealRepositoryImpl.getInstance();
         orderRepository = OrderRepositoryImpl.getInstance();
+        rawMaterialRepository = RawMaterialRepositoryImpl.getInstance();
+        dishRepository = DishRepositoryImpl.getInstance();
     }
 
     @BeforeEach
@@ -60,10 +66,138 @@ class TestCuisineController {
     @DisplayName("Le plat est bien ajouté à la base de données")
     void verifyAddDishSucceed() {
         CuisinierController cuisinierController = new CuisinierController(new Authentification());
-        SortedSet<Order> ordersQueue = cuisinierController.getOrdersQueue();
-        assertThat(ordersQueue.size(), is(3));
-        assertThat(ordersQueue.first().getOrderDate(), equalTo(order5.getOrderDate()));
-        assertThat(ordersQueue.last().getOrderDate(), equalTo(order4.getOrderDate()));
+        RawMaterial rm = rawMaterialRepository.save(new RawMaterial("Riz", 100, Units.KG));
+        HashMap<RawMaterial, Integer> rawMaterialHashMap = new HashMap<RawMaterial, Integer>();
+        rawMaterialHashMap.put(rm,1);
+        cuisinierController.createDish("Riz", "PLat", MenuTypes.ADULTES, 5.0, rawMaterialHashMap);
+        List<Dish> dishes = dishRepository.findAll();
+        dishRepository.delete(dishes.get(0).getDishId());
+        rawMaterialRepository.delete(rm.getRawMaterialId());
+        assertThat(dishes.size(),is(1));
+    }
+
+    @Test
+    @DisplayName("Le plat n'est pas ajouté à la base de données")
+    void verifyAddDishFailedDoublon() {
+        CuisinierController cuisinierController = new CuisinierController(new Authentification());
+        RawMaterial rm = rawMaterialRepository.save(new RawMaterial("Riz", 100, Units.KG));
+        HashMap<RawMaterial, Integer> rawMaterialHashMap = new HashMap<RawMaterial, Integer>();
+        rawMaterialHashMap.put(rm,1);
+        Dish dish = new Dish("Riz", "PLat", MenuTypes.ADULTES, 5.0, false);
+        dish.addRawMaterial(rm,1);
+        dish = dishRepository.save(dish);
+        cuisinierController.createDish("Riz", "PLat", MenuTypes.ADULTES, 5.0, rawMaterialHashMap);
+        List<Dish> dishes = dishRepository.findAll();
+        dishRepository.delete(dish.getDishId());
+        rawMaterialRepository.delete(rm.getRawMaterialId());
+        assertThat(dishes.size(),is(1));
+    }
+
+    @Test
+    @DisplayName("Le plat est bien modifié")
+    void verifyUpdateDishSucceed() {
+        CuisinierController cuisinierController = new CuisinierController(new Authentification());
+        RawMaterial rm = rawMaterialRepository.save(new RawMaterial("Riz", 100, Units.KG));
+        HashMap<RawMaterial, Integer> rawMaterialHashMap = new HashMap<RawMaterial, Integer>();
+        rawMaterialHashMap.put(rm,1);
+        Dish dish = new Dish("Riz", "PLat", MenuTypes.ADULTES, 5.0, false);
+        dish.addRawMaterial(rm,1);
+        dish = dishRepository.save(dish);
+        cuisinierController.updateDish(dish, "Riz", "PLat", MenuTypes.ADULTES, 6.0, rawMaterialHashMap);
+        Dish res = dishRepository.findById(dish.getDishId()).get();
+        dishRepository.delete(dish.getDishId());
+        rawMaterialRepository.delete(rm.getRawMaterialId());
+        assertThat(res.getPrice(), is(6.0));
+    }
+
+    @Test
+    @DisplayName("Le plat n'est pas modifié car il y a une commande en cours")
+    void verifyUpdateDishFailedOrder() {
+        User user = userRepository.findByLogin("chaumontt").get();
+        Table table = tableRepository.save(new Table(1, TableStates.LIBRE, 4, user));
+        Bill bill = billRepository.save(new Bill(2L));
+        Meal meal = mealRepository.save(new Meal(4, Timestamp.valueOf("2021-04-27 12:00:00"), 30L, table , bill));
+        RawMaterial rawMaterial = rawMaterialRepository.save(new RawMaterial("Riz", 100, Units.KG));
+        HashMap<RawMaterial, Integer> rawMaterialHashMap = new HashMap<RawMaterial, Integer>();
+        rawMaterialHashMap.put(rawMaterial,1);
+        Dish dish = dishRepository.save(new Dish("Riz", "Plat", MenuTypes.ADULTES, 5.0, true, rawMaterialHashMap));
+        Map<Dish,Integer> dishIntegerMap = new HashMap<Dish,Integer>();
+        dishIntegerMap.put(dish,1);
+        Order order = orderRepository.save(new Order(Timestamp.from(Instant.now()), meal, dishIntegerMap));
+        CuisinierController cuisinierController = new CuisinierController(new Authentification());
+        cuisinierController.updateDish(dish, "Riz", "PLat", MenuTypes.ADULTES, 6.0, rawMaterialHashMap);
+        Dish result = dishRepository.findById(dish.getDishId()).get();
+        orderRepository.delete(order.getOrderId());
+        dishRepository.delete(dish.getDishId());
+        rawMaterialRepository.delete(rawMaterial.getRawMaterialId());
+        mealRepository.delete(meal.getMealId());
+        tableRepository.delete(table.getTableId());
+        billRepository.delete(bill.getBillId());
+        assertThat(result.getPrice(), is(5.0));
+    }
+
+    @Test
+    @DisplayName("Le plat n'est pas modifié car le plat existe déjà")
+    void verifyUpdateDishFailedDoublon() {
+        CuisinierController cuisinierController = new CuisinierController(new Authentification());
+        RawMaterial rm = rawMaterialRepository.save(new RawMaterial("Riz", 100, Units.KG));
+        HashMap<RawMaterial, Integer> rawMaterialHashMap = new HashMap<RawMaterial, Integer>();
+        rawMaterialHashMap.put(rm,1);
+        Dish dish = new Dish("Riz", "PLat", MenuTypes.ADULTES, 5.0, false);
+        dish.addRawMaterial(rm,1);
+        dish = dishRepository.save(dish);
+        Dish dish2 = new Dish("Riz blanc", "PLat", MenuTypes.ADULTES, 6.0, false);
+        dish2.addRawMaterial(rm,1);
+        dish2 = dishRepository.save(dish2);
+        cuisinierController.updateDish(dish2, "Riz", "PLat", MenuTypes.ADULTES, 6.0, rawMaterialHashMap);
+        Dish res = dishRepository.findById(dish2.getDishId()).get();
+        dishRepository.delete(dish.getDishId());
+        dishRepository.delete(dish2.getDishId());
+        rawMaterialRepository.delete(rm.getRawMaterialId());
+        assertThat(res.getDishName(), is("Riz blanc"));
+    }
+
+    @Test
+    @DisplayName("Le plat est bien supprimé")
+    void verifyDeleteDishSucceed() {
+        CuisinierController cuisinierController = new CuisinierController(new Authentification());
+        RawMaterial rm = rawMaterialRepository.save(new RawMaterial("Riz", 100, Units.KG));
+        HashMap<RawMaterial, Integer> rawMaterialHashMap = new HashMap<RawMaterial, Integer>();
+        rawMaterialHashMap.put(rm,1);
+        Dish dish = new Dish("Riz", "PLat", MenuTypes.ADULTES, 5.0, false);
+        dish.addRawMaterial(rm,1);
+        dish = dishRepository.save(dish);
+        cuisinierController.deleteDish(dish);
+        List<Dish> dishes = dishRepository.findAll();
+        dishRepository.delete(dish.getDishId());
+        rawMaterialRepository.delete(rm.getRawMaterialId());
+        assertThat(dishes.size(), is(0));
+    }
+
+    @Test
+    @DisplayName("Le plat n'est pas supprimé car le plat est dans une commande")
+    void verifyDeleteDishFailedOrder() {
+        User user = userRepository.findByLogin("chaumontt").get();
+        Table table = tableRepository.save(new Table(1, TableStates.LIBRE, 4, user));
+        Bill bill = billRepository.save(new Bill(2L));
+        Meal meal = mealRepository.save(new Meal(4, Timestamp.valueOf("2021-04-27 12:00:00"), 30L, table , bill));
+        RawMaterial rawMaterial = rawMaterialRepository.save(new RawMaterial("Riz", 100, Units.KG));
+        HashMap<RawMaterial, Integer> rawMaterialHashMap = new HashMap<RawMaterial, Integer>();
+        rawMaterialHashMap.put(rawMaterial,1);
+        Dish dish = dishRepository.save(new Dish("Riz", "Plat", MenuTypes.ADULTES, 5.0, true, rawMaterialHashMap));
+        Map<Dish,Integer> dishIntegerMap = new HashMap<Dish,Integer>();
+        dishIntegerMap.put(dish,1);
+        Order order = orderRepository.save(new Order(Timestamp.from(Instant.now()), meal, dishIntegerMap));
+        CuisinierController cuisinierController = new CuisinierController(new Authentification());
+        cuisinierController.deleteDish(dish);
+        List<Dish> dishes = dishRepository.findAll();
+        orderRepository.delete(order.getOrderId());
+        dishRepository.delete(dish.getDishId());
+        rawMaterialRepository.delete(rawMaterial.getRawMaterialId());
+        mealRepository.delete(meal.getMealId());
+        tableRepository.delete(table.getTableId());
+        billRepository.delete(bill.getBillId());
+        assertThat(dishes.size(), is(1));
     }
 
     @AfterEach
