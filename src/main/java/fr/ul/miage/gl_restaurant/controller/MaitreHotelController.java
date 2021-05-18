@@ -206,16 +206,6 @@ public class MaitreHotelController extends UserController {
     }
 
     @Override
-    public String displayActions() {
-        var stringBuilder = new TextStringBuilder();
-        stringBuilder.appendln(super.displayActions());
-        for (String action : actions) {
-            stringBuilder.appendln(action);
-        }
-        return stringBuilder.toString();
-    }
-
-    @Override
     public void callAction(int action) {
         PrintUtils.print("%n");
         switch (action) {

@@ -77,12 +77,6 @@ public class CuisinierController extends UserController {
     }
 
     @Override
-    public String displayActions() {
-        //TODO
-        return "";
-    }
-
-    @Override
     public void callAction(int action) {
         switch (action) {
             case 0:
