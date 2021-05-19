@@ -9,7 +9,12 @@ import fr.ul.miage.gl_restaurant.repository.TableRepositoryImpl;
 import fr.ul.miage.gl_restaurant.repository.UserRepositoryImpl;
 import org.junit.jupiter.api.*;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 class TestAssistantServiceController {
@@ -17,8 +22,8 @@ class TestAssistantServiceController {
     static TableRepositoryImpl tableRepository;
     static UserRepositoryImpl userRepository;
     static AssistantServiceController assistantServiceController;
-    static Table table, table2;
-    static User user;
+    Table table, table2;
+    User user;
 
     @BeforeAll
     static void initializeBeforeAll(){
@@ -38,19 +43,32 @@ class TestAssistantServiceController {
     }
 
     @Test
-    @DisplayName("La table change de status car la table est sale")
-    void verifyServingTableChangeStatus() {
-        assistantServiceController.serveTable(table);
-        Table result = tableRepository.findById(table.getTableId()).get();
-        assertThat(result.getState(),equalTo(TableStates.LIBRE));
+    @DisplayName("Récupère toutes les tables sales")
+    void verifyGetDirtyTablesSucceed() {
+        List<Table> tables = Arrays.asList(table, table2);
+        List<Table> result = assistantServiceController.getDirtyTables(tables);
+        assertThat(result.size(), is(1));
+        assertThat(result.get(0).getState(), is(TableStates.SALE));
     }
 
     @Test
-    @DisplayName("La table ne change pas de status car elle est occupée")
-    void verifyServingTableDontChangeStatus() {
-        assistantServiceController.serveTable(table2);
-        Table result = tableRepository.findById(table2.getTableId()).get();
-        assertThat(result.getState(),equalTo(TableStates.OCCUPEE));
+    @DisplayName("La table change de statut car la table est sale (sale vers libre)")
+    void verifyLayTableChangeStatus() {
+        boolean result = assistantServiceController.layTable(table);
+        Optional<Table> tableResult = tableRepository.findById(table.getTableId());
+        assertThat(tableResult.isPresent(), is(true));
+        assertThat(result, is(true));
+        assertThat(tableResult.get().getState(),equalTo(TableStates.LIBRE));
+    }
+
+    @Test
+    @DisplayName("La table ne change pas de statut car elle est occupée (sale vers libre)")
+    void verifyLayTableDoesntChangeStatus() {
+        boolean result = assistantServiceController.layTable(table2);
+        Optional<Table> tableResult = tableRepository.findById(table2.getTableId());
+        assertThat(tableResult.isPresent(), is(true));
+        assertThat(result, is(false));
+        assertThat(tableResult.get().getState(),equalTo(TableStates.OCCUPEE));
     }
 
     @AfterEach

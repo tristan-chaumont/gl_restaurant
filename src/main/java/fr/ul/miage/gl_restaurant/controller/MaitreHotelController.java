@@ -37,14 +37,6 @@ public class MaitreHotelController extends UserController {
         this.actions.addAll(Arrays.asList(ACTION_1, ACTION_2, ACTION_3, ACTION_4));
     }
 
-    protected long askTableId(List<Table> tables) {
-        return Long.parseLong(
-                InputUtils.readInputInArray(
-                        tables.stream().map(t -> t.getTableId().toString()).collect(Collectors.toList())
-                )
-        );
-    }
-
     protected long askServerId(Set<User> users) {
         return Long.parseLong(
                 InputUtils.readInputInArray(
@@ -55,42 +47,6 @@ public class MaitreHotelController extends UserController {
 
     protected List<Table> getAvailableTables(List<Table> tables) {
         return tables.stream().filter(t -> t.getState().equals(TableStates.LIBRE)).collect(Collectors.toList());
-    }
-
-    /**
-     * Renvoie une hashmap contenant le numéro de l'étage et la liste des tables de cet étage.
-     * Permet de faciliter l'affichage des tables dans l'interface.
-     */
-    protected Map<Integer, Set<Table>> getFloorsTables(List<Table> tables) {
-        Map<Integer, Set<Table>> floors = new HashMap<>();
-        tables.forEach(t -> {
-            if (floors.containsKey(t.getFloor())) {
-                floors.get(t.getFloor()).add(t);
-            } else {
-                floors.put(t.getFloor(), new LinkedHashSet<>(Collections.singletonList(t)));
-            }
-        });
-        return floors;
-    }
-
-    /**
-     * Renvoie un string contenant l'étage et les tables associées à cet étage.
-     */
-    public String displayTables(List<Table> tables) {
-        var stringBuilder = new TextStringBuilder();
-        Map<Integer, Set<Table>> floors = getFloorsTables(tables);
-        floors.forEach((k, v) -> {
-            if (!v.isEmpty()) {
-                stringBuilder.append("Étage %d : ", k);
-                v.forEach(t -> {
-                    if (t.getTableId() != null) {
-                        stringBuilder.append("[n°%d]", t.getTableId());
-                    }
-                });
-                stringBuilder.appendNewLine();
-            }
-        });
-        return stringBuilder.toString();
     }
 
     /**
@@ -115,7 +71,7 @@ public class MaitreHotelController extends UserController {
      */
     public void seatClient() {
         List<Table> availableTables = getAvailableTables(tableRepository.findAll());
-        PrintUtils.print("%s%n", displayTables(availableTables));
+        PrintUtils.print("%s%n", displayTablesByFloor(availableTables));
         PrintUtils.print("Veuillez saisir le numéro de la table : ");
         var tableId = askTableId(availableTables);
         Optional<Table> table = tableRepository.findById(tableId);
@@ -161,7 +117,7 @@ public class MaitreHotelController extends UserController {
      */
     public void assignServer() {
         List<Table> tables = tableRepository.findAll();
-        PrintUtils.print("%s%n", displayTables(tables));
+        PrintUtils.print("%s%n", displayTablesByFloor(tables));
         PrintUtils.print("Veuillez saisir le numéro de la table : ");
         var tableId = askTableId(tables);
         Optional<Table> table = tableRepository.findById(tableId);

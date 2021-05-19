@@ -22,8 +22,8 @@ class TestMaitreHotelController {
     static TableRepositoryImpl tableRepository;
     static MealRepositoryImpl mealRepository;
     static UserRepositoryImpl userRepository;
-    static Table table1, table2;
-    static User user;
+    Table table1, table2;
+    User user;
 
     @BeforeAll
     static void initializeBeforeAll() {
@@ -35,7 +35,7 @@ class TestMaitreHotelController {
 
     @BeforeEach
     void initializeBeforeEach() {
-        user = userRepository.findByLogin("chaumontt").get();
+        user = userRepository.findByLogin("chaumontt").orElse(null);
         table1 = tableRepository.save(new Table(1, TableStates.LIBRE, 4, user));
         table2 = tableRepository.save(new Table(1, TableStates.RESERVEE, 4, user));
     }
@@ -49,8 +49,9 @@ class TestMaitreHotelController {
         mealRepository.delete(meal.getMealId());
         assertThat(res.isPresent(), is(true));
         assertThat(res.get().getCustomersNb(), is(2));
-        Table resTable = tableRepository.findById(table1.getTableId()).get();
-        assertThat(resTable.getState(), is(TableStates.OCCUPEE));
+        Optional<Table> resTable = tableRepository.findById(table1.getTableId());
+        assertThat(resTable.isPresent(), is(true));
+        assertThat(resTable.get().getState(), is(TableStates.OCCUPEE));
     }
 
     @Test
@@ -76,8 +77,9 @@ class TestMaitreHotelController {
         userTest = userRepository.save(userTest);
         boolean result = maitreHotelController.assignServer(table1, userTest);
         assertThat(result, is(true));
-        Table tableResult = tableRepository.findById(table1.getTableId()).get();
-        assertThat(tableResult.getUser(), equalTo(userTest));
+        Optional<Table> tableResult = tableRepository.findById(table1.getTableId());
+        assertThat(tableResult.isPresent(), is(true));
+        assertThat(tableResult.get().getUser(), equalTo(userTest));
         tableRepository.delete(table1.getTableId());
         userRepository.delete(userTest.getUserId());
     }
@@ -89,8 +91,9 @@ class TestMaitreHotelController {
         userRepository.save(userTest);
         boolean result = maitreHotelController.assignServer(table1, userTest);
         assertThat(result, is(false));
-        Table tableResult = tableRepository.findById(table1.getTableId()).get();
-        assertThat(tableResult.getUser(), equalTo(user));
+        Optional<Table> tableResult = tableRepository.findById(table1.getTableId());
+        assertThat(tableResult.isPresent(), is(true));
+        assertThat(tableResult.get().getUser(), equalTo(user));
         tableRepository.delete(table1.getTableId());
         userRepository.delete(userTest.getUserId());
     }
@@ -101,8 +104,9 @@ class TestMaitreHotelController {
         User userTest = new User(999999L,"ttcUser2", "ttc", "User2", Roles.SERVEUR);
         boolean result = maitreHotelController.assignServer(table1, userTest);
         assertThat(result, is(false));
-        Table tableResult = tableRepository.findById(table1.getTableId()).get();
-        assertThat(tableResult.getUser(), equalTo(user));
+        Optional<Table> tableResult = tableRepository.findById(table1.getTableId());
+        assertThat(tableResult.isPresent(), is(true));
+        assertThat(tableResult.get().getUser(), equalTo(user));
         tableRepository.delete(table1.getTableId());
         userRepository.delete(userTest.getUserId());
     }
