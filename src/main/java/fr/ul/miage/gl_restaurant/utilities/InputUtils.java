@@ -2,9 +2,10 @@ package fr.ul.miage.gl_restaurant.utilities;
 
 import java.util.List;
 import java.util.Scanner;
-import java.util.regex.Pattern;
 
 public class InputUtils {
+
+    private InputUtils() {}
 
     public static final Scanner scanner = new Scanner(System.in);
 
@@ -14,22 +15,13 @@ public class InputUtils {
 
     public static String readInputInArray(List<String> values) {
         String input = readInput();
+
         while (!values.contains(input)) {
             PrintUtils.print("Votre saisie doit correspondre à l'un des éléments suivants : %s%n", String.join(", ", values));
             PrintUtils.print("Veuillez réessayer : ");
             input = readInput();
         }
         return input;
-    }
-
-    /**
-     * Vérifie si l'input entré par l'utilisateur est conforme au pattern.
-     * @param input Entrée de l'utilisateur.
-     * @param pattern Pattern à utiliser.
-     * @return True si l'input est valide, false sinon.
-     */
-    private boolean isValidPattern(String input, String pattern) {
-        return Pattern.matches(pattern, input);
     }
 
     public static int readIntegerInputInRange(int startInclusive, int endExclusive) {

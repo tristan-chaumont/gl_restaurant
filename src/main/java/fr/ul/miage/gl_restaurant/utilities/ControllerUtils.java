@@ -17,10 +17,8 @@ public class ControllerUtils {
                 return new ServeurController(auth);
             case ASSISTANT_SERVICE:
                 return new AssistantServiceController(auth);
-            case CUISINIER:
-                return new CuisinierController(auth);
             default:
-                throw new IllegalArgumentException();
+                return new CuisinierController(auth);
         }
     }
 }

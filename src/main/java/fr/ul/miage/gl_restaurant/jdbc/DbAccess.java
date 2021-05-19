@@ -24,7 +24,7 @@ public class DbAccess {
 
     private DbAccess() {}
 
-    private static void parseProperties(String propertiesFileName) {
+    protected static void parseProperties(String propertiesFileName) {
         var properties = new Properties();
         try (InputStream inputStream = new FileInputStream(propertiesFileName)) {
             properties.load(inputStream);

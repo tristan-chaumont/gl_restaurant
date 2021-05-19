@@ -21,10 +21,14 @@ public class Main {
         var quit = false;
         while (!quit) {
             if (auth.isConnected()) {
-                var userController = ControllerUtils.getController(auth);
-                PrintUtils.print("%s%n", userController.displayActions());
-                PrintUtils.print("Veuillez renseigner le numéro de l'action à effectuer : ");
-                userController.callAction(InputUtils.readIntegerInputInRange(0, userController.getActions().size() + 1));
+                try {
+                    var userController = ControllerUtils.getController(auth);
+                    PrintUtils.print("%s%n", userController.displayActions());
+                    PrintUtils.print("Veuillez renseigner le numéro de l'action à effectuer : ");
+                    userController.callAction(InputUtils.readIntegerInputInRange(0, userController.getActions().size() + 1));
+                } catch (NullPointerException e) {
+                    log.error(String.format("Le rôle de l'utilisateur n'existe pas, veuillez réessayer.%n"));
+                }
             } else {
                 if (!auth.displayInterface()) {
                     quit = true;
