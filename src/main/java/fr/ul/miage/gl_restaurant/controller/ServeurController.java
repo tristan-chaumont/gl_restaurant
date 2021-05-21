@@ -2,33 +2,95 @@ package fr.ul.miage.gl_restaurant.controller;
 
 import fr.ul.miage.gl_restaurant.auth.Authentification;
 import fr.ul.miage.gl_restaurant.constants.Roles;
-import fr.ul.miage.gl_restaurant.model.Order;
-import fr.ul.miage.gl_restaurant.model.Table;
-import fr.ul.miage.gl_restaurant.model.User;
-import fr.ul.miage.gl_restaurant.repository.OrderRepositoryImpl;
-import fr.ul.miage.gl_restaurant.repository.RawMaterialRepositoryImpl;
-import fr.ul.miage.gl_restaurant.repository.TableRepositoryImpl;
+import fr.ul.miage.gl_restaurant.constants.TableStates;
+import fr.ul.miage.gl_restaurant.model.*;
+import fr.ul.miage.gl_restaurant.repository.*;
+import fr.ul.miage.gl_restaurant.utilities.InputUtils;
+import fr.ul.miage.gl_restaurant.utilities.PrintUtils;
+import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.TextStringBuilder;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class ServeurController extends UserController {
+
+    @Getter
+    private Order order;
 
     private final OrderRepositoryImpl orderRepository = OrderRepositoryImpl.getInstance();
     private final TableRepositoryImpl tableRepository = TableRepositoryImpl.getInstance();
     private final RawMaterialRepositoryImpl rawMaterialRepository = RawMaterialRepositoryImpl.getInstance();
+    private final DishRepositoryImpl dishRepository = DishRepositoryImpl.getInstance();
+    private final MealRepositoryImpl mealRepository = MealRepositoryImpl.getInstance();
+
+    /**
+     * ACTIONS DE L'UTILISATEUR
+     */
+    private static final String ACTION_1 = "1 : Afficher les tables qui m'ont été affectées ainsi que leur état";
+    private static final String ACTION_2 = "2 : Gérer une table";
+
+    private final Set<String> subActions;
+
+    /**
+     * SOUS-ACTIONS POUR UNE TABLE
+     */
+    private static final String SUB_ACTION_0 = "0 : Retour";
+    private static final String SUB_ACTION_1 = "1 : Afficher les informations de la table";
+    private static final String SUB_ACTION_2 = "2 : Ajouter un article à la table";
+    private static final String SUB_ACTION_3 = "3 : Valider et transmettre la commande en cours à la cuisine";
 
     public ServeurController(Authentification auth) {
         super(auth);
+        this.actions.addAll(Arrays.asList(ACTION_1, ACTION_2));
+        subActions = new LinkedHashSet<>();
+        subActions.addAll(Arrays.asList(SUB_ACTION_0, SUB_ACTION_1, SUB_ACTION_2, SUB_ACTION_3));
+    }
+
+    protected String displayOrderRecap(Order order) {
+        var stringBuilder = new TextStringBuilder();
+        order.getDishes().forEach((k, v) -> {
+            stringBuilder.appendln("- %s (x%d)", k.getDishName(), v);
+        });
+        return stringBuilder.toString();
     }
 
     /**
      * Prend une commande et la sauvegarde en base de données.
      * @param order Commande à prendre.
      */
-    public void takeOrder(Order order) {
+    public boolean takeOrder(Order order) {
         rawMaterialRepository.updateStockBasedOnTakenOrder(order);
-        orderRepository.save(order);
+        order = orderRepository.save(order);
+        if (order.getOrderId() != null) {
+            this.order = null;
+            return true;
+        }
+        return false;
+    }
+
+    public void takeOrder() {
+        if (this.order != null) {
+            PrintUtils.println("-".repeat(50));
+            PrintUtils.println(StringUtils.center("Récap. de la commande", 50));
+            PrintUtils.println("-".repeat(50));
+            PrintUtils.println(displayOrderRecap(this.order));
+            PrintUtils.println("Voulez-vous transmettre la commande à la cuisine ? ([y]es ou [n]o)");
+            String input = InputUtils.readInputConfirmation();
+            if (input.equals("y")) {
+                if (takeOrder(this.order)) {
+                    PrintUtils.println("La commande a bien été transmise à la cuisine.%n");
+                } else {
+                    PrintUtils.println("Problème lors de la validation de la commande.%n");
+                }
+            }
+        } else {
+            PrintUtils.println("Il n'y aucune commande existante pour cette table.%n");
+        }
     }
 
     /**
@@ -53,11 +115,170 @@ public class ServeurController extends UserController {
         orderRepository.update(order);
     }
 
+    public boolean addArticleToOrder(Table table, Dish dish, int quantity) {
+        List<Meal> meals = mealRepository.findAll();
+        Optional<Meal> meal = meals.stream().filter(m ->
+                m.getTable().getTableId().equals(table.getTableId()) && m.getBill() == null).findFirst();
+        if (meal.isPresent()) {
+            if (this.order == null) {
+                this.order = new Order();
+                this.order.setOrderDate(Timestamp.from(Instant.now()));
+                this.order.setMeal(meal.get());
+            }
+            order.addDish(dish, quantity);
+        } else {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Affiche toutes les tables affectées à un serveur ainsi que leur état.
+     * @param tables Tables affectées au serveyr.
+     * @return L'affichage des tables.
+     */
+    protected String displayServerTablesByFloor(List<Table> tables) {
+        var stringBuilder = new TextStringBuilder();
+        Map<Integer, Set<Table>> floors = getFloorsTables(tables);
+        floors.forEach((k, v) -> {
+            if (!v.isEmpty()) {
+                stringBuilder.append("Étage %d : ", k);
+                v.forEach(t -> {
+                    if (t.getTableId() != null) {
+                        stringBuilder.append("[n°%d - %s]", t.getTableId(), t.getState());
+                    }
+                });
+                stringBuilder.appendNewLine();
+            }
+        });
+        return stringBuilder.toString();
+    }
+
+    /**
+     * Récupère les catégories des plats du menu du jour afin de les afficher lorsque le serveur veut ajouter un article.
+     * @return La liste des catégories.
+     */
+    protected List<String> getDishesCategories() {
+        List<Dish> dishes = dishRepository.findDailyMenu();
+        return dishes.stream().map(Dish::getCategory).collect(Collectors.toList());
+    }
+
+    /**
+     * Affiche les catégories des plats du menu du jour.
+     * @param categories Catégories des plats.
+     * @return Les catégories de manière plus visuelle.
+     */
+    protected String displayDishesCategories(List<String> categories) {
+        var stringBuilder = new TextStringBuilder();
+        stringBuilder.appendln("Catégories des articles :");
+        IntStream.range(1, categories.size() + 1).forEach(i ->
+                stringBuilder.appendln("\t%d. %s", i, categories.get(i-1)));
+        return stringBuilder.toString();
+    }
+
+    /**
+     * Affiche tous les plats d'une catégorie.
+     * @param dishes Liste des plats de la catégorie.
+     * @param category Catégorie.
+     * @return Les plats de manière plus visuelle.
+     */
+    protected String displayDishesByCategory(List<Dish> dishes, String category) {
+        var stringBuilder = new TextStringBuilder();
+        stringBuilder.appendln("Liste des plats dans la catégorie '%s' :", category);
+        IntStream.range(1, dishes.size() + 1).forEach(i ->
+                stringBuilder.appendln("\t%d. %s", i, dishes.get(i-1).getDishName()));
+        return stringBuilder.toString();
+    }
+
+    /**
+     * Demande au serveur d'ajouter un article à la table.
+     */
+    protected void addArticle(Table table) {
+        List<String> categories = getDishesCategories();
+        if (!categories.isEmpty()) {
+            PrintUtils.println(displayDishesCategories(categories));
+            PrintUtils.print("Veuillez choisir le numéro de la catégorie : ");
+            var categoryInput = InputUtils.readIntegerInputInRange(1, categories.size() + 1);
+            String category = categories.get(categoryInput - 1);
+            List<Dish> dishes = dishRepository.findByCategory(category);
+            if (!dishes.isEmpty()) {
+                PrintUtils.println();
+                PrintUtils.println(displayDishesByCategory(dishes, category));
+                PrintUtils.print("Veuillez choisir le numéro du plat à ajouter : ");
+                var dishInput = InputUtils.readIntegerInputInRange(1, dishes.size() + 1);
+                var dish = dishes.get(dishInput - 1);
+                PrintUtils.print("Veuillez insérer la quantité de ce plat à ajouter : ");
+                var quantity = InputUtils.readIntegerInputInRange(1, 10);
+                if (!addArticleToOrder(table, dish, quantity)) {
+                    PrintUtils.println("Impossible d'ajouter l'article à la table.%n");
+                } else {
+                    PrintUtils.println();
+                }
+            } else {
+                PrintUtils.println("Il n'existe aucun plat dans cette catégorie.%n");
+            }
+        } else {
+            PrintUtils.println("Vous ne pouvez pas ajouter d'article à cette table, il n'en existe aucun.");
+            PrintUtils.println("Veuillez vérifier que vous avez ajouter des plats et qu'ils ont une catégorie.%n");
+        }
+    }
+
+    protected void callSubAction(int action, Table table) {
+        PrintUtils.println();
+        switch (action) {
+            case 1:
+                System.out.println(table);
+                break;
+            case 2:
+                if (table.getState().equals(TableStates.OCCUPEE)) {
+                    addArticle(table);
+                } else {
+                    PrintUtils.println("Impossible d'ajouter un article à cette table, il n'y a aucun client.%n");
+                }
+                break;
+            case 3:
+                takeOrder();
+                break;
+            default:
+                break;
+        }
+    }
+    public String displaySubActions() {
+        var stringBuilder = new TextStringBuilder();
+        for (String subAction : subActions) {
+            stringBuilder.appendln(subAction);
+        }
+        return stringBuilder.toString();
+    }
+
+
+    protected void handleTable() {
+        Set<Table> tables = getTablesList(auth.getUser());
+        PrintUtils.println("%s", displayServerTablesByFloor(List.copyOf(tables)));
+        PrintUtils.print("Veuillez saisir le numéro de la table : ");
+        var tableId = askTableId(List.copyOf(tables));
+        Optional<Table> table = tableRepository.findById(tableId);
+        if (table.isPresent()) {
+            PrintUtils.println("%n%s", displaySubActions());
+            PrintUtils.print("Veuillez renseigner le numéro de l'action à effectuer : ");
+            callSubAction(InputUtils.readIntegerInputInRange(0, subActions.size() + 1), table.get());
+        } else {
+            PrintUtils.println("Cette table n'existe pas.");
+        }
+    }
+
     @Override
     public void callAction(int action) {
+        PrintUtils.println();
         switch (action) {
             case 0:
                 auth.disconnect();
+                break;
+            case 1:
+                System.out.println(displayServerTablesByFloor(List.copyOf(getTablesList(auth.getUser()))));
+                break;
+            case 2:
+                handleTable();
                 break;
             default:
                 break;

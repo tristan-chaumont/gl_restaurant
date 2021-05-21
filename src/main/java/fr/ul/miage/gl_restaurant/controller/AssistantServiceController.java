@@ -43,29 +43,29 @@ public class AssistantServiceController extends UserController {
 
     protected void layTable() {
         List<Table> dirtyTables = getDirtyTables(tableRepository.findAll());
-        PrintUtils.print("%s%n", StringUtils.center("Liste des tables sales :", 50));
-        PrintUtils.print("%s%n", displayTablesByFloor(dirtyTables));
+        PrintUtils.println("%s", StringUtils.center("Liste des tables sales :", 50));
+        PrintUtils.println("%s", displayTablesByFloor(dirtyTables));
         PrintUtils.print("Veuillez saisir le numéro de la table : ");
         var tableId = askTableId(dirtyTables);
         Optional<Table> table = tableRepository.findById(tableId);
         if (table.isPresent()) {
             if (layTable(table.get())) {
-                PrintUtils.print("La table a bien été nettoyée et dressée.%n%n");
+                PrintUtils.println("La table a bien été nettoyée et dressée.%n");
             } else {
-                PrintUtils.print("Impossible de s'occuper de la table sélectionnée, veuillez réessayer.%n%n");
+                PrintUtils.println("Impossible de s'occuper de la table sélectionnée, veuillez réessayer.%n");
             }
         }
     }
 
     @Override
     public void callAction(int action) {
-        PrintUtils.print("%n");
+        PrintUtils.println();
         switch (action) {
             case 0:
                 auth.disconnect();
                 break;
             case 1:
-                PrintUtils.print("%s%n", displayTablesByFloor(getDirtyTables(tableRepository.findAll())));
+                PrintUtils.println("%s", displayTablesByFloor(getDirtyTables(tableRepository.findAll())));
                 break;
             case 2:
                 layTable();

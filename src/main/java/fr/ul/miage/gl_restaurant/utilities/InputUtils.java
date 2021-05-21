@@ -17,11 +17,21 @@ public class InputUtils {
         String input = readInput();
 
         while (!values.contains(input)) {
-            PrintUtils.print("Votre saisie doit correspondre à l'un des éléments suivants : %s%n", String.join(", ", values));
+            PrintUtils.println("Votre saisie doit correspondre à l'un des éléments suivants : %s", String.join(", ", values));
             PrintUtils.print("Veuillez réessayer : ");
             input = readInput();
         }
         return input;
+    }
+
+    public static String readInputConfirmation() {
+        String input = readInput();
+
+        while (!input.equalsIgnoreCase("y") && !input.equalsIgnoreCase("n")) {
+            PrintUtils.print("Vous devez répondre par [y]es ou [n]o, veuillez réessayer : ");
+            input = readInput();
+        }
+        return input.toLowerCase();
     }
 
     public static int readIntegerInputInRange(int startInclusive, int endExclusive) {

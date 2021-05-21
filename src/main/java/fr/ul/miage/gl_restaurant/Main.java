@@ -2,6 +2,7 @@ package fr.ul.miage.gl_restaurant;
 
 import fr.ul.miage.gl_restaurant.auth.Authentification;
 import fr.ul.miage.gl_restaurant.constants.Environment;
+import fr.ul.miage.gl_restaurant.controller.UserController;
 import fr.ul.miage.gl_restaurant.jdbc.DbAccess;
 import fr.ul.miage.gl_restaurant.utilities.ControllerUtils;
 import fr.ul.miage.gl_restaurant.utilities.InputUtils;
@@ -19,19 +20,21 @@ public class Main {
 
         var auth = new Authentification();
         var quit = false;
+        UserController userController;
         while (!quit) {
-            if (auth.isConnected()) {
+            if (!auth.isConnected()) {
+                if (!auth.displayInterface()) {
+                    quit = true;
+                }
+            }
+            userController = ControllerUtils.getController(auth);
+            while (auth.isConnected()) {
                 try {
-                    var userController = ControllerUtils.getController(auth);
-                    PrintUtils.print("%s%n", userController.displayActions());
+                    PrintUtils.println(userController.displayActions());
                     PrintUtils.print("Veuillez renseigner le numéro de l'action à effectuer : ");
                     userController.callAction(InputUtils.readIntegerInputInRange(0, userController.getActions().size() + 1));
                 } catch (NullPointerException e) {
                     log.error(String.format("Le rôle de l'utilisateur n'existe pas, veuillez réessayer.%n"));
-                }
-            } else {
-                if (!auth.displayInterface()) {
-                    quit = true;
                 }
             }
         }

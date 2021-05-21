@@ -1,14 +1,18 @@
 package fr.ul.miage.gl_restaurant.model;
 
+import fr.ul.miage.gl_restaurant.repository.MealRepositoryImpl;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Getter
 @Setter
@@ -28,7 +32,9 @@ public class Order implements Comparable<Order> {
 
     private Map<Dish, Integer> dishes;
 
-    public Order() {}
+    public Order() {
+        this.dishes = new HashMap<>();
+    }
 
     public Order(Long orderId, Meal meal) {
         this.orderId = orderId;
@@ -75,6 +81,16 @@ public class Order implements Comparable<Order> {
 
     public Order(Timestamp orderDate,  Meal meal, Map<Dish, Integer> dishes) {
         this(null, orderDate, null, meal, dishes);
+    }
+
+    public Order(ResultSet resultSet, Map<Dish, Integer> dishes) throws SQLException {
+        this.orderId = resultSet.getLong("orderId");
+        this.orderDate = resultSet.getTimestamp("orderDate");
+        this.preparationDate = resultSet.getTimestamp("preparationDate");
+        this.served = resultSet.getBoolean("served");
+        Optional<Meal> optionalMeal = MealRepositoryImpl.getInstance().findById(resultSet.getLong("mealId"));
+        this.meal = optionalMeal.orElse(null);
+        this.dishes = dishes;
     }
 
     public void addDish(Dish dish, Integer quantity) {

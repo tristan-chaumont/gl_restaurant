@@ -3,6 +3,7 @@ package fr.ul.miage.gl_restaurant.controller;
 import fr.ul.miage.gl_restaurant.auth.Authentification;
 import fr.ul.miage.gl_restaurant.model.Table;
 import fr.ul.miage.gl_restaurant.utilities.InputUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.TextStringBuilder;
 
 import java.util.*;
@@ -70,6 +71,9 @@ public abstract class UserController {
 
     public String displayActions() {
         var stringBuilder = new TextStringBuilder();
+        stringBuilder.appendln("=".repeat(50))
+                .appendln(StringUtils.center("ACCUEIL", 50))
+                .appendln("=".repeat(50));
         for (String action : actions) {
             stringBuilder.appendln(action);
         }

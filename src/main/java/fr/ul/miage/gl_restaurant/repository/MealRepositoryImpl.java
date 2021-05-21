@@ -37,10 +37,8 @@ public class MealRepositoryImpl extends Repository<Meal, Long> {
                 var startDate = resultSet.getTimestamp("startDate");
                 Long mealDuration = resultSet.getLong("mealDuration");
                 Optional<Table> table = TableRepositoryImpl.getInstance().findById(resultSet.getLong("tableId"));
-                if(table.isPresent()){
-                    Optional<Bill> bill = BillRepositoryImpl.getInstance().findById(resultSet.getLong("billId"));
-                    bill.ifPresent(value -> meals.add(new Meal(mealId, customersNb, startDate, mealDuration, table.get(), value)));
-                }
+                Optional<Bill> bill = BillRepositoryImpl.getInstance().findById(resultSet.getLong("billId"));
+                meals.add(new Meal(mealId, customersNb, startDate, mealDuration, table.orElse(null), bill.orElse(null)));
             }
         } catch (SQLException e) {
             log.error(e.getMessage());
@@ -60,10 +58,8 @@ public class MealRepositoryImpl extends Repository<Meal, Long> {
                     var startDate = resultSet.getTimestamp("startDate");
                     Long mealDuration = resultSet.getLong("mealDuration");
                     Optional<Table> table = TableRepositoryImpl.getInstance().findById(resultSet.getLong("tableId"));
-                    if (table.isPresent()) {
-                        Optional<Bill> bill = BillRepositoryImpl.getInstance().findById(resultSet.getLong("billId"));
-                        meal = Optional.of(new Meal(mealId, customersNb, startDate, mealDuration, table.get(), bill.orElse(null)));
-                    }
+                    Optional<Bill> bill = BillRepositoryImpl.getInstance().findById(resultSet.getLong("billId"));
+                    meal = Optional.of(new Meal(mealId, customersNb, startDate, mealDuration, table.orElse(null), bill.orElse(null)));
                 }
             }
         } catch (SQLException e) {

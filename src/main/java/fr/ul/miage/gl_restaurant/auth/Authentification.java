@@ -39,25 +39,25 @@ public class Authentification {
 
     public void disconnect() {
         logOut();
-        PrintUtils.print("Vous êtes déconnecté. A bientôt !%n%n");
+        PrintUtils.println("Vous êtes déconnecté. A bientôt !%n");
     }
 
     public boolean displayInterface() {
-        PrintUtils.print("%s%n", "=".repeat(50));
-        PrintUtils.print("%s%n", StringUtils.center("Bonjour et bienvenue !", 50));
-        PrintUtils.print("%s%n", "=".repeat(50));
-        PrintUtils.print("Pour quitter l'application, tapez : !q%n");
+        PrintUtils.println("%s", "=".repeat(50));
+        PrintUtils.println("%s", StringUtils.center("Bonjour et bienvenue !", 50));
+        PrintUtils.println("%s", "=".repeat(50));
+        PrintUtils.println("Pour quitter l'application, tapez : !q");
         PrintUtils.print("Pour vous connecter, veuillez entrer votre login : ");
         String input = InputUtils.readInput();
         if (input.equals("!q")) {
-            PrintUtils.print("À bientôt !%n");
+            PrintUtils.println("À bientôt !");
             return false;
         }
         signIn(input);
         while (user == null) {
             signIn(InputUtils.readInput());
         }
-        PrintUtils.print("Vous êtes connecté en tant que '%s' (%s %s, %s)%n%n", user.getLogin(), user.getFirstName(), user.getLastName(), user.getRole());
+        PrintUtils.println("Vous êtes connecté en tant que '%s' (%s %s, %s)%n", user.getLogin(), user.getFirstName(), user.getLastName(), user.getRole());
         return true;
     }
 }
