@@ -5,6 +5,8 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.TextStringBuilder;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -66,5 +68,18 @@ public class Dish {
 
     public void clearRawMaterials() {
         rawMaterials.clear();
+    }
+
+    @Override
+    public String toString() {
+        var stringBuilder = new TextStringBuilder();
+        stringBuilder.appendln("-".repeat(20))
+                .appendln("|" + StringUtils.center(dishName, 18) + "|")
+                .appendln("-".repeat(20))
+                .appendln("Catégorie : %s", category)
+                .appendln("Prix : %d", price)
+                .appendln("Ingrédients : ");
+                rawMaterials.forEach((rm,quantity) -> stringBuilder.appendln(" - %d %s", quantity, rm.getRawMaterialName()));
+        return stringBuilder.toString();
     }
 }

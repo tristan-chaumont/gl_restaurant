@@ -26,16 +26,51 @@ public class CuisinierController extends UserController {
     private final OrderRepositoryImpl orderRepository = OrderRepositoryImpl.getInstance();
     private final RawMaterialRepositoryImpl rawMaterialRepository = RawMaterialRepositoryImpl.getInstance();
 
+    /**
+     * ACTIONS DE L'UTILISATEUR
+     */
+    private static final String ACTION_1 = "1 : Préparer une commande";
+    private static final String ACTION_2 = "2 : Créer un plat";
+    private static final String ACTION_3 = "3 : Modifier un plat";
+    private static final String ACTION_4 = "4 : Supprimer un plat";
+
 
     public CuisinierController(Authentification auth) {
         super(auth);
         this.ordersQueue = new TreeSet<>();
+        this.actions.addAll(Arrays.asList(ACTION_1, ACTION_2, ACTION_3, ACTION_4));
     }
 
     protected long askRMId(List<RawMaterial> rms) {
         return Long.parseLong(
                 InputUtils.readInputInArray(
-                        rms.stream().map(u -> u.getRawMaterialId().toString()).collect(Collectors.toList())
+                        rms.stream().map(rm -> rm.getRawMaterialId().toString()).collect(Collectors.toList())
+                )
+        );
+    }
+
+    protected long askUpdateRMId(List<RawMaterial> rms) {
+        var list = rms.stream().map(rm -> rm.getRawMaterialId().toString()).collect(Collectors.toList());
+        list.add("0");
+        return Long.parseLong(
+                InputUtils.readInputInArray(list)
+        );
+    }
+
+    protected long askDishId(List<Dish> dishes) {
+        return Long.parseLong(
+                InputUtils.readInputInArray(
+                        dishes.stream().map(d -> d.getDishId().toString()).collect(Collectors.toList())
+                )
+        );
+    }
+
+    protected long askDeleteDishId(List<Dish> dishes) {
+        var list =  dishes.stream().map(d -> d.getDishId().toString()).collect(Collectors.toList());
+        list.add("0");
+        return Long.parseLong(
+                InputUtils.readInputInArray(
+                        list
                 )
         );
     }
@@ -48,12 +83,30 @@ public class CuisinierController extends UserController {
     protected void displayRawMaterials(List<RawMaterial> rawMaterialList){
         var stringBuilder = new TextStringBuilder();
         rawMaterialList.forEach(rm -> stringBuilder.appendln("[%d] %s", rm.getRawMaterialId(), rm.getRawMaterialName()));
-        PrintUtils.print(stringBuilder.toString());
+        PrintUtils.println(stringBuilder.toString());
     }
 
-    /*protected List<Dish> getDishes(){
-        dishRepository.findAll()
-    }*/
+    protected List<Dish> getDishes(){
+        return dishRepository.findNotDailyMenu();
+    }
+
+    protected void displayDishes(List<Dish> dishes){
+        var stringBuilder = new TextStringBuilder();
+        dishes.forEach(dish -> stringBuilder.appendln("[%d] %s", dish.getDishId(), dish.getDishName()));
+        PrintUtils.println(stringBuilder.toString());
+    }
+
+    protected Dish displayDish(Long dishId){
+        var dish = dishRepository.findById(dishId).get();
+        PrintUtils.println(dish.toString());
+        return dish;
+    }
+
+    protected void displayDishRawMaterials(Map<RawMaterial,Integer> rawMaterials){
+        var stringBuilder = new TextStringBuilder();
+        rawMaterials.forEach((rm,q) -> stringBuilder.appendln("[%d] %s : %d", rm.getRawMaterialId(), rm.getRawMaterialName(), q));
+        PrintUtils.println(stringBuilder.toString());
+    }
 
     /**
      * Récupère toutes les commandes prises par les serveurs et qui n'ont pas encore été préparées.
@@ -81,7 +134,7 @@ public class CuisinierController extends UserController {
         var orders = getOrdersQueue();
         Order order = orders.first();
         prepareOrder(order);
-        PrintUtils.print("La commande N°" + order.getOrderId() + " est prête à être livré.");
+        PrintUtils.println("La commande N°" + order.getOrderId() + " est prête à être livré.");
     }
 
     public void createDish(String dishName, String category, MenuTypes menuType, Double price, HashMap<RawMaterial, Integer> rawMaterials){
@@ -96,8 +149,12 @@ public class CuisinierController extends UserController {
         var dishName = InputUtils.readInput();
         PrintUtils.print("Veuillez saisir la catégorie : ");
         var category = InputUtils.readInput();
-        PrintUtils.print("Veuillez choisir le type du menu : ");
-        var menuType = MenuTypes.getMenuType(InputUtils.readInputInArray(Arrays.asList(MenuTypes.ADULTES.toString(),MenuTypes.ENFANTS.toString())));
+        PrintUtils.print("Ce plat est-il un menu enfant ? y/n) : ");
+        var choice = InputUtils.readInputConfirmation();
+        var menuType = MenuTypes.ADULTES;
+        if(choice.equals("o")){
+            menuType = MenuTypes.ENFANTS;
+        }
         PrintUtils.print("Veuillez choisir les ingrédients que contient votre plat : ");
         List<RawMaterial> rawMaterialList = getRawMaterials();
         HashMap<RawMaterial,Integer> rawMaterials = new HashMap<>();
@@ -111,17 +168,17 @@ public class CuisinierController extends UserController {
             if(quantity > 0) {
                 rawMaterials.put(rawMaterialRepository.findById(rmId).get(), quantity);
             }
-            PrintUtils.print("Voulez-vous ajoutez d'autres ingrédient ? (o/n)");
-            if(InputUtils.readInputInArray(Arrays.asList("o","n")).equals("n")) {
+            PrintUtils.print("Voulez-vous ajoutez d'autres ingrédient ? (y/n)");
+            if(InputUtils.readInputConfirmation().equals("n")) {
                 stop = true;
             }
         }
         PrintUtils.print("Veuillez saisir le prix de ce plat : ");
-        var price = InputUtils.readDoubleInputInRange(0.0, 50.0);
+        var price = InputUtils.readDoubleInputInRange(1.0, 50.0);
         createDish(dishName,category,menuType,price,rawMaterials);
     }
 
-    public void updateDish(Dish dish, String dishName, String category, MenuTypes menuType, Double price, HashMap<RawMaterial, Integer> rawMaterials){
+    public void updateDish(Dish dish, String dishName, String category, MenuTypes menuType, Double price, Map<RawMaterial, Integer> rawMaterials){
         Optional<Dish> resDish = dishRepository.findByName(dishName);
         if(resDish.isEmpty() || dishName.equals(dish.getDishName())){
             List<Order> orders = orderRepository.findByDish(dish.getDishId());
@@ -137,7 +194,57 @@ public class CuisinierController extends UserController {
     }
 
     public void updateDish(){
-
+        List<Dish> dishes = getDishes();
+        PrintUtils.print("Voici la liste des plats que vous pouvez modifié : ");
+        displayDishes(dishes);
+        PrintUtils.print("Pour modifier l'un de ces plats, veuillez saisir son id : ");
+        var dishId = askDishId(dishes);
+        var dish = displayDish(dishId);
+        PrintUtils.print("Pour modifier le nom du plat, veuillez saisir un autre nom, sinon entrez le même nom : ");
+        var dishName = InputUtils.readInput();
+        PrintUtils.print("Pour modifier la catégorie, veuillez saisir la nouvelle catégorie, sinon entrez l'ancienne : ");
+        var category = InputUtils.readInput();
+        PrintUtils.print("Voulez-vous modifier le type du menu ? (y/n) : ");
+        var choice = InputUtils.readInputConfirmation();
+        var menuType = MenuTypes.ADULTES;
+        if ((dish.getMenuType() == MenuTypes.ADULTES && choice.equals("y")) || (dish.getMenuType() == MenuTypes.ENFANTS && choice.equals("n"))){
+            menuType = MenuTypes.ENFANTS;
+        }
+        PrintUtils.print("Pour modifier le prix, veuillez saisir le nouveau prix, sinon entrez l'ancien : ");
+        var price = InputUtils.readDoubleInputInRange(1.0,50.0);
+        var rawMaterials = dish.getRawMaterials();
+        displayDishRawMaterials(rawMaterials);
+        var rmId = 1l;
+        while(rmId != 0){
+            PrintUtils.print("Pour modifier l'un des ingrédients veuillez saisir son id, sinon entrez 0");
+            rmId = askUpdateRMId(List.copyOf(rawMaterials.keySet()));
+            if(rmId != 0) {
+                var rm = rawMaterialRepository.findById(rmId).get();
+                PrintUtils.print("Pour modifier la quantité de cet ingrédient entrez la nouvelle valeur, sinon entrez 0 pour supprimer cet ingrédient : ");
+                var quantity = InputUtils.readIntegerInput();
+                if (quantity > 0) {
+                    rawMaterials.put(rm,quantity);
+                }else{
+                    rawMaterials.remove(rm);
+                }
+            }
+        }
+        rmId = 1l;
+        while (rmId != 0) {
+            var rms = getRawMaterials();
+            displayRawMaterials(rms);
+            PrintUtils.print("Pour ajouter un ingrédient, veuillez entrer son id, sinon entrez 0");
+            rmId = askUpdateRMId(rms);
+            var rmAdd = rawMaterialRepository.findById(rmId).get();
+            if (rmId != 0) {
+                PrintUtils.print("Pour modifier la quantité de cet ingrédient entrez la nouvelle valeur, sinon entrez 0 pour supprimer cet ingrédient : ");
+                var quantityAdd = InputUtils.readIntegerInput();
+                if (quantityAdd > 0) {
+                    rawMaterials.put(rmAdd, quantityAdd);
+                }
+            }
+        }
+        updateDish(dish,dishName,category,menuType,price,rawMaterials);
     }
 
     public void deleteDish(Dish dish){
@@ -147,11 +254,34 @@ public class CuisinierController extends UserController {
         }
     }
 
+    public void deleteDish(){
+        var dishes = getDishes();
+        displayDishes(dishes);
+        PrintUtils.print("Pour supprimer un repas veuillez entrez son id, sinon entrez 0 : ");
+        var dishId = askDeleteDishId(dishes);
+        if(dishId != 0){
+            var dish = dishRepository.findById(dishId).get();
+            deleteDish(dish);
+        }
+    }
+
     @Override
     public void callAction(int action) {
         switch (action) {
             case 0:
                 auth.disconnect();
+                break;
+            case 1:
+                prepareOrder();
+                break;
+            case 2:
+                createDish();
+                break;
+            case 3:
+                updateDish();
+                break;
+            case 4:
+                deleteDish();
                 break;
             default:
                 break;

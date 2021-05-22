@@ -22,6 +22,7 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
     private static final String FIND_BY_NAME_SQL = "SELECT dishId, dishName, category, menuType, price, dailymenu FROM Dishes WHERE dishName = ?";
     private static final String FIND_BY_CATEGORY_SQL = "SELECT dishId, dishName, category, menuType, price, dailymenu FROM Dishes WHERE category = ?";
     private static final String FIND_DAILY_MENU_SQL = "SELECT dishId, dishName, category, menuType, price, dailyMenu FROM Dishes WHERE dailyMenu = true";
+    private static final String FIND_NOT_DAILY_MENU_SQL = "SELECT dishId, dishName, category, menuType, price, dailyMenu FROM Dishes WHERE dailyMenu = false";
     private static final String SAVE_SQL = "INSERT INTO Dishes(dishName, category, menuType, price, dailymenu) VALUES(?, ?, ?, ?, ?)";
     private static final String UPDATE_SQL = "UPDATE Dishes SET dishName = ?, category = ?, menuType = ?, price = ?, dailyMenu = ? WHERE dishId = ?";
     private static final String UPDATE_DAILY_MENU_SQL = "UPDATE Dishes SET dailyMenu = ? WHERE dishId = ?";
@@ -43,6 +44,10 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
 
     public List<Dish> findDailyMenu() {
         return findAllHelper(FIND_DAILY_MENU_SQL);
+    }
+
+    public List<Dish> findNotDailyMenu() {
+        return findAllHelper(FIND_NOT_DAILY_MENU_SQL);
     }
 
     public List<Dish> findAllHelper(String query) {

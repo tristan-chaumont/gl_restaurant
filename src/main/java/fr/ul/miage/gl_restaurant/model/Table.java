@@ -66,10 +66,10 @@ public class Table {
         if (user == null) {
             stringBuilder.appendln("Serveur : Aucun");
         } else {
-            stringBuilder.appendln("Serveur : %s %s", user.getFirstName(), user.getLastName())
-                    .appendln("Nombre de places : %d", places)
-                    .appendln("Statut : %s", state.toString());
+            stringBuilder.appendln("Serveur : %s %s", user.getFirstName(), user.getLastName());
         }
+        stringBuilder.appendln("Nombre de places : %d", places)
+                .appendln("Statut : %s", state.toString());
         return stringBuilder.toString();
     }
 }
