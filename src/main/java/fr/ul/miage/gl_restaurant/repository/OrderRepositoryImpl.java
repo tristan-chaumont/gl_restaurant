@@ -1,8 +1,6 @@
 package fr.ul.miage.gl_restaurant.repository;
 
-import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.model.Dish;
-import fr.ul.miage.gl_restaurant.model.Meal;
 import fr.ul.miage.gl_restaurant.model.Order;
 import lombok.extern.slf4j.Slf4j;
 
@@ -29,8 +27,8 @@ public class OrderRepositoryImpl extends Repository<Order, Long> {
     private static final String SAVE_DISHES_SQL = "INSERT INTO Dishes_Orders(dishId, orderId, quantity) VALUES(?, ?, ?)";
     private static final String DELETE_DISHES_SQL = "DELETE FROM Dishes_Orders WHERE orderId = ?";
 
-    private OrderRepositoryImpl(Environment environment) {
-        super(environment);
+    private OrderRepositoryImpl() {
+        super();
     }
 
     @Override
@@ -213,7 +211,7 @@ public class OrderRepositoryImpl extends Repository<Order, Long> {
 
     public static OrderRepositoryImpl getInstance() {
         if (instance == null) {
-            instance = new OrderRepositoryImpl(Environment.TEST);
+            instance = new OrderRepositoryImpl();
         }
         return instance;
     }

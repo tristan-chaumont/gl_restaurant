@@ -1,6 +1,5 @@
 package fr.ul.miage.gl_restaurant.repository;
 
-import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.model.Dish;
 import fr.ul.miage.gl_restaurant.model.RawMaterial;
 import lombok.extern.slf4j.Slf4j;
@@ -33,8 +32,8 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
     private static final String SAVE_RM_SQL = "INSERT INTO Dishes_RawMaterials(dishId, rmId, quantity) VALUES(?, ?, ?)";
     private static final String DELETE_RM_SQL = "DELETE FROM Dishes_RawMaterials WHERE dishId = ?";
 
-    private DishRepositoryImpl(Environment environment) {
-        super(environment);
+    private DishRepositoryImpl() {
+        super();
     }
 
     @Override
@@ -260,7 +259,7 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
 
     public static DishRepositoryImpl getInstance() {
         if (instance == null) {
-            instance = new DishRepositoryImpl(Environment.TEST);
+            instance = new DishRepositoryImpl();
         }
         return instance;
     }

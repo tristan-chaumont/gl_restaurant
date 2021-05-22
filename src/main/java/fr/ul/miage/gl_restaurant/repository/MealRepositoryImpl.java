@@ -1,6 +1,5 @@
 package fr.ul.miage.gl_restaurant.repository;
 
-import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.model.Bill;
 import fr.ul.miage.gl_restaurant.model.Meal;
 import fr.ul.miage.gl_restaurant.model.Table;
@@ -22,8 +21,8 @@ public class MealRepositoryImpl extends Repository<Meal, Long> {
     private static final String UPDATE_SQL = "UPDATE Meals SET customersNb = ?, startDate = ?, mealDuration = ?, tableId = ?, billId = ? WHERE mealId = ?";
     private static final String DELETE_SQL = "DELETE FROM Meals WHERE mealId = ?";
 
-    private MealRepositoryImpl(Environment environment) {
-        super(environment);
+    private MealRepositoryImpl() {
+        super();
     }
 
     @Override
@@ -128,7 +127,7 @@ public class MealRepositoryImpl extends Repository<Meal, Long> {
 
     public static MealRepositoryImpl getInstance() {
         if (instance == null) {
-            instance = new MealRepositoryImpl(Environment.TEST);
+            instance = new MealRepositoryImpl();
         }
         return instance;
     }

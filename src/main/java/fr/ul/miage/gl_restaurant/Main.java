@@ -1,7 +1,6 @@
 package fr.ul.miage.gl_restaurant;
 
 import fr.ul.miage.gl_restaurant.auth.Authentification;
-import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.controller.UserController;
 import fr.ul.miage.gl_restaurant.jdbc.DbAccess;
 import fr.ul.miage.gl_restaurant.utilities.ControllerUtils;
@@ -15,7 +14,7 @@ import java.sql.SQLException;
 public class Main {
 
     public static void main(String[] args) {
-        var connection = DbAccess.getInstance(Environment.TEST);
+        var connection = DbAccess.getInstance();
         log.info("Connection successful");
 
         var auth = new Authentification();
