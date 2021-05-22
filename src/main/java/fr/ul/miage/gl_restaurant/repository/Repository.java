@@ -1,6 +1,5 @@
 package fr.ul.miage.gl_restaurant.repository;
 
-import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.jdbc.DbAccess;
 import lombok.extern.slf4j.Slf4j;
 
@@ -14,8 +13,8 @@ public abstract class Repository<T, K> {
 
     protected Connection connection;
 
-    protected Repository(Environment environment) {
-        connection = DbAccess.getInstance(environment);
+    protected Repository() {
+        connection = DbAccess.getInstance();
     }
 
     public abstract List<T> findAll();

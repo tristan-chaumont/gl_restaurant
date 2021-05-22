@@ -12,8 +12,6 @@ import fr.ul.miage.gl_restaurant.repository.RawMaterialRepositoryImpl;
 import java.util.List;
 import java.util.Optional;
 
-import static ch.qos.logback.core.joran.spi.ConsoleTarget.findByName;
-
 public class DirecteurController extends UserController {
 
     private final DishRepositoryImpl dishRepository;

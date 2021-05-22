@@ -117,27 +117,27 @@ public class MaitreHotelController extends UserController {
      */
     public void assignServer() {
         List<Table> tables = tableRepository.findAll();
-        PrintUtils.print("%s%n", displayTablesByFloor(tables));
+        PrintUtils.println("%s", displayTablesByFloor(tables));
         PrintUtils.print("Veuillez saisir le numéro de la table : ");
         var tableId = askTableId(tables);
         Optional<Table> table = tableRepository.findById(tableId);
         if (table.isPresent()) {
             Set<User> servers = userRepository.findByRole(Roles.SERVEUR);
-            PrintUtils.print("%n%s%n", displayUsers(servers));
+            PrintUtils.println("%n%s", displayUsers(servers));
             PrintUtils.print("Veuillez saisir le numéro du serveur : ");
             var serverId = askServerId(servers);
             Optional<User> server = userRepository.findById(serverId);
             if (server.isPresent()) {
                 if (assignServer(table.get(), server.get())) {
-                    PrintUtils.print("Le serveur a bien été affecté à la table.%n%n");
+                    PrintUtils.println("Le serveur a bien été affecté à la table.%n");
                 } else {
-                    PrintUtils.print("Problème lors de l'affectation du serveur à la table, veuillez réessayer.%n%n");
+                    PrintUtils.println("Problème lors de l'affectation du serveur à la table, veuillez réessayer.%n");
                 }
             } else {
-                PrintUtils.print("Cet utilisateur n'existe pas.%n");
+                PrintUtils.println("Cet utilisateur n'existe pas.");
             }
         } else {
-            PrintUtils.print("Cette table n'existe pas.%n");
+            PrintUtils.println("Cette table n'existe pas.");
         }
     }
 
@@ -163,7 +163,7 @@ public class MaitreHotelController extends UserController {
 
     @Override
     public void callAction(int action) {
-        PrintUtils.print("%n");
+        PrintUtils.println();
         switch (action) {
             case 0:
                 auth.disconnect();
@@ -178,7 +178,7 @@ public class MaitreHotelController extends UserController {
                 assignServer();
                 break;
             case 4:
-                System.out.println(displayTablesAndServers());
+                PrintUtils.print(displayTablesAndServers());
                 break;
             default:
                 break;

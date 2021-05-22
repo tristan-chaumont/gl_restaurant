@@ -1,6 +1,5 @@
 package fr.ul.miage.gl_restaurant.repository;
 
-import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.constants.Roles;
 import fr.ul.miage.gl_restaurant.model.User;
 import lombok.extern.slf4j.Slf4j;
@@ -24,8 +23,8 @@ public class UserRepositoryImpl extends Repository<User, Long> {
     private static final String UPDATE_SQL = "UPDATE Users SET login = ?, lastName = ?, firstName = ?, role = ? WHERE userId = ?";
     private static final String DELETE_SQL = "DELETE FROM Users WHERE userId = ?";
 
-    private UserRepositoryImpl(Environment environment) {
-        super(environment);
+    private UserRepositoryImpl() {
+        super();
     }
 
     /* FIND */
@@ -158,7 +157,7 @@ public class UserRepositoryImpl extends Repository<User, Long> {
 
     public static UserRepositoryImpl getInstance() {
         if (instance == null) {
-            instance = new UserRepositoryImpl(Environment.TEST);
+            instance = new UserRepositoryImpl();
         }
         return instance;
     }

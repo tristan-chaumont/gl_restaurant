@@ -91,6 +91,9 @@ fabric.properties
 db.properties
 db.test.properties
 
+# Configuration
+config.properties
+
 # Eclipse
 bin/
 .classpath

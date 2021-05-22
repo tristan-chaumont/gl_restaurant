@@ -82,7 +82,7 @@ class TestOrderRepositoryImpl {
     }
 
     @Test
-    @DisplayName("findById() récupère le bon utilisateur")
+    @DisplayName("findById() récupère la bonne commande")
     void verifyFindByIdGetsOrder() {
         Optional<Order> result = orderRepository.findById(order1.getOrderId());
         assertThat(result.isPresent(), is(true));
@@ -111,6 +111,21 @@ class TestOrderRepositoryImpl {
     }
 
     @Test
+    @DisplayName("findByMeal() récupère la bonne commande")
+    void verifyFindByMealGetsOrder() {
+        Optional<Order> result = orderRepository.findByMeal(meal1.getMealId());
+        assertThat(result.isPresent(), is(true));
+        assertThat(result.get().getOrderId(), equalTo(order1.getOrderId()));
+    }
+
+    @Test
+    @DisplayName("findByMeal() ne récupère rien")
+    void verifyFindByMealReturnsNothing() {
+        Optional<Order> result = orderRepository.findByMeal(999999999L);
+        assertThat(result.isPresent(), is(false));
+    }
+
+    @Test
     @DisplayName("L'insertion fonctionne")
     void verifySaveInsertElement() {
         Table tableInsert = tableRepository.save(new Table(1,TableStates.LIBRE, 4, user));
@@ -118,13 +133,14 @@ class TestOrderRepositoryImpl {
         Meal meal = mealRepository.save(new Meal(4, Timestamp.valueOf("2021-04-26 12:00:00"), 30L, tableInsert ,bill));
         Order order = orderRepository.save(new Order(Timestamp.valueOf("2021-04-26 12:05:00"),Timestamp.valueOf("2021-04-26 12:15:00"),meal));
         assertNotNull(order.getOrderId());
-        Order result = orderRepository.findById(order.getOrderId()).get();
+        Optional<Order> result = orderRepository.findById(order.getOrderId());
+        assertThat(result.isPresent(), is(true));
         orderRepository.delete(order.getOrderId());
         mealRepository.delete(meal.getMealId());
         billRepository.delete(bill.getBillId());
         tableRepository.delete(tableInsert.getTableId());
-        assertThat(result.getOrderDate(), equalTo(order.getOrderDate()));
-        assertThat(result.getPreparationDate(), equalTo(order.getPreparationDate()));
+        assertThat(result.get().getOrderDate(), equalTo(order.getOrderDate()));
+        assertThat(result.get().getPreparationDate(), equalTo(order.getPreparationDate()));
     }
 
     //Faire un test sur le fait que l'on ne peut insérer un objet Meal sur une table occupée
@@ -134,8 +150,9 @@ class TestOrderRepositoryImpl {
     void verifyUpdateSucceed() {
         order1.setOrderDate(Timestamp.valueOf("2021-04-26 12:03:00"));
         orderRepository.update(order1);
-        Order result = orderRepository.findById(order1.getOrderId()).get();
-        assertThat(result.getOrderDate(), equalTo(Timestamp.valueOf("2021-04-26 12:03:00")));
+        Optional<Order> result = orderRepository.findById(order1.getOrderId());
+        assertThat(result.isPresent(), is(true));
+        assertThat(result.get().getOrderDate(), equalTo(Timestamp.valueOf("2021-04-26 12:03:00")));
     }
 
     @Test

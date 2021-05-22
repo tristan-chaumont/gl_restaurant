@@ -77,13 +77,14 @@ class TestMealRepositoryImpl {
         Bill bill = billRepository.save(new Bill(3L));
         Meal meal = mealRepository.save(new Meal(4, Timestamp.valueOf("2021-04-26 12:00:00"), 30L, tableInsert ,bill));
         assertNotNull(meal.getMealId());
-        Meal result = mealRepository.findById(meal.getMealId()).get();
+        Optional<Meal> result = mealRepository.findById(meal.getMealId());
+        assertThat(result.isPresent(), is(true));
         mealRepository.delete(meal.getMealId());
         billRepository.delete(bill.getBillId());
         tableRepository.delete(tableInsert.getTableId());
-        assertThat(result.getCustomersNb(), equalTo(meal.getCustomersNb()));
-        assertThat(result.getStartDate(), equalTo(meal.getStartDate()));
-        assertThat(result.getMealDuration(), equalTo(meal.getMealDuration()));
+        assertThat(result.get().getCustomersNb(), equalTo(meal.getCustomersNb()));
+        assertThat(result.get().getStartDate(), equalTo(meal.getStartDate()));
+        assertThat(result.get().getMealDuration(), equalTo(meal.getMealDuration()));
     }
 
     //Faire un test sur le fait que l'on ne peut insérer un objet Meal sur une table occupée
@@ -93,8 +94,9 @@ class TestMealRepositoryImpl {
     void verifyUpdateSucceed() {
         meal1.setMealDuration(40L);
         mealRepository.update(meal1);
-        Meal result = mealRepository.findById(meal1.getMealId()).get();
-        assertThat(result.getMealDuration(), equalTo(40L));
+        Optional<Meal> result = mealRepository.findById(meal1.getMealId());
+        assertThat(result.isPresent(), is(true));
+        assertThat(result.get().getMealDuration(), equalTo(40L));
     }
 
     @Test

@@ -1,11 +1,9 @@
 package fr.ul.miage.gl_restaurant.jdbc;
 
-import fr.ul.miage.gl_restaurant.constants.Environment;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.io.FileNotFoundException;
 import java.sql.Connection;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -20,8 +18,8 @@ class TestDbAccess {
     @Test
     @DisplayName("Deux connexions lancées")
     void verifyBothConnectionsAreTheSame() {
-        connection1 = DbAccess.getInstance(Environment.TEST);
-        connection2 = DbAccess.getInstance(Environment.TEST);
+        connection1 = DbAccess.getInstance();
+        connection2 = DbAccess.getInstance();
         assertThat(connection1, is(connection2));
     }
 

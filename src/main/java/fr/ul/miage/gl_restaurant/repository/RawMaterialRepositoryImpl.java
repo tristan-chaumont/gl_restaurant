@@ -1,6 +1,5 @@
 package fr.ul.miage.gl_restaurant.repository;
 
-import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.model.Order;
 import fr.ul.miage.gl_restaurant.model.RawMaterial;
 import lombok.extern.slf4j.Slf4j;
@@ -29,8 +28,8 @@ public class RawMaterialRepositoryImpl extends Repository<RawMaterial, Long> {
     private static final String UPDATE_STOCK_SQL = "UPDATE RawMaterials SET stockQuantity = stockQuantity - ? WHERE rmId = ?";
     private static final String DELETE_SQL = "DELETE FROM RawMaterials WHERE rmId = ?";
 
-    private RawMaterialRepositoryImpl(Environment environment) {
-        super(environment);
+    private RawMaterialRepositoryImpl() {
+        super();
     }
 
     @Override
@@ -196,7 +195,7 @@ public class RawMaterialRepositoryImpl extends Repository<RawMaterial, Long> {
 
     public static RawMaterialRepositoryImpl getInstance() {
         if (instance == null) {
-            instance = new RawMaterialRepositoryImpl(Environment.TEST);
+            instance = new RawMaterialRepositoryImpl();
         }
         return instance;
     }

@@ -1,6 +1,5 @@
 package fr.ul.miage.gl_restaurant.repository;
 
-import fr.ul.miage.gl_restaurant.constants.Environment;
 import fr.ul.miage.gl_restaurant.model.Dish;
 import fr.ul.miage.gl_restaurant.model.RawMaterial;
 import lombok.extern.slf4j.Slf4j;
@@ -16,15 +15,14 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
 
     private static DishRepositoryImpl instance;
 
-
     private static final String DISHID_COLUMN_NAME = "dishId";
 
     private static final String FIND_ALL_SQL = "SELECT dishId, dishName, category, menuType, price, dailymenu FROM Dishes";
     private static final String FIND_BY_ID_SQL = "SELECT dishId, dishName, category, menuType, price, dailymenu FROM Dishes WHERE dishId = ?";
     private static final String FIND_BY_NAME_SQL = "SELECT dishId, dishName, category, menuType, price, dailymenu FROM Dishes WHERE dishName = ?";
     private static final String FIND_BY_CATEGORY_SQL = "SELECT dishId, dishName, category, menuType, price, dailymenu FROM Dishes WHERE category = ?";
+    private static final String FIND_DAILY_MENU_SQL = "SELECT dishId, dishName, category, menuType, price, dailyMenu FROM Dishes WHERE dailyMenu = true";
     private static final String SAVE_SQL = "INSERT INTO Dishes(dishName, category, menuType, price, dailymenu) VALUES(?, ?, ?, ?, ?)";
-
     private static final String UPDATE_SQL = "UPDATE Dishes SET dishName = ?, category = ?, menuType = ?, price = ?, dailyMenu = ? WHERE dishId = ?";
     private static final String UPDATE_DAILY_MENU_SQL = "UPDATE Dishes SET dailyMenu = ? WHERE dishId = ?";
     private static final String DELETE_SQL = "DELETE FROM Dishes WHERE dishId = ?";
@@ -34,15 +32,23 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
     private static final String SAVE_RM_SQL = "INSERT INTO Dishes_RawMaterials(dishId, rmId, quantity) VALUES(?, ?, ?)";
     private static final String DELETE_RM_SQL = "DELETE FROM Dishes_RawMaterials WHERE dishId = ?";
 
-    private DishRepositoryImpl(Environment environment) {
-        super(environment);
+    private DishRepositoryImpl() {
+        super();
     }
 
     @Override
     public List<Dish> findAll() {
+        return findAllHelper(FIND_ALL_SQL);
+    }
+
+    public List<Dish> findDailyMenu() {
+        return findAllHelper(FIND_DAILY_MENU_SQL);
+    }
+
+    public List<Dish> findAllHelper(String query) {
         List<Dish> dishes = new ArrayList<>();
         try (var statement = connection.createStatement();
-             var resultSet = statement.executeQuery(FIND_ALL_SQL)) {
+             var resultSet = statement.executeQuery(query)) {
             while (resultSet.next()) {
                 dishes.add(new Dish(resultSet, findRawMaterialsByDishId(resultSet.getLong(DISHID_COLUMN_NAME))));
             }
@@ -102,15 +108,15 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
 
     public List<Dish> findByRM(Long rmId) {
         List<Dish> dishes = new ArrayList<>();
-        try (PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_RM_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+        try (var preparedStatement = connection.prepareStatement(FIND_BY_RM_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
             preparedStatement.setLong(1, rmId);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+            try (var resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
-                    dishes.add(new Dish(resultSet, findRawMaterialsByDishId(resultSet.getLong("dishId"))));
+                    dishes.add(new Dish(resultSet, findRawMaterialsByDishId(resultSet.getLong(DISHID_COLUMN_NAME))));
                 }
             }
         } catch (SQLException e) {
-            log.error("Exception: " + e.getMessage());
+            log.error(e.getMessage());
         }
         return dishes;
     }
@@ -253,7 +259,7 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
 
     public static DishRepositoryImpl getInstance() {
         if (instance == null) {
-            instance = new DishRepositoryImpl(Environment.TEST);
+            instance = new DishRepositoryImpl();
         }
         return instance;
     }

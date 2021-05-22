@@ -62,10 +62,14 @@ public class Table {
         stringBuilder.appendln("-".repeat(20))
                 .appendln("|" + StringUtils.center("Table " +tableId, 18) + "|")
                 .appendln("-".repeat(20))
-                .appendln("Étage : %d", floor)
-                .appendln("Serveur : %s %s", user.getFirstName(), user.getLastName())
-                .appendln("Nombre de places : %d", places)
-                .appendln("Statut : %s", state.toString());
+                .appendln("Étage : %d", floor);
+        if (user == null) {
+            stringBuilder.appendln("Serveur : Aucun");
+        } else {
+            stringBuilder.appendln("Serveur : %s %s", user.getFirstName(), user.getLastName())
+                    .appendln("Nombre de places : %d", places)
+                    .appendln("Statut : %s", state.toString());
+        }
         return stringBuilder.toString();
     }
 }
