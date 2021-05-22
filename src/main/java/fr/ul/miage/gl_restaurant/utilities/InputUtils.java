@@ -32,6 +32,30 @@ public class InputUtils {
         return Integer.parseInt(input);
     }
 
+    public static int readIntegerInput() {
+        String input = scanner.nextLine();
+        while (!isValidInteger(input)) {
+            input = readInput();
+        }
+        return Integer.parseInt(input);
+    }
+
+    public static double readDoubleInput() {
+        String input = scanner.nextLine();
+        while (!isValidDouble(input)) {
+            input = readInput();
+        }
+        return Double.parseDouble(input);
+    }
+
+    public static double readDoubleInputInRange(double startInclusive, double endExclusive) {
+        String input = scanner.nextLine();
+        while (!isValidDouble(input) || !isDoubleInRange(Double.parseDouble(input), startInclusive, endExclusive)) {
+            input = readInput();
+        }
+        return Double.parseDouble(input);
+    }
+
     /**
      * Vérifie si l'input entré par l'utilisateur est bien dans la range définie.
      * @param input Entrée de l'utilisateur.
@@ -48,6 +72,21 @@ public class InputUtils {
     }
 
     /**
+     * Vérifie si l'input entré par l'utilisateur est bien dans la range définie.
+     * @param input Entrée de l'utilisateur.
+     * @param startInclusive Borne inférieure fermée.
+     * @param endExclusive Borne supérieure ouverte.
+     * @return True si l'input est valide, false sinon.
+     */
+    private static boolean isDoubleInRange(double input, double startInclusive, double endExclusive) {
+        if (startInclusive <= input && endExclusive > input) {
+            return true;
+        }
+        PrintUtils.print("La valeur est trop petite ou trop grande, veuillez réessayer : ");
+        return false;
+    }
+
+    /**
      * Vérifie si l'input entré par l'utilisateur est un entier valide.
      * @param input Entrée de l'utilisateur.
      * @return True si l'input est valide, false sinon.
@@ -55,6 +94,21 @@ public class InputUtils {
     private static boolean isValidInteger(String input) {
         try {
             Integer.parseInt(input);
+        } catch (NumberFormatException e) {
+            PrintUtils.print("Problème lors de la saisie de la valeur, veuillez réessayer : ");
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Vérifie si l'input entré par l'utilisateur est un nombre réel valide.
+     * @param input Entrée de l'utilisateur.
+     * @return True si l'input est valide, false sinon.
+     */
+    private static boolean isValidDouble(String input) {
+        try {
+            Double.parseDouble(input);
         } catch (NumberFormatException e) {
             PrintUtils.print("Problème lors de la saisie de la valeur, veuillez réessayer : ");
             return false;
