@@ -43,19 +43,26 @@ public class ServeurController extends UserController {
     private static final String SUB_ACTION_1 = "1 : Afficher les informations de la table";
     private static final String SUB_ACTION_2 = "2 : Ajouter un article à la table";
     private static final String SUB_ACTION_3 = "3 : Valider et transmettre la commande en cours à la cuisine";
+    private static final String SUB_ACTION_4 = "4 : Servir la commande";
 
     public ServeurController(Authentification auth) {
         super(auth);
         this.actions.addAll(Arrays.asList(ACTION_1, ACTION_2));
         subActions = new LinkedHashSet<>();
-        subActions.addAll(Arrays.asList(SUB_ACTION_0, SUB_ACTION_1, SUB_ACTION_2, SUB_ACTION_3));
+        subActions.addAll(Arrays.asList(
+                SUB_ACTION_0,
+                SUB_ACTION_1,
+                SUB_ACTION_2,
+                SUB_ACTION_3,
+                SUB_ACTION_4)
+        );
     }
 
     protected String displayOrderRecap(Order order) {
         var stringBuilder = new TextStringBuilder();
-        order.getDishes().forEach((k, v) -> {
-            stringBuilder.appendln("- %s (x%d)", k.getDishName(), v);
-        });
+        order.getDishes().forEach((k, v) ->
+            stringBuilder.appendln("- %s (x%d)", k.getDishName(), v)
+        );
         return stringBuilder.toString();
     }
 
@@ -63,7 +70,7 @@ public class ServeurController extends UserController {
      * Prend une commande et la sauvegarde en base de données.
      * @param order Commande à prendre.
      */
-    public boolean takeOrder(Order order) {
+    protected boolean takeOrder(Order order) {
         rawMaterialRepository.updateStockBasedOnTakenOrder(order);
         order = orderRepository.save(order);
         if (order.getOrderId() != null) {
@@ -73,7 +80,7 @@ public class ServeurController extends UserController {
         return false;
     }
 
-    public void takeOrder() {
+    protected void takeOrder() {
         if (this.order != null) {
             PrintUtils.println("-".repeat(50));
             PrintUtils.println(StringUtils.center("Récap. de la commande", 50));
@@ -98,7 +105,7 @@ public class ServeurController extends UserController {
      * @param user Serveur.
      * @return La liste des tables du serveur.
      */
-    public Set<Table> getTablesList(User user){
+    protected Set<Table> getTablesList(User user){
         Set<Table> tablesList = new HashSet<>();
         if (user.getRole().equals(Roles.SERVEUR)) {
             tablesList.addAll(tableRepository.findByUserId(user.getUserId()));
@@ -110,26 +117,18 @@ public class ServeurController extends UserController {
      * Indique que la commande a été servie par le serveur.
      * @param order Commande servie.
      */
-    public void setOrderServed(Order order) {
+    protected Order setOrderServed(Order order) {
         order.setServed(true);
-        orderRepository.update(order);
+        return orderRepository.update(order);
     }
 
-    public boolean addArticleToOrder(Table table, Dish dish, int quantity) {
-        List<Meal> meals = mealRepository.findAll();
-        Optional<Meal> meal = meals.stream().filter(m ->
-                m.getTable().getTableId().equals(table.getTableId()) && m.getBill() == null).findFirst();
-        if (meal.isPresent()) {
-            if (this.order == null) {
-                this.order = new Order();
-                this.order.setOrderDate(Timestamp.from(Instant.now()));
-                this.order.setMeal(meal.get());
-            }
-            order.addDish(dish, quantity);
-        } else {
-            return false;
+    protected void addArticleToOrder(Meal meal, Dish dish, int quantity) {
+        if (this.order == null) {
+            this.order = new Order();
+            this.order.setOrderDate(Timestamp.from(Instant.now()));
+            this.order.setMeal(meal);
         }
-        return true;
+        order.addDish(dish, quantity);
     }
 
     /**
@@ -193,7 +192,7 @@ public class ServeurController extends UserController {
     /**
      * Demande au serveur d'ajouter un article à la table.
      */
-    protected void addArticle(Table table) {
+    protected void addArticle(Meal meal) {
         List<String> categories = getDishesCategories();
         if (!categories.isEmpty()) {
             PrintUtils.println(displayDishesCategories(categories));
@@ -209,17 +208,59 @@ public class ServeurController extends UserController {
                 var dish = dishes.get(dishInput - 1);
                 PrintUtils.print("Veuillez insérer la quantité de ce plat à ajouter : ");
                 var quantity = InputUtils.readIntegerInputInRange(1, 10);
-                if (!addArticleToOrder(table, dish, quantity)) {
-                    PrintUtils.println("Impossible d'ajouter l'article à la table.%n");
-                } else {
-                    PrintUtils.println();
-                }
+                addArticleToOrder(meal, dish, quantity);
+                PrintUtils.println();
+
             } else {
                 PrintUtils.println("Il n'existe aucun plat dans cette catégorie.%n");
             }
         } else {
             PrintUtils.println("Vous ne pouvez pas ajouter d'article à cette table, il n'en existe aucun.");
             PrintUtils.println("Veuillez vérifier que vous avez ajouter des plats et qu'ils ont une catégorie.%n");
+        }
+    }
+
+    /**
+     * Regarde si la table est occupée ou s'il y a déjà une commande avant de pouvoir ajouter un article.
+     */
+    protected void handleAddArticle(Table table) {
+        List<Meal> meals = mealRepository.findAll();
+        Optional<Meal> meal = meals.stream().filter(m ->
+                m.getTable().getTableId().equals(table.getTableId()) && m.getBill() == null).findFirst();
+
+        if (table.getState().equals(TableStates.OCCUPEE) && meal.isPresent()) {
+            Optional<Order> optionalOrder = orderRepository.findByMeal(meal.get().getMealId());
+            if (optionalOrder.isEmpty() || optionalOrder.get().isServed()) {
+                addArticle(meal.get());
+            } else {
+                PrintUtils.println("Impossible d'ajouter un article, une commande existe déjà pour cette table.%n");
+            }
+        } else {
+            PrintUtils.println("Impossible d'ajouter un article à cette table, il n'y a aucun client.%n");
+        }
+    }
+
+    protected void serveOrder(Table table) {
+        List<Meal> meals = mealRepository.findAll();
+        Optional<Meal> meal = meals.stream().filter(m ->
+                m.getTable().getTableId().equals(table.getTableId()) && m.getBill() == null).findFirst();
+
+        if (table.getState().equals(TableStates.OCCUPEE) && meal.isPresent()) {
+            Optional<Order> optionalOrder = orderRepository.findByMeal(meal.get().getMealId());
+            if (optionalOrder.isPresent()) {
+                if (optionalOrder.get().getPreparationDate() == null) {
+                    PrintUtils.println("La commande de cette table n'a pas encore été préparée.%n");
+                } else if (optionalOrder.get().isServed()) {
+                    PrintUtils.println("Toutes les commandes de cette table ont déjà été servies.%n");
+                } else {
+                    setOrderServed(optionalOrder.get());
+                    PrintUtils.println("La commande a bien été servie.%n");
+                }
+            } else {
+                PrintUtils.println("Aucune commande à servir pour cette table.%n");
+            }
+        } else {
+            PrintUtils.println("Impossible de servir une table inoccupée.%n");
         }
     }
 
@@ -230,27 +271,26 @@ public class ServeurController extends UserController {
                 System.out.println(table);
                 break;
             case 2:
-                if (table.getState().equals(TableStates.OCCUPEE)) {
-                    addArticle(table);
-                } else {
-                    PrintUtils.println("Impossible d'ajouter un article à cette table, il n'y a aucun client.%n");
-                }
+                handleAddArticle(table);
                 break;
             case 3:
                 takeOrder();
+                break;
+            case 4:
+                serveOrder(table);
                 break;
             default:
                 break;
         }
     }
-    public String displaySubActions() {
+
+    protected String displaySubActions() {
         var stringBuilder = new TextStringBuilder();
         for (String subAction : subActions) {
             stringBuilder.appendln(subAction);
         }
         return stringBuilder.toString();
     }
-
 
     protected void handleTable() {
         Set<Table> tables = getTablesList(auth.getUser());

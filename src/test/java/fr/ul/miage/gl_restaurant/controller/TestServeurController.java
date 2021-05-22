@@ -8,18 +8,15 @@ import fr.ul.miage.gl_restaurant.model.Meal;
 import fr.ul.miage.gl_restaurant.model.Order;
 import fr.ul.miage.gl_restaurant.model.Table;
 import fr.ul.miage.gl_restaurant.model.User;
-import fr.ul.miage.gl_restaurant.repository.DishRepositoryImpl;
-import fr.ul.miage.gl_restaurant.repository.MealRepositoryImpl;
-import fr.ul.miage.gl_restaurant.repository.TableRepositoryImpl;
-import fr.ul.miage.gl_restaurant.repository.UserRepositoryImpl;
+import fr.ul.miage.gl_restaurant.repository.*;
 import org.apache.commons.text.TextStringBuilder;
 import org.junit.jupiter.api.*;
 
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -31,6 +28,7 @@ class TestServeurController {
     static ServeurController serveurController;
     static DishRepositoryImpl dishRepository;
     static MealRepositoryImpl mealRepository;
+    static OrderRepositoryImpl orderRepository;
     Table table1Floor1, table2Floor1, table1Floor2, table2Floor2;
     Meal meal1;
     Dish dish1, dish2;
@@ -42,6 +40,7 @@ class TestServeurController {
         userRepository = UserRepositoryImpl.getInstance();
         dishRepository = DishRepositoryImpl.getInstance();
         mealRepository = MealRepositoryImpl.getInstance();
+        orderRepository = OrderRepositoryImpl.getInstance();
         serveurController = new ServeurController(new Authentification());
         user = userRepository.findByLogin("chaumontt").orElse(null);
     }
@@ -65,17 +64,13 @@ class TestServeurController {
     }
 
     @Test
-    @DisplayName("La commande prise par le serveur est sauvegardée en DB")
-    void verifyTakeOrderSucceed() {
-        // Rien pour le moment puisqu'on ne testerait qu'un appel à une autre méthode déjà testée.
-        // À voir si la méthode évolue par la suite.
-    }
-
-    @Test
-    @DisplayName("La liste des tables correspond à celle du serveur")
-    void verifyGetTablesList() {
-        // Rien pour le moment puisqu'on ne testerait qu'un appel à une autre méthode déjà testée.
-        // À voir si la méthode évolue par la suite.
+    @DisplayName("La commande est servir avec succès")
+    void verifySetOrderServedSucceed() {
+        Order order = new Order(Timestamp.from(Instant.now()), meal1, new HashMap<>());
+        order = orderRepository.save(order);
+        order = serveurController.setOrderServed(order);
+        assertThat(order.isServed(), is(true));
+        orderRepository.delete(order.getOrderId());
     }
 
     @Test
@@ -128,16 +123,8 @@ class TestServeurController {
     @Test
     @DisplayName("addArticleToOrder() ajoute l'article à la commande de la table")
     void verifyAddArticleToOrderSucceed() {
-        boolean result = serveurController.addArticleToOrder(table2Floor1, dish1, 2);
-        assertThat(result, is(true));
+        serveurController.addArticleToOrder(meal1, dish1, 2);
         assertThat(serveurController.getOrder().getMeal().getMealId(), equalTo(meal1.getMealId()));
-    }
-
-    @Test
-    @DisplayName("addArticleToOrder() n'ajoute pas l'article car il n'y a pas de clients")
-    void verifyAddArticleToOrderFail() {
-        boolean result = serveurController.addArticleToOrder(table1Floor1, dish1, 2);
-        assertThat(result, is(false));
     }
 
     @Test
