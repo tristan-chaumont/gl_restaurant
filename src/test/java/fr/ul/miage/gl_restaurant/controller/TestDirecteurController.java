@@ -212,7 +212,7 @@ class TestDirecteurController {
 
     @Test
     @DisplayName("L'utilisateur n'est pas supprimé car l'utilisateur est affecté à une table")
-    void tesDeleteUserFailed(){
+    void testDeleteUserFailed(){
         DirecteurController directeurController = new DirecteurController(new Authentification());
         var user = userRepository.save(new User("bouchev", "Bouché", "Valentine", Roles.SERVEUR));
         var table = tableRepository.save(new Table(1,TableStates.LIBRE, 4,user));

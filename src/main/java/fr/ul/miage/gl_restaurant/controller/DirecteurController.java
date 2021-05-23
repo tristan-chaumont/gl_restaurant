@@ -189,11 +189,15 @@ public class DirecteurController extends UserController {
         var lastname = InputUtils.readInput();
         PrintUtils.print("Veuillez saisir le prénom de l'utilisateur");
         var firstname = InputUtils.readInput();
-        var roles = Roles.values();
-        PrintUtils.println("Voici la liste des roles disponibles :");
-        PrintUtils.println(displayRoles(roles));
-        PrintUtils.print("Veuillez sélectionner l'un de ces rôles en saisissant le numéro correspondant : ");
-        var role = roles[InputUtils.readIntegerInputInRange(1,roles.length)];
+        var tables = tableRepository.findByUserId(userId);
+        var role = user.getRole();
+        if(user.getRole() != Roles.SERVEUR || tables.isEmpty()) {
+            var roles = Roles.values();
+            PrintUtils.println("Voici la liste des roles disponibles :");
+            PrintUtils.println(displayRoles(roles));
+            PrintUtils.print("Veuillez sélectionner l'un de ces rôles en saisissant le numéro correspondant : ");
+            role = roles[InputUtils.readIntegerInputInRange(1, roles.length)];
+        }
         return updateUser(user,login,lastname,firstname,role);
     }
 
