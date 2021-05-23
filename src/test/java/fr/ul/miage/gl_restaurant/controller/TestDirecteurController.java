@@ -223,12 +223,6 @@ class TestDirecteurController {
         assertThat(res.isPresent(), is(true));
     }
 
-
-
-    @AfterEach
-    void tearDownAfterEach() {
-        rawMaterialRepository.delete(rm1.getRawMaterialId());
-
     private void generateTwoOrders() {
         Optional<User> user = userRepository.findByLogin("chaumontt");
         if (user.isPresent()) {

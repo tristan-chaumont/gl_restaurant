@@ -22,6 +22,7 @@ import org.apache.commons.text.TextStringBuilder;
 
 import javax.management.relation.Role;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 public class DirecteurController extends UserController {
@@ -216,7 +217,7 @@ public class DirecteurController extends UserController {
         return deleteUser(user);
     }
 
-    public String displayUser(){
+    public String displayUser() {
         PrintUtils.println("Voici la liste des utilisateurs");
         var users = userRepository.findAll();
         PrintUtils.println(displayUsers(users));
@@ -224,6 +225,7 @@ public class DirecteurController extends UserController {
         var userId = askUserId(users);
         var user = userRepository.findById(userId).get();
         return displayUser(user);
+    }
 
     /**
      * Génère la liste des profits de chaque plat.
