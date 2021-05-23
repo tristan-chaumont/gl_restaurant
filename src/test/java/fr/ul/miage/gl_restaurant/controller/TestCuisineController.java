@@ -7,6 +7,7 @@ import fr.ul.miage.gl_restaurant.constants.Units;
 import fr.ul.miage.gl_restaurant.model.Order;
 import fr.ul.miage.gl_restaurant.model.*;
 import fr.ul.miage.gl_restaurant.repository.*;
+import org.apache.commons.text.TextStringBuilder;
 import org.junit.jupiter.api.*;
 
 import java.sql.Timestamp;
@@ -100,10 +101,10 @@ class TestCuisineController {
         RawMaterial rm = rawMaterialRepository.save(new RawMaterial("Riz", 100, Units.KG));
         HashMap<RawMaterial, Integer> rawMaterialHashMap = new HashMap<RawMaterial, Integer>();
         rawMaterialHashMap.put(rm,1);
-        Dish dish = new Dish("Riz", "PLat", MenuTypes.ADULTES, 5.0, false);
+        Dish dish = new Dish("Riz", "Plat", MenuTypes.ADULTES, 5.0, false);
         dish.addRawMaterial(rm,1);
         dish = dishRepository.save(dish);
-        cuisinierController.updateDish(dish, "Riz", "PLat", MenuTypes.ADULTES, 6.0, rawMaterialHashMap);
+        cuisinierController.updateDish(dish, "Riz", "Plat", MenuTypes.ADULTES, 6.0, rawMaterialHashMap);
         Dish res = dishRepository.findById(dish.getDishId()).get();
         dishRepository.delete(dish.getDishId());
         rawMaterialRepository.delete(rm.getRawMaterialId());
@@ -184,7 +185,7 @@ class TestCuisineController {
         RawMaterial rawMaterial = rawMaterialRepository.save(new RawMaterial("Riz", 100, Units.KG));
         HashMap<RawMaterial, Integer> rawMaterialHashMap = new HashMap<RawMaterial, Integer>();
         rawMaterialHashMap.put(rawMaterial,1);
-        Dish dish = dishRepository.save(new Dish("Riz", "Plat", MenuTypes.ADULTES, 5.0, true, rawMaterialHashMap));
+        Dish dish = dishRepository.save(new Dish("Riz", "Plat", MenuTypes.ADULTES, 5.0, false, rawMaterialHashMap));
         Map<Dish,Integer> dishIntegerMap = new HashMap<Dish,Integer>();
         dishIntegerMap.put(dish,1);
         Order order = orderRepository.save(new Order(Timestamp.from(Instant.now()), meal, dishIntegerMap));
@@ -198,6 +199,24 @@ class TestCuisineController {
         tableRepository.delete(table.getTableId());
         billRepository.delete(bill.getBillId());
         assertThat(dishes.size(), is(1));
+    }
+
+    @Test
+    @DisplayName("La liste des plats s'affiche correctement")
+    void verifyDisplayDishes() {
+        CuisinierController cuisinierController = new CuisinierController(new Authentification());
+        var expected = new TextStringBuilder();
+        RawMaterial rawMaterial = rawMaterialRepository.save(new RawMaterial("Riz", 100, Units.KG));
+        HashMap<RawMaterial, Integer> rawMaterialHashMap = new HashMap<RawMaterial, Integer>();
+        rawMaterialHashMap.put(rawMaterial,1);
+        Dish dish = dishRepository.save(new Dish("Riz", "Plat", MenuTypes.ADULTES, 5.0, false, rawMaterialHashMap));
+        expected.appendln("[%d] %s", dish.getDishId(), "Riz");
+        var dishes = cuisinierController.getDishes();
+        var res = cuisinierController.displayDishes(dishes);
+        dishRepository.deleteRawMaterialsByDishId(dish.getDishId());
+        dishRepository.delete(dish.getDishId());
+        rawMaterialRepository.delete(rawMaterial.getRawMaterialId());
+        assertThat(res, is(expected.toString()));
     }
 
     @AfterEach

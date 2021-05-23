@@ -84,20 +84,20 @@ public class CuisinierController extends UserController {
         return rawMaterials;
     }
 
-    protected void displayRawMaterials(List<RawMaterial> rawMaterialList){
+    protected String displayRawMaterials(List<RawMaterial> rawMaterialList){
         var stringBuilder = new TextStringBuilder();
         rawMaterialList.forEach(rm -> stringBuilder.appendln("[%d] %s", rm.getRawMaterialId(), rm.getRawMaterialName()));
-        PrintUtils.println(stringBuilder.toString());
+        return stringBuilder.toString();
     }
 
     protected List<Dish> getDishes(){
         return dishRepository.findNotDailyMenu();
     }
 
-    protected void displayDishes(List<Dish> dishes){
+    protected String displayDishes(List<Dish> dishes){
         var stringBuilder = new TextStringBuilder();
         dishes.forEach(dish -> stringBuilder.appendln("[%d] %s", dish.getDishId(), dish.getDishName()));
-        PrintUtils.println(stringBuilder.toString());
+        return stringBuilder.toString();
     }
 
     protected Dish displayDish(Long dishId){
@@ -106,10 +106,10 @@ public class CuisinierController extends UserController {
         return dish;
     }
 
-    protected void displayDishRawMaterials(Map<RawMaterial,Integer> rawMaterials){
+    protected String displayDishRawMaterials(Map<RawMaterial,Integer> rawMaterials){
         var stringBuilder = new TextStringBuilder();
         rawMaterials.forEach((rm,q) -> stringBuilder.appendln("[%d] %s : %d", rm.getRawMaterialId(), rm.getRawMaterialName(), q));
-        PrintUtils.println(stringBuilder.toString());
+        return stringBuilder.toString();
     }
 
     /**
@@ -124,35 +124,38 @@ public class CuisinierController extends UserController {
         return ordersQueue;
     }
 
-    public void displayOrdersQueue(){
+    public String displayOrdersQueue(){
         var orders = getOrdersQueue();
         var stringBuilder = new TextStringBuilder();
+        stringBuilder.appendln("-".repeat(20))
+                .appendln("|" + StringUtils.center("Commandes", 18) + "|")
+                .appendln("-".repeat(20));
         orders.forEach(order -> {
-            stringBuilder.appendln("Commande de la table N° " + order.getMeal().getTable().getTableId());
-            order.getDishes().forEach((dish,quantity) -> stringBuilder.appendln("  - %s (x%d)", dish.getDishName(), quantity));
+            stringBuilder.appendln("Commande de la table N°%d :", order.getMeal().getTable().getTableId());
+            order.getDishes().forEach((dish,quantity) -> stringBuilder.appendln("\t- %s (x%d)", dish.getDishName(), quantity));
             stringBuilder.appendln("");
         });
-        PrintUtils.println(stringBuilder.toString());
+        return stringBuilder.toString();
     }
 
-    public void displayDailyMenu(){
+    public String displayDailyMenu(){
         var dailyMenu = dishRepository.findDailyMenu();
         var stringBuilder = new TextStringBuilder();
         stringBuilder.appendln("-".repeat(20))
                 .appendln("|" + StringUtils.center("Menu du jour", 18) + "|")
                 .appendln("-".repeat(20));
-        dailyMenu.forEach(dish -> stringBuilder.appendln(" - %s $d€", dish.getDishName(), dish.getPrice()));
-        PrintUtils.println(stringBuilder.toString());
+        dailyMenu.forEach(dish -> stringBuilder.appendln("\t- %s %.2f€", dish.getDishName(), dish.getPrice()));
+        return stringBuilder.toString();
     }
 
-    public void displayStock(){
+    public String displayStock(){
         var stocks = getRawMaterials();
         var stringBuilder = new TextStringBuilder();
         stringBuilder.appendln("-".repeat(20))
                 .appendln("|" + StringUtils.center("Stocks", 18) + "|")
                 .appendln("-".repeat(20));
-        stocks.forEach(rm -> stringBuilder.appendln("%s %d%s", rm.getRawMaterialName(), rm.getStockQuantity(), rm.getUnit().toString()));
-        PrintUtils.println(stringBuilder.toString());
+        stocks.forEach(rm -> stringBuilder.appendln("%s : %d%s", rm.getRawMaterialName(), rm.getStockQuantity(), rm.getUnit().toString()));
+        return stringBuilder.toString();
     }
 
     /**
@@ -169,7 +172,7 @@ public class CuisinierController extends UserController {
         var orders = getOrdersQueue();
         Order order = orders.first();
         prepareOrder(order);
-        PrintUtils.println("La commande N°" + order.getOrderId() + " est prête à être livré.");
+        PrintUtils.println("La commande N°" + order.getOrderId() + " est prête à être servie.");
     }
 
     public void createDish(String dishName, String category, MenuTypes menuType, Double price, HashMap<RawMaterial, Integer> rawMaterials){
@@ -195,7 +198,7 @@ public class CuisinierController extends UserController {
         HashMap<RawMaterial,Integer> rawMaterials = new HashMap<>();
         boolean stop = false;
         while(!stop){
-            displayRawMaterials(rawMaterialList);
+            PrintUtils.println(displayRawMaterials(rawMaterialList));
             PrintUtils.print("Pour ajouter un ingrédient, veuillez saisir son id : ");
             var rmId = askRMId(rawMaterialList);
             PrintUtils.print("Veuillez saisir la quantité de l'ingrédient nécessaire à la confection du plat : ");
@@ -230,56 +233,60 @@ public class CuisinierController extends UserController {
 
     public void updateDish(){
         List<Dish> dishes = getDishes();
-        PrintUtils.print("Voici la liste des plats que vous pouvez modifié : ");
-        displayDishes(dishes);
-        PrintUtils.print("Pour modifier l'un de ces plats, veuillez saisir son id : ");
-        var dishId = askDishId(dishes);
-        var dish = displayDish(dishId);
-        PrintUtils.print("Pour modifier le nom du plat, veuillez saisir un autre nom, sinon entrez le même nom : ");
-        var dishName = InputUtils.readInput();
-        PrintUtils.print("Pour modifier la catégorie, veuillez saisir la nouvelle catégorie, sinon entrez l'ancienne : ");
-        var category = InputUtils.readInput();
-        PrintUtils.print("Voulez-vous modifier le type du menu ? (y/n) : ");
-        var choice = InputUtils.readInputConfirmation();
-        var menuType = MenuTypes.ADULTES;
-        if ((dish.getMenuType() == MenuTypes.ADULTES && choice.equals("y")) || (dish.getMenuType() == MenuTypes.ENFANTS && choice.equals("n"))){
-            menuType = MenuTypes.ENFANTS;
-        }
-        PrintUtils.print("Pour modifier le prix, veuillez saisir le nouveau prix, sinon entrez l'ancien : ");
-        var price = InputUtils.readDoubleInputInRange(1.0,50.0);
-        var rawMaterials = dish.getRawMaterials();
-        displayDishRawMaterials(rawMaterials);
-        var rmId = 1l;
-        while(rmId != 0){
-            PrintUtils.print("Pour modifier l'un des ingrédients veuillez saisir son id, sinon entrez 0");
-            rmId = askUpdateRMId(List.copyOf(rawMaterials.keySet()));
-            if(rmId != 0) {
-                var rm = rawMaterialRepository.findById(rmId).get();
-                PrintUtils.print("Pour modifier la quantité de cet ingrédient entrez la nouvelle valeur, sinon entrez 0 pour supprimer cet ingrédient : ");
-                var quantity = InputUtils.readIntegerInput();
-                if (quantity > 0) {
-                    rawMaterials.put(rm,quantity);
-                }else{
-                    rawMaterials.remove(rm);
+        if(dishes.isEmpty())
+            PrintUtils.println("Il n'y pas de plat modifiable.");
+        else {
+            PrintUtils.println("Voici la liste des plats que vous pouvez modifié : ");
+            PrintUtils.println(displayDishes(dishes));
+            PrintUtils.print("Pour modifier l'un de ces plats, veuillez saisir son id : ");
+            var dishId = askDishId(dishes);
+            var dish = displayDish(dishId);
+            PrintUtils.print("Pour modifier le nom du plat, veuillez saisir un autre nom, sinon entrez le même nom : ");
+            var dishName = InputUtils.readInput();
+            PrintUtils.print("Pour modifier la catégorie, veuillez saisir la nouvelle catégorie, sinon entrez l'ancienne : ");
+            var category = InputUtils.readInput();
+            PrintUtils.print("Voulez-vous modifier le type du menu ? (y/n) : ");
+            var choice = InputUtils.readInputConfirmation();
+            var menuType = MenuTypes.ADULTES;
+            if ((dish.getMenuType() == MenuTypes.ADULTES && choice.equals("y")) || (dish.getMenuType() == MenuTypes.ENFANTS && choice.equals("n"))) {
+                menuType = MenuTypes.ENFANTS;
+            }
+            PrintUtils.print("Pour modifier le prix, veuillez saisir le nouveau prix, sinon entrez l'ancien : ");
+            var price = InputUtils.readDoubleInputInRange(1.0, 50.0);
+            var rawMaterials = dish.getRawMaterials();
+            PrintUtils.println(displayDishRawMaterials(rawMaterials));
+            var rmId = 1l;
+            while (rmId != 0) {
+                PrintUtils.print("Pour modifier l'un des ingrédients veuillez saisir son id, sinon entrez 0");
+                rmId = askUpdateRMId(List.copyOf(rawMaterials.keySet()));
+                if (rmId != 0) {
+                    var rm = rawMaterialRepository.findById(rmId).get();
+                    PrintUtils.print("Pour modifier la quantité de cet ingrédient entrez la nouvelle valeur, sinon entrez 0 pour supprimer cet ingrédient : ");
+                    var quantity = InputUtils.readIntegerInput();
+                    if (quantity > 0) {
+                        rawMaterials.put(rm, quantity);
+                    } else {
+                        rawMaterials.remove(rm);
+                    }
                 }
             }
-        }
-        rmId = 1l;
-        while (rmId != 0) {
-            var rms = getRawMaterials();
-            displayRawMaterials(rms);
-            PrintUtils.print("Pour ajouter un ingrédient, veuillez entrer son id, sinon entrez 0");
-            rmId = askUpdateRMId(rms);
-            var rmAdd = rawMaterialRepository.findById(rmId).get();
-            if (rmId != 0) {
-                PrintUtils.print("Pour modifier la quantité de cet ingrédient entrez la nouvelle valeur, sinon entrez 0 pour supprimer cet ingrédient : ");
-                var quantityAdd = InputUtils.readIntegerInput();
-                if (quantityAdd > 0) {
-                    rawMaterials.put(rmAdd, quantityAdd);
+            rmId = 1l;
+            while (rmId != 0) {
+                var rms = getRawMaterials();
+                PrintUtils.print(displayRawMaterials(rms));
+                PrintUtils.print("Pour ajouter un ingrédient, veuillez entrer son id, sinon entrez 0");
+                rmId = askUpdateRMId(rms);
+                var rmAdd = rawMaterialRepository.findById(rmId).get();
+                if (rmId != 0) {
+                    PrintUtils.print("Pour modifier la quantité de cet ingrédient entrez la nouvelle valeur, sinon entrez 0 pour supprimer cet ingrédient : ");
+                    var quantityAdd = InputUtils.readIntegerInput();
+                    if (quantityAdd > 0) {
+                        rawMaterials.put(rmAdd, quantityAdd);
+                    }
                 }
             }
+            updateDish(dish, dishName, category, menuType, price, rawMaterials);
         }
-        updateDish(dish,dishName,category,menuType,price,rawMaterials);
     }
 
     public void deleteDish(Dish dish){
@@ -291,12 +298,16 @@ public class CuisinierController extends UserController {
 
     public void deleteDish(){
         var dishes = getDishes();
-        displayDishes(dishes);
-        PrintUtils.print("Pour supprimer un repas veuillez entrez son id, sinon entrez 0 : ");
-        var dishId = askDeleteDishId(dishes);
-        if(dishId != 0){
-            var dish = dishRepository.findById(dishId).get();
-            deleteDish(dish);
+        if(dishes.isEmpty())
+            PrintUtils.println("Il n'y a pas de plat pouvant être supprimé");
+        else {
+            PrintUtils.println(displayDishes(dishes));
+            PrintUtils.print("Pour supprimer un repas veuillez entrez son id, sinon entrez 0 : ");
+            var dishId = askDeleteDishId(dishes);
+            if (dishId != 0) {
+                var dish = dishRepository.findById(dishId).get();
+                deleteDish(dish);
+            }
         }
     }
 
@@ -319,13 +330,13 @@ public class CuisinierController extends UserController {
                 deleteDish();
                 break;
             case 5:
-                displayOrdersQueue();
+                PrintUtils.println(displayOrdersQueue());
                 break;
             case 6:
-                displayDailyMenu();
+                PrintUtils.println(displayDailyMenu());
                 break;
             case 7:
-                displayStock();
+                PrintUtils.println(displayStock());
                 break;
             default:
                 break;
