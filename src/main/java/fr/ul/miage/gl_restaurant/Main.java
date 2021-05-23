@@ -16,6 +16,7 @@ public class Main {
     public static void main(String[] args) {
         var connection = DbAccess.getInstance();
         log.info("Connection successful");
+        ControllerUtils.verifyReservationsForToday();
 
         var auth = new Authentification();
         var quit = false;

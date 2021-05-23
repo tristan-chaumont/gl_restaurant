@@ -6,6 +6,7 @@ import fr.ul.miage.gl_restaurant.constants.TableStates;
 import fr.ul.miage.gl_restaurant.model.*;
 import fr.ul.miage.gl_restaurant.model.Order;
 import fr.ul.miage.gl_restaurant.repository.*;
+import fr.ul.miage.gl_restaurant.utilities.DateUtils;
 import fr.ul.miage.gl_restaurant.utilities.InputUtils;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,6 +16,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
@@ -33,6 +36,7 @@ class TestMaitreHotelController {
     static UserRepositoryImpl userRepository;
     static OrderRepositoryImpl orderRepository;
     static BillRepositoryImpl billRepository;
+    static ReservationRepositoryImpl reservationRepository;
     Table table1, table2, table3;
     User user;
 
@@ -44,6 +48,7 @@ class TestMaitreHotelController {
         userRepository = UserRepositoryImpl.getInstance();
         orderRepository = OrderRepositoryImpl.getInstance();
         billRepository = BillRepositoryImpl.getInstance();
+        reservationRepository = ReservationRepositoryImpl.getInstance();
     }
 
     @BeforeEach
@@ -70,10 +75,15 @@ class TestMaitreHotelController {
 
     @Test
     @DisplayName("Le repas ne peut être créé car la table est réservée")
-    void verifySeatCustomerFailedBecauseReserved(){
+    void verifySeatCustomerFailedBecauseReserved() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDate dateNow = now.toLocalDate();
+        boolean isLunch = DateUtils.isDateLunch(now);
+        Reservation reservation1 = reservationRepository.save(new Reservation(isLunch, table2, dateNow));
         Meal meal = maitreHotelController.seatClient(table2,2);
         assertThat(meal, is(nullValue()));
         assertThat(mealRepository.findAll().size(),is(0));
+        reservationRepository.delete(reservation1.getReservationId());
     }
 
     @Test
@@ -243,6 +253,62 @@ class TestMaitreHotelController {
             utilities.when(InputUtils::readInputConfirmation).thenReturn("n");
             boolean result = maitreHotelController.createBill(meal, order, table3);
             assertThat(result, is(false));
+        }
+    }
+
+    @Test
+    @DisplayName("La table est libre car son état est libre")
+    void verifyTableIsFreeNowSucceedBecauseTableStateIsLibre() {
+        boolean result = maitreHotelController.verifyTableIsFree(table1, LocalDateTime.now());
+        assertThat(result, is(true));
+    }
+
+    @Test
+    @DisplayName("La table est libre car elle est réservée mais pas pour cette période")
+    void verifyTableIsFreeNowSucceedBecauseTableIsNotReservedNow() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDate dateNow = now.toLocalDate();
+        boolean isLunch = DateUtils.isDateLunch(now);
+        Reservation reservationLunch;
+        Reservation reservationDinner;
+        if (isLunch) {
+            reservationDinner = reservationRepository.save(new Reservation(false, table2, dateNow));
+            boolean result = maitreHotelController.verifyTableIsFree(table2, now);
+            assertThat(result, is(true));
+            reservationRepository.delete(reservationDinner.getReservationId());
+        } else {
+            reservationLunch = reservationRepository.save(new Reservation(true, table2, dateNow));
+            boolean result = maitreHotelController.verifyTableIsFree(table2, now);
+            assertThat(result, is(true));
+            reservationRepository.delete(reservationLunch.getReservationId());
+        }
+    }
+
+    @Test
+    @DisplayName("La table est non libre car son état n'est pas libre ni réservée")
+    void verifyTableIsFreeNowFailBecauseTableStateIsntLibreOrReservee() {
+        boolean result = maitreHotelController.verifyTableIsFree(table3, LocalDateTime.now());
+        assertThat(result, is(false));
+    }
+
+    @Test
+    @DisplayName("La table n'est pas libre car elle est réservée pour cette période")
+    void verifyTableIsFreeNowFailBecauseTableIsReservedNow() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDate dateNow = now.toLocalDate();
+        boolean isLunch = DateUtils.isDateLunch(now);
+        Reservation reservationLunch;
+        Reservation reservationDinner;
+        if (isLunch) {
+            reservationLunch = reservationRepository.save(new Reservation(true, table2, dateNow));
+            boolean result = maitreHotelController.verifyTableIsFree(table2, now);
+            assertThat(result, is(false));
+            reservationRepository.delete(reservationLunch.getReservationId());
+        } else {
+            reservationDinner = reservationRepository.save(new Reservation(false, table2, dateNow));
+            boolean result = maitreHotelController.verifyTableIsFree(table2, now);
+            assertThat(result, is(false));
+            reservationRepository.delete(reservationDinner.getReservationId());
         }
     }
 
