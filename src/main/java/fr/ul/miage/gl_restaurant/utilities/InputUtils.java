@@ -1,7 +1,13 @@
 package fr.ul.miage.gl_restaurant.utilities;
 
+import org.apache.commons.validator.GenericValidator;
+
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Scanner;
+import java.util.regex.Pattern;
 
 public class InputUtils {
 
@@ -22,6 +28,19 @@ public class InputUtils {
             input = readInput();
         }
         return input;
+    }
+
+    public static LocalDate readDate() {
+        String input = readInput();
+
+        while (!GenericValidator.isDate(input, "yyyy-MM-dd", true) ||
+                LocalDate.parse(input).isBefore(LocalDate.now())) {
+            PrintUtils.println("Le format de votre date doit correspondre à <aaaa-mm-jj> et votre date ne doit pas être située avant la date d'aujourd'hui.");
+            PrintUtils.print("Veuillez réessayer : ");
+            input = readInput();
+        }
+
+        return LocalDate.parse(input);
     }
 
     public static String readInputConfirmation() {
@@ -124,5 +143,9 @@ public class InputUtils {
             return false;
         }
         return true;
+    }
+
+    public static void main(String[] args) {
+        PrintUtils.print(InputUtils.readDate().toString());
     }
 }

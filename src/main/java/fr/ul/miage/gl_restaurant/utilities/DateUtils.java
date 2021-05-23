@@ -1,6 +1,10 @@
 package fr.ul.miage.gl_restaurant.utilities;
 
+import java.sql.Time;
 import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
 
 public class DateUtils {
@@ -17,5 +21,14 @@ public class DateUtils {
     public static long getDateDiff(Timestamp startDate, Timestamp endDate, TimeUnit unit) {
         long diffInMs = endDate.getTime() - startDate.getTime();
         return unit.convert(diffInMs, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Regarde si la date passée se situe au moment du déjeuner ou du dîner.
+     * @param date Date à vérifier.
+     * @return True si déjeuner, false sinon.
+     */
+    public static boolean isDateLunch(LocalDateTime date) {
+        return date.getHour() < 17;
     }
 }

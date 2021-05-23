@@ -8,7 +8,6 @@ import fr.ul.miage.gl_restaurant.constants.Units;
 import fr.ul.miage.gl_restaurant.model.*;
 import fr.ul.miage.gl_restaurant.model.Order;
 import fr.ul.miage.gl_restaurant.repository.*;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.TextStringBuilder;
 import org.junit.jupiter.api.*;
 

@@ -7,11 +7,14 @@ import fr.ul.miage.gl_restaurant.model.Table;
 import fr.ul.miage.gl_restaurant.model.User;
 import org.junit.jupiter.api.*;
 
+import java.sql.Date;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -36,7 +39,7 @@ class TestReservationRepositoryImpl {
     void initializeBeforeEach() {
         user1 = userRepository.save(new User("testUserReservation1", "Test1", "UserReservation1", Roles.SERVEUR));
         table1 = tableRepository.save(new Table(1, TableStates.OCCUPEE, 5, user1));
-        reservation1 = reservationRepository.save(new Reservation(true, table1));
+        reservation1 = reservationRepository.save(new Reservation(true, table1, LocalDate.now()));
     }
 
     @Test
@@ -64,15 +67,29 @@ class TestReservationRepositoryImpl {
     }
 
     @Test
+    @DisplayName("findByReservationDateEqualsNow() renvoie toutes les réservation d'aujourd'hui")
+    void verifyFindByReservationDateEqualsNowGetsRightReservations() {
+        Reservation reservation2 = reservationRepository.save(new Reservation(false, table1, LocalDate.now()));
+        Reservation reservation3 = reservationRepository.save(new Reservation(false, table1, LocalDate.now()));
+        Reservation reservation4 = reservationRepository.save(new Reservation(false, table1, LocalDate.of(2021, 5, 5)));
+        List<Reservation> reservations = reservationRepository.findByReservationDateEquals(LocalDate.now());
+        assertThat(reservations, both(hasItems(reservation1, reservation2, reservation3)).and(not(hasItem(reservation4))));
+        reservationRepository.delete(reservation2.getReservationId());
+        reservationRepository.delete(reservation3.getReservationId());
+        reservationRepository.delete(reservation4.getReservationId());
+    }
+
+    @Test
     @DisplayName("L'insertion fonctionne")
     void verifySaveInsertElement() {
         User user = userRepository.save(new User("testInsertion1", "Test1", "Insertion1", Roles.DIRECTEUR));
         Table table = tableRepository.save(new Table(2, TableStates.LIBRE, 3, user));
-        Reservation reservation = reservationRepository.save(new Reservation(true, table));
+        Reservation reservation = reservationRepository.save(new Reservation(true, table, LocalDate.now()));
         assertNotNull(reservation.getReservationId());
-        Reservation result = reservationRepository.findById(reservation.getReservationId()).get();
-        assertThat(result.isLunch(), is(true));
-        assertThat(result.getTable(), equalTo(table));
+        Optional<Reservation> result = reservationRepository.findById(reservation.getReservationId());
+        assertThat(result.isPresent(), is(true));
+        assertThat(result.get().isLunch(), is(true));
+        assertThat(result.get().getTable(), equalTo(table));
         reservationRepository.delete(reservation.getReservationId());
         tableRepository.delete(table.getTableId());
         userRepository.delete(user.getUserId());
@@ -83,14 +100,15 @@ class TestReservationRepositoryImpl {
     void verifyUpdateSucceed() {
         reservation1.setLunch(false);
         reservationRepository.update(reservation1);
-        Reservation result = reservationRepository.findById(reservation1.getReservationId()).get();
-        assertThat(result.isLunch(), is(false));
+        Optional<Reservation> result = reservationRepository.findById(reservation1.getReservationId());
+        assertThat(result.isPresent(), is(true));
+        assertThat(result.get().isLunch(), is(false));
     }
 
     @Test
     @DisplayName("La modification ne s'effectue pas car la table n'existe pas")
     void verifyUpdateFailBecauseReservationDoesNotExist() {
-        Reservation reservation = new Reservation(false, table1);
+        Reservation reservation = new Reservation(false, table1, LocalDate.now());
         reservationRepository.update(reservation);
         Optional<Reservation> result = reservationRepository.findById(reservation.getReservationId());
         assertThat(result.isEmpty(), is(true));
@@ -99,7 +117,7 @@ class TestReservationRepositoryImpl {
     @Test
     @DisplayName("La suppression de la table fonctionne")
     void verifyDeleteSucceed() {
-        Reservation reservation = new Reservation(false, table1);
+        Reservation reservation = new Reservation(false, table1, LocalDate.now());
         reservation = reservationRepository.save(reservation);
         int totalReservations = reservationRepository.findAll().size();
         reservationRepository.delete(reservation.getReservationId());
@@ -110,7 +128,7 @@ class TestReservationRepositoryImpl {
     @Test
     @DisplayName("La suppression de ne fonctionne pas car la table n'existe pas")
     void verifyDeleteFailBecauseReservationDoesNotExist() {
-        Reservation reservation = new Reservation(false, table1);
+        Reservation reservation = new Reservation(false, table1, LocalDate.now());
         int totalReservations = userRepository.findAll().size();
         reservationRepository.delete(reservation.getReservationId());
         int newTotalReservations = userRepository.findAll().size();
