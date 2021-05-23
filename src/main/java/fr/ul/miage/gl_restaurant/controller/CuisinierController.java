@@ -11,6 +11,7 @@ import fr.ul.miage.gl_restaurant.repository.OrderRepositoryImpl;
 import fr.ul.miage.gl_restaurant.repository.RawMaterialRepositoryImpl;
 import fr.ul.miage.gl_restaurant.utilities.InputUtils;
 import fr.ul.miage.gl_restaurant.utilities.PrintUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.TextStringBuilder;
 
 import java.sql.Timestamp;
@@ -33,12 +34,15 @@ public class CuisinierController extends UserController {
     private static final String ACTION_2 = "2 : Créer un plat";
     private static final String ACTION_3 = "3 : Modifier un plat";
     private static final String ACTION_4 = "4 : Supprimer un plat";
+    private static final String ACTION_5 = "5 : Afficher les commandes à préparer";
+    private static final String ACTION_6 = "6 : Afficher la carte du jour";
+    private static final String ACTION_7 = "7 : Afficher les stocks";
 
 
     public CuisinierController(Authentification auth) {
         super(auth);
         this.ordersQueue = new TreeSet<>();
-        this.actions.addAll(Arrays.asList(ACTION_1, ACTION_2, ACTION_3, ACTION_4));
+        this.actions.addAll(Arrays.asList(ACTION_1, ACTION_2, ACTION_3, ACTION_4, ACTION_5, ACTION_6, ACTION_7));
     }
 
     protected long askRMId(List<RawMaterial> rms) {
@@ -118,6 +122,37 @@ public class CuisinierController extends UserController {
         List<Order> orders = orderRepository.findCurrentOrders();
         this.ordersQueue.addAll(orders);
         return ordersQueue;
+    }
+
+    public void displayOrdersQueue(){
+        var orders = getOrdersQueue();
+        var stringBuilder = new TextStringBuilder();
+        orders.forEach(order -> {
+            stringBuilder.appendln("Commande de la table N° " + order.getMeal().getTable().getTableId());
+            order.getDishes().forEach((dish,quantity) -> stringBuilder.appendln("  - %s (x%d)", dish.getDishName(), quantity));
+            stringBuilder.appendln("");
+        });
+        PrintUtils.println(stringBuilder.toString());
+    }
+
+    public void displayDailyMenu(){
+        var dailyMenu = dishRepository.findDailyMenu();
+        var stringBuilder = new TextStringBuilder();
+        stringBuilder.appendln("-".repeat(20))
+                .appendln("|" + StringUtils.center("Menu du jour", 18) + "|")
+                .appendln("-".repeat(20));
+        dailyMenu.forEach(dish -> stringBuilder.appendln(" - %s $d€", dish.getDishName(), dish.getPrice()));
+        PrintUtils.println(stringBuilder.toString());
+    }
+
+    public void displayStock(){
+        var stocks = getRawMaterials();
+        var stringBuilder = new TextStringBuilder();
+        stringBuilder.appendln("-".repeat(20))
+                .appendln("|" + StringUtils.center("Stocks", 18) + "|")
+                .appendln("-".repeat(20));
+        stocks.forEach(rm -> stringBuilder.appendln("%s %d%s", rm.getRawMaterialName(), rm.getStockQuantity(), rm.getUnit().toString()));
+        PrintUtils.println(stringBuilder.toString());
     }
 
     /**
@@ -282,6 +317,15 @@ public class CuisinierController extends UserController {
                 break;
             case 4:
                 deleteDish();
+                break;
+            case 5:
+                displayOrdersQueue();
+                break;
+            case 6:
+                displayDailyMenu();
+                break;
+            case 7:
+                displayStock();
                 break;
             default:
                 break;
