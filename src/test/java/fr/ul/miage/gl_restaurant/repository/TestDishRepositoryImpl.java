@@ -52,7 +52,7 @@ class TestDishRepositoryImpl {
     @DisplayName("findAll() récupère tous les éléments")
     void verifyFindAllReturnsAllElements() {
         List<Dish> result = dishRepository.findAll();
-        assertThat(result.size(), is(2));
+        assertThat(result.size(), is(4));
     }
 
     @Test
@@ -112,7 +112,7 @@ class TestDishRepositoryImpl {
     @DisplayName("findByRM() récupère le bon plat")
     void verifyFindByRMGetsDish() {
         List<Dish> result = dishRepository.findByRM(rawMaterial1.getRawMaterialId());
-        assertThat(result.size(), is(2));
+        assertThat(result.size(), is(4));
     }
 
     @Test

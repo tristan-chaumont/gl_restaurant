@@ -75,6 +75,10 @@ public class Order implements Comparable<Order> {
         this(null, orderDate, preparationDate, meal);
     }
 
+    public Order(Timestamp orderDate, boolean served, Meal meal) {
+        this(null, orderDate, null, served, meal, new HashMap<>());
+    }
+
     public Order(Timestamp orderDate, Timestamp preparationDate, Meal meal, Map<Dish, Integer> dishes) {
         this(null, orderDate, preparationDate, meal, dishes);
     }
