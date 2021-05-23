@@ -55,7 +55,6 @@ public class MealRepositoryImpl extends Repository<Meal, Long> {
                     Long mealId = resultSet.getLong("mealId");
                     var customersNb = resultSet.getInt("customersNb");
                     var startDate = resultSet.getTimestamp("startDate");
-                    System.out.println(resultSet.getLong("mealDuration"));
                     Long mealDuration = resultSet.getLong("mealDuration");
                     Optional<Table> table = TableRepositoryImpl.getInstance().findById(resultSet.getLong("tableId"));
                     Optional<Bill> bill = BillRepositoryImpl.getInstance().findById(resultSet.getLong("billId"));

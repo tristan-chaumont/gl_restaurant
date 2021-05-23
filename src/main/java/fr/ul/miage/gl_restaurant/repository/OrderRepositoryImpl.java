@@ -80,10 +80,10 @@ public class OrderRepositoryImpl extends Repository<Order, Long> {
         return findByIdHelper(mealId, FIND_BY_MEAL_SQL);
     }
 
-    private Optional<Order> findByIdHelper(Long mealId, String query) {
+    private Optional<Order> findByIdHelper(Long id, String query) {
         Optional<Order> order = Optional.empty();
         try (var preparedStatement = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
-            preparedStatement.setLong(1, mealId);
+            preparedStatement.setLong(1, id);
             try (var resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.first()) {
                     Map<Dish, Integer> dishes = findDishesByOrderId(resultSet.getLong(ORDERID_COLUMN_NAME));
