@@ -2,6 +2,7 @@ package fr.ul.miage.gl_restaurant.controller;
 
 import fr.ul.miage.gl_restaurant.auth.Authentification;
 import fr.ul.miage.gl_restaurant.constants.MenuTypes;
+import fr.ul.miage.gl_restaurant.constants.Roles;
 import fr.ul.miage.gl_restaurant.constants.TableStates;
 import fr.ul.miage.gl_restaurant.constants.Units;
 import fr.ul.miage.gl_restaurant.model.*;
@@ -138,10 +139,80 @@ public class TestDirecteurController {
         assertThat(result.isEmpty(), is(false));
     }
 
+    @Test
+    @DisplayName("L'utilisateur est bien ajouté")
+    void tesAddUserSucceed(){
+        DirecteurController directeurController = new DirecteurController(new Authentification());
+        directeurController.addUser("bouchev", "Bouché", "Valentine", Roles.MAITRE_HOTEL);
+        var res = userRepository.findAll();
+        var user = userRepository.findByLogin("bouchev");
+        userRepository.delete(user.get().getUserId());
+        assertThat(user.isPresent(), is(true));
+        assertThat(res.size(), is(6));
+    }
+
+    @Test
+    @DisplayName("L'utilisateur n'est pas ajouté car il y a déjà un utiisateur avec ce login")
+    void tesAddUserFailed(){
+        DirecteurController directeurController = new DirecteurController(new Authentification());
+        directeurController.addUser("luct", "Luc", "Tristan", Roles.SERVEUR);
+        var res = userRepository.findAll();
+        var user = userRepository.findByLogin("luct").get();
+        assertThat(user.getRole(), is(Roles.CUISINIER));
+        assertThat(res.size(), is(5));
+    }
+
+    @Test
+    @DisplayName("L'utilisateur est bien modifié")
+    void tesUpdateUserSucceed(){
+        DirecteurController directeurController = new DirecteurController(new Authentification());
+        var user = userRepository.save(new User("bouchev", "Bouché", "Valentine", Roles.MAITRE_HOTEL));
+        directeurController.updateUser(user, "bouchev", "Bouché", "Valentine", Roles.CUISINIER);
+        var res = userRepository.findByLogin("bouchev").get();
+        userRepository.delete(user.getUserId());
+        assertThat(res.getRole(), is(Roles.CUISINIER));
+    }
+
+    @Test
+    @DisplayName("L'utilisateur n'est pas modifié car il y a déjà un utiisateur avec ce login")
+    void tesUpdateUserFailed(){
+        DirecteurController directeurController = new DirecteurController(new Authentification());
+        var user = userRepository.save(new User("bouchev", "Bouché", "Valentine", Roles.MAITRE_HOTEL));
+        directeurController.updateUser(user, "luct", "Luc", "Thomas", Roles.SERVEUR);
+        var res = userRepository.findByLogin("bouchev");
+        userRepository.delete(user.getUserId());
+        assertThat(res.isPresent(), is(true));
+    }
+
+    @Test
+    @DisplayName("L'utilisateur est bien supprimé")
+    void tesDeleteUserSucceed(){
+        DirecteurController directeurController = new DirecteurController(new Authentification());
+        var user = userRepository.save(new User("bouchev", "Bouché", "Valentine", Roles.MAITRE_HOTEL));
+        directeurController.deleteUser(user);
+        var res = userRepository.findByLogin("bouchev");
+        userRepository.delete(user.getUserId());
+        assertThat(res.isEmpty(), is(true));
+    }
+
+    @Test
+    @DisplayName("L'utilisateur n'est pas supprimé car l'utilisateur est affecté à une table")
+    void tesDeleteUserFailed(){
+        DirecteurController directeurController = new DirecteurController(new Authentification());
+        var user = userRepository.save(new User("bouchev", "Bouché", "Valentine", Roles.SERVEUR));
+        var table = tableRepository.save(new Table(1,TableStates.LIBRE, 4,user));
+        directeurController.deleteUser(user);
+        var res = userRepository.findByLogin("bouchev");
+        tableRepository.delete(table.getTableId());
+        userRepository.delete(user.getUserId());
+        assertThat(res.isPresent(), is(true));
+    }
+
+
+
     @AfterEach
     void tearDownAfterEach() {
         rawMaterialRepository.delete(rm1.getRawMaterialId());
-
     }
 
 
