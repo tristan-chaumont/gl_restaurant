@@ -3,26 +3,37 @@ package fr.ul.miage.gl_restaurant.controller;
 import fr.ul.miage.gl_restaurant.auth.Authentification;
 import fr.ul.miage.gl_restaurant.constants.Roles;
 import fr.ul.miage.gl_restaurant.constants.TableStates;
-import fr.ul.miage.gl_restaurant.model.Meal;
-import fr.ul.miage.gl_restaurant.model.Table;
-import fr.ul.miage.gl_restaurant.model.User;
-import fr.ul.miage.gl_restaurant.repository.MealRepositoryImpl;
-import fr.ul.miage.gl_restaurant.repository.TableRepositoryImpl;
-import fr.ul.miage.gl_restaurant.repository.UserRepositoryImpl;
+import fr.ul.miage.gl_restaurant.model.*;
+import fr.ul.miage.gl_restaurant.model.Order;
+import fr.ul.miage.gl_restaurant.repository.*;
+import fr.ul.miage.gl_restaurant.utilities.InputUtils;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
+@ExtendWith(MockitoExtension.class)
 class TestMaitreHotelController {
 
     static MaitreHotelController maitreHotelController;
     static TableRepositoryImpl tableRepository;
     static MealRepositoryImpl mealRepository;
     static UserRepositoryImpl userRepository;
-    Table table1, table2;
+    static OrderRepositoryImpl orderRepository;
+    static BillRepositoryImpl billRepository;
+    Table table1, table2, table3;
     User user;
 
     @BeforeAll
@@ -31,6 +42,8 @@ class TestMaitreHotelController {
         tableRepository = TableRepositoryImpl.getInstance();
         mealRepository = MealRepositoryImpl.getInstance();
         userRepository = UserRepositoryImpl.getInstance();
+        orderRepository = OrderRepositoryImpl.getInstance();
+        billRepository = BillRepositoryImpl.getInstance();
     }
 
     @BeforeEach
@@ -38,6 +51,7 @@ class TestMaitreHotelController {
         user = userRepository.findByLogin("chaumontt").orElse(null);
         table1 = tableRepository.save(new Table(1, TableStates.LIBRE, 4, user));
         table2 = tableRepository.save(new Table(1, TableStates.RESERVEE, 4, user));
+        table3 = tableRepository.save(new Table(1, TableStates.OCCUPEE, 4, user));
     }
 
     @Test
@@ -146,9 +160,96 @@ class TestMaitreHotelController {
         assertThat(availableTables.size(), is(5));
     }
 
+    @Test
+    @DisplayName("Calcule le montant total de la facture")
+    void verifyCalculateBillTotalReturnsRightTotal() {
+        Order order = new Order();
+        Dish dish1 = new Dish();
+        dish1.setPrice(5.0);
+        Dish dish2 = new Dish();
+        dish2.setPrice(2.2);
+        order.addDish(dish1, 2);
+        order.addDish(dish2, 4);
+        assertThat(maitreHotelController.calculateBillTotal(order), is(18.8));
+    }
+
+    @Test
+    @DisplayName("La création de la facture fonctionne et est déjà payée")
+    void verifyCreateBillSucceedAndIsPaid() {
+        Order order = new Order();
+        order.setOrderDate(Timestamp.from(Instant.now()));
+        Dish dish1 = new Dish();
+        dish1.setPrice(5.0);
+        Dish dish2 = new Dish();
+        dish2.setPrice(2.2);
+        order.addDish(dish1, 2);
+        order.addDish(dish2, 4);
+        Meal meal = mealRepository.save(new Meal(2, Timestamp.from(Instant.now().minus(5, ChronoUnit.MINUTES)), table3));
+        order.setMeal(meal);
+        order = orderRepository.save(order);
+        try (MockedStatic<InputUtils> utilities = Mockito.mockStatic(InputUtils.class)) {
+            utilities.when(InputUtils::readInputConfirmation).thenReturn("y", "y");
+            boolean result = maitreHotelController.createBill(meal, order, table3);
+            assertThat(result, is(true));
+            assertNotNull(meal.getBill());
+            assertNotNull(meal.getBill().getBillId());
+            assertThat(meal.getBill().getTotal(), is(18.8));
+            assertThat(meal.getBill().isPaid(), is(true));
+            assertNotNull(meal.getMealDuration());
+            assertThat(meal.getMealDuration(), is(greaterThan(0L)));
+            assertThat(table3.getState(), is(TableStates.SALE));
+        }
+        orderRepository.delete(order.getOrderId());
+        mealRepository.delete(meal.getMealId());
+        billRepository.delete(meal.getBill().getBillId());
+    }
+
+    @Test
+    @DisplayName("La création de la facture fonctionne et n'est pas payée")
+    void verifyCreateBillSucceedAndIsNotPaid() {
+        Order order = new Order();
+        order.setOrderDate(Timestamp.from(Instant.now()));
+        Dish dish1 = new Dish();
+        dish1.setPrice(5.0);
+        Dish dish2 = new Dish();
+        dish2.setPrice(2.2);
+        order.addDish(dish1, 2);
+        order.addDish(dish2, 4);
+        Meal meal = mealRepository.save(new Meal(2, Timestamp.from(Instant.now().minus(5, ChronoUnit.MINUTES)), table3));
+        order.setMeal(meal);
+        order = orderRepository.save(order);
+        try (MockedStatic<InputUtils> utilities = Mockito.mockStatic(InputUtils.class)) {
+            utilities.when(InputUtils::readInputConfirmation).thenReturn("y", "n");
+            boolean result = maitreHotelController.createBill(meal, order, table3);
+            assertThat(result, is(true));
+            assertNotNull(meal.getBill());
+            assertNotNull(meal.getBill().getBillId());
+            assertThat(meal.getBill().getTotal(), is(18.8));
+            assertThat(meal.getBill().isPaid(), is(false));
+            assertNull(meal.getMealDuration());
+            assertThat(table3.getState(), is(TableStates.OCCUPEE));
+        }
+        orderRepository.delete(order.getOrderId());
+        mealRepository.delete(meal.getMealId());
+        billRepository.delete(meal.getBill().getBillId());
+    }
+
+    @Test
+    @DisplayName("La création de la facture est annulée")
+    void verifyCreateBillIsCancelled() {
+        Order order = new Order();
+        Meal meal = new Meal(2, Timestamp.from(Instant.now().minus(5, ChronoUnit.MINUTES)), table3);
+        try (MockedStatic<InputUtils> utilities = Mockito.mockStatic(InputUtils.class)) {
+            utilities.when(InputUtils::readInputConfirmation).thenReturn("n");
+            boolean result = maitreHotelController.createBill(meal, order, table3);
+            assertThat(result, is(false));
+        }
+    }
+
     @AfterEach
     void tearDownAfterEach() {
         tableRepository.delete(table1.getTableId());
         tableRepository.delete(table2.getTableId());
+        tableRepository.delete(table3.getTableId());
     }
 }

@@ -55,6 +55,7 @@ public class MealRepositoryImpl extends Repository<Meal, Long> {
                     Long mealId = resultSet.getLong("mealId");
                     var customersNb = resultSet.getInt("customersNb");
                     var startDate = resultSet.getTimestamp("startDate");
+                    System.out.println(resultSet.getLong("mealDuration"));
                     Long mealDuration = resultSet.getLong("mealDuration");
                     Optional<Table> table = TableRepositoryImpl.getInstance().findById(resultSet.getLong("tableId"));
                     Optional<Bill> bill = BillRepositoryImpl.getInstance().findById(resultSet.getLong("billId"));
@@ -71,19 +72,7 @@ public class MealRepositoryImpl extends Repository<Meal, Long> {
     public Meal save(Meal object) {
         if (object != null && object.getMealId() == null) {
             try (var preparedStatement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
-                preparedStatement.setInt(1, object.getCustomersNb());
-                preparedStatement.setTimestamp(2, object.getStartDate());
-                if(object.getMealDuration() == null) {
-                    preparedStatement.setNull(3, Types.INTEGER);
-                }else {
-                    preparedStatement.setLong(3, object.getMealDuration());
-                }
-                preparedStatement.setLong(4, object.getTable().getTableId());
-                if(object.getMealDuration() == null) {
-                    preparedStatement.setNull(5, Types.INTEGER);
-                }else {
-                    preparedStatement.setLong(5, object.getBill().getBillId());
-                }
+                setMealParameters(object, preparedStatement);
                 preparedStatement.executeUpdate();
                 generateKey(object, preparedStatement);
             } catch (SQLException e) {
@@ -91,6 +80,22 @@ public class MealRepositoryImpl extends Repository<Meal, Long> {
             }
         }
         return object;
+    }
+
+    private void setMealParameters(Meal object, PreparedStatement preparedStatement) throws SQLException {
+        preparedStatement.setInt(1, object.getCustomersNb());
+        preparedStatement.setTimestamp(2, object.getStartDate());
+        if (object.getMealDuration() == null) {
+            preparedStatement.setNull(3, Types.INTEGER);
+        } else {
+            preparedStatement.setLong(3, object.getMealDuration());
+        }
+        preparedStatement.setLong(4, object.getTable().getTableId());
+        if (object.getBill() == null || object.getBill().getBillId() == null) {
+            preparedStatement.setNull(5, Types.INTEGER);
+        } else {
+            preparedStatement.setLong(5, object.getBill().getBillId());
+        }
     }
 
     private void generateKey(Meal object, PreparedStatement preparedStatement) {
@@ -107,11 +112,7 @@ public class MealRepositoryImpl extends Repository<Meal, Long> {
     public Meal update(Meal object) {
         if (object != null && object.getMealId() != null) {
             try (var preparedStatement = connection.prepareStatement(UPDATE_SQL)) {
-                preparedStatement.setInt(1, object.getCustomersNb());
-                preparedStatement.setTimestamp(2, object.getStartDate());
-                preparedStatement.setLong(3, object.getMealDuration());
-                preparedStatement.setLong(4, object.getTable().getTableId());
-                preparedStatement.setLong(5, object.getBill().getBillId());
+                setMealParameters(object, preparedStatement);
                 preparedStatement.setLong(6, object.getMealId());
                 preparedStatement.executeUpdate();
             } catch (SQLException e) {

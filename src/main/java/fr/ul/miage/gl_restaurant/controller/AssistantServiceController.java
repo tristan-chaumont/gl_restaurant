@@ -45,7 +45,6 @@ public class AssistantServiceController extends UserController {
         List<Table> dirtyTables = getDirtyTables(tableRepository.findAll());
         PrintUtils.println("%s", StringUtils.center("Liste des tables sales :", 50));
         PrintUtils.println("%s", displayTablesByFloor(dirtyTables));
-        PrintUtils.print("Veuillez saisir le numéro de la table : ");
         var tableId = askTableId(dirtyTables);
         Optional<Table> table = tableRepository.findById(tableId);
         if (table.isPresent()) {

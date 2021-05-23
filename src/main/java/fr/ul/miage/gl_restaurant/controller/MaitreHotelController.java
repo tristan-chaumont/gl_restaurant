@@ -3,19 +3,18 @@ package fr.ul.miage.gl_restaurant.controller;
 import fr.ul.miage.gl_restaurant.auth.Authentification;
 import fr.ul.miage.gl_restaurant.constants.Roles;
 import fr.ul.miage.gl_restaurant.constants.TableStates;
-import fr.ul.miage.gl_restaurant.model.Meal;
-import fr.ul.miage.gl_restaurant.model.Table;
-import fr.ul.miage.gl_restaurant.model.User;
-import fr.ul.miage.gl_restaurant.repository.MealRepositoryImpl;
-import fr.ul.miage.gl_restaurant.repository.TableRepositoryImpl;
-import fr.ul.miage.gl_restaurant.repository.UserRepositoryImpl;
+import fr.ul.miage.gl_restaurant.model.*;
+import fr.ul.miage.gl_restaurant.repository.*;
+import fr.ul.miage.gl_restaurant.utilities.DateUtils;
 import fr.ul.miage.gl_restaurant.utilities.InputUtils;
 import fr.ul.miage.gl_restaurant.utilities.PrintUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.TextStringBuilder;
 
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class MaitreHotelController extends UserController {
@@ -23,6 +22,8 @@ public class MaitreHotelController extends UserController {
     private final TableRepositoryImpl tableRepository = TableRepositoryImpl.getInstance();
     private final MealRepositoryImpl mealRepository = MealRepositoryImpl.getInstance();
     private final UserRepositoryImpl userRepository = UserRepositoryImpl.getInstance();
+    private final OrderRepositoryImpl orderRepository = OrderRepositoryImpl.getInstance();
+    private final BillRepositoryImpl billRepository = BillRepositoryImpl.getInstance();
 
     /**
      * ACTIONS DE L'UTILISATEUR
@@ -31,10 +32,21 @@ public class MaitreHotelController extends UserController {
     private static final String ACTION_2 = "2 : Affecter un client à une table";
     private static final String ACTION_3 = "3 : Affecter un serveur à une table";
     private static final String ACTION_4 = "4 : Afficher la liste des tables ainsi que leur serveur";
+    private static final String ACTION_5 = "5 : Créer une facture";
+    private static final String ACTION_6 = "6 : Faire payer une facture";
 
     public MaitreHotelController(Authentification auth) {
         super(auth);
-        this.actions.addAll(Arrays.asList(ACTION_1, ACTION_2, ACTION_3, ACTION_4));
+        this.actions.addAll(
+            Arrays.asList(
+                ACTION_1,
+                ACTION_2,
+                ACTION_3,
+                ACTION_4,
+                ACTION_5,
+                ACTION_6
+            )
+        );
     }
 
     protected long askServerId(Set<User> users) {
@@ -72,7 +84,6 @@ public class MaitreHotelController extends UserController {
     public void seatClient() {
         List<Table> availableTables = getAvailableTables(tableRepository.findAll());
         PrintUtils.print("%s%n", displayTablesByFloor(availableTables));
-        PrintUtils.print("Veuillez saisir le numéro de la table : ");
         var tableId = askTableId(availableTables);
         Optional<Table> table = tableRepository.findById(tableId);
         if (table.isPresent()) {
@@ -118,7 +129,6 @@ public class MaitreHotelController extends UserController {
     public void assignServer() {
         List<Table> tables = tableRepository.findAll();
         PrintUtils.println("%s", displayTablesByFloor(tables));
-        PrintUtils.print("Veuillez saisir le numéro de la table : ");
         var tableId = askTableId(tables);
         Optional<Table> table = tableRepository.findById(tableId);
         if (table.isPresent()) {
@@ -161,6 +171,141 @@ public class MaitreHotelController extends UserController {
         return stringBuilder.toString();
     }
 
+    /**
+     * Calcule le prix total d'une commande.
+     * @param order Commande.
+     * @return Prix total.
+     */
+    protected double calculateBillTotal(Order order) {
+        var total = 0.0;
+        for (var dish : order.getDishes().entrySet()) {
+            total += dish.getKey().getPrice() * dish.getValue();
+        }
+        return total;
+    }
+
+    protected String displayOrderRecap(Order order) {
+        var stringBuilder = new TextStringBuilder();
+        order.getDishes().forEach((k, v) ->
+                stringBuilder.appendln("- %s (x%d) : %.2f€ (%.2f€)", k.getDishName(), v, k.getPrice(), k.getPrice() * v)
+        );
+        return stringBuilder.toString();
+    }
+
+    protected String displayBillRecap(Meal meal, Order order, double total) {
+        var stringBuilder = new TextStringBuilder();
+        stringBuilder.appendln("Numéro de la table : %d", meal.getTable().getTableId())
+                .appendln("Nombre de couverts : %d", meal.getCustomersNb())
+                .appendln("Numéro de la commande : %d", order.getOrderId())
+                .appendln("Récap. de la commande : ")
+                .append(displayOrderRecap(order))
+                .appendln("Prix total : %.2f€", total);
+        return stringBuilder.toString();
+    }
+
+    protected boolean createBill(Meal meal, Order order, Table table) {
+        var total = calculateBillTotal(order);
+        PrintUtils.println("-".repeat(50));
+        PrintUtils.println(StringUtils.center("Récap. de la facture", 50));
+        PrintUtils.println("-".repeat(50));
+        PrintUtils.println(displayBillRecap(meal, order, total));
+        PrintUtils.print("Validez-vous la facture ? [y]es ou [n]o : ");
+        String input = InputUtils.readInputConfirmation();
+        if (input.equalsIgnoreCase("y")) {
+            PrintUtils.print("Voulez-vous marquer la facture comme payée immédiatement ? [y]es ou [n]o : ");
+            input = InputUtils.readInputConfirmation();
+            var bill = new Bill(
+                    total,
+                    input.equalsIgnoreCase("y")
+            );
+            bill = billRepository.save(bill);
+            if (bill.getBillId() == null) {
+                PrintUtils.println("Problème lors de la création de la facture, veuillez réessayer.");
+                return false;
+            }
+            if (input.equalsIgnoreCase("y")) {
+                long mealDuration = DateUtils.getDateDiff(meal.getStartDate(), Timestamp.from(Instant.now()), TimeUnit.SECONDS);
+                meal.setMealDuration(mealDuration);
+                table.setState(TableStates.SALE);
+                tableRepository.update(table);
+            } else {
+                meal.setMealDuration(null);
+            }
+            meal.setBill(bill);
+            mealRepository.update(meal);
+            return true;
+        }
+        return false;
+    }
+
+    protected void createBill() {
+        List<Table> tables = tableRepository.findByState(TableStates.OCCUPEE);
+        PrintUtils.println(displayTablesByFloor(tables));
+        var tableId = askTableId(tables);
+        Optional<Table> table = tableRepository.findById(tableId);
+        if (table.isPresent()) {
+            Optional<Meal> meal = mealRepository.findAll().stream().filter(m ->
+                    m.getTable().getTableId().equals(table.get().getTableId()) && m.getBill() == null).findFirst();
+            if (meal.isPresent()) {
+                Optional<Order> order = orderRepository.findByMeal(meal.get().getMealId());
+                if (order.isPresent()) {
+                    if (createBill(meal.get(), order.get(), table.get())) {
+                        PrintUtils.println("%nLa facture a bien été créée.%n");
+                    } else {
+                        PrintUtils.println("%nLa création de la facture a été annulée");
+                    }
+                } else {
+                    PrintUtils.println("%nIl n'existe aucune commande pour cette table.%n");
+                }
+            } else {
+                PrintUtils.println("%nLa facture de cette table a déjà été créée.%n");
+            }
+        } else {
+            PrintUtils.println("%nCette table n'existe pas.%n");
+        }
+    }
+
+    protected void payBill(Meal meal, Bill bill, Table table) {
+        if (bill.isPaid()) {
+            PrintUtils.println("%nLa facture de cette table a déjà été payée.%n");
+        } else {
+            bill.setPaid(true);
+            long mealDuration = DateUtils.getDateDiff(meal.getStartDate(), Timestamp.from(Instant.now()), TimeUnit.SECONDS);
+            meal.setMealDuration(mealDuration);
+            table.setState(TableStates.SALE);
+            bill = billRepository.update(bill);
+            meal = mealRepository.update(meal);
+            tableRepository.update(table);
+            if (!bill.isPaid() || meal.getMealDuration() == null) {
+                PrintUtils.println("%nProblème lors du paiement de la facture, veuillez réessayer.%n");
+            } else {
+                PrintUtils.println("%nPaiement de la facture effectué.%n");
+            }
+        }
+    }
+
+    protected void payBill() {
+        List<Table> tables = tableRepository.findByState(TableStates.OCCUPEE);
+        PrintUtils.println(displayTablesByFloor(tables));
+        var tableId = askTableId(tables);
+        Optional<Table> table = tableRepository.findById(tableId);
+        if (table.isPresent()) {
+            Optional<Meal> meal = mealRepository.findAll().stream().filter(m ->
+                    m.getTable().getTableId().equals(table.get().getTableId()) && m.getBill() != null).findFirst();
+            if (meal.isPresent()) {
+                Optional<Bill> bill = billRepository.findById(meal.get().getBill().getBillId());
+                if (bill.isPresent()) {
+                    payBill(meal.get(), bill.get(), table.get());
+                } else {
+                    PrintUtils.println("%nIl n'y aucune facture en cours pour cette table.%n");
+                }
+            } else {
+                PrintUtils.println("%nIl n'y aucune facture en cours pour cette table.%n");
+            }
+
+        }
+    }
+
     @Override
     public void callAction(int action) {
         PrintUtils.println();
@@ -179,6 +324,12 @@ public class MaitreHotelController extends UserController {
                 break;
             case 4:
                 PrintUtils.print(displayTablesAndServers());
+                break;
+            case 5:
+                createBill();
+                break;
+            case 6:
+                payBill();
                 break;
             default:
                 break;
