@@ -42,6 +42,7 @@ public class Table {
     public Table(Integer floor, TableStates state, Integer places, User user) {
         this(null, floor, state, places, user);
     }
+
     public Table(ResultSet resultSet) throws SQLException {
         tableId = resultSet.getLong("tableId");
         floor = resultSet.getInt("floor");

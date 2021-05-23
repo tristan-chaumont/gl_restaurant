@@ -20,6 +20,7 @@ public class TableRepositoryImpl extends Repository<Table, Long> {
     private static final String FIND_ALL_SQL = "SELECT tableId, floor, state, places, userId FROM Tables";
     private static final String FIND_BY_ID_SQL = "SELECT tableId, floor, state, places, userId FROM Tables WHERE tableId = ?";
     private static final String FIND_BY_USERID_SQL = "SELECT tableId, floor, state, places, userId FROM Tables WHERE userId = ?";
+    private static final String FIND_BY_STATE_SQL = "SELECT tableId, floor, state, places, userId FROM Tables WHERE state LIKE ?";
     private static final String SAVE_SQL = "INSERT INTO Tables(floor, state, places, userId) VALUES(?, ?, ?, ?)";
     private static final String UPDATE_SQL = "UPDATE Tables SET floor = ?, state = ?, places = ?, userId = ? WHERE tableId = ?";
     private static final String DELETE_SQL = "DELETE FROM Tables WHERE tableId = ?";
@@ -66,12 +67,22 @@ public class TableRepositoryImpl extends Repository<Table, Long> {
             preparedStatement.setLong(1, id);
             try (var resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
-                    Long tableId = resultSet.getLong(TABLEID_COLUMN_NAME);
-                    Integer floor = resultSet.getInt("floor");
-                    var state = TableStates.getState(resultSet.getString("state"));
-                    Integer places = resultSet.getInt("places");
-                    Optional<User> user = UserRepositoryImpl.getInstance().findById(resultSet.getLong("userId"));
-                    tables.add(new Table(tableId, floor, state, places, user.orElse(null)));
+                    tables.add(new Table(resultSet));
+                }
+            }
+        } catch (SQLException e) {
+            log.error(e.getMessage());
+        }
+        return tables;
+    }
+
+    public List<Table> findByState(TableStates tableState) {
+        List<Table> tables = new ArrayList<>();
+        try (var preparedStatement = connection.prepareStatement(FIND_BY_STATE_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+            preparedStatement.setString(1, tableState.toString());
+            try (var resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    tables.add(new Table(resultSet));
                 }
             }
         } catch (SQLException e) {

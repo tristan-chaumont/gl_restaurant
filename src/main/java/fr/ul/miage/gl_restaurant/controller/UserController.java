@@ -3,6 +3,7 @@ package fr.ul.miage.gl_restaurant.controller;
 import fr.ul.miage.gl_restaurant.auth.Authentification;
 import fr.ul.miage.gl_restaurant.model.Table;
 import fr.ul.miage.gl_restaurant.utilities.InputUtils;
+import fr.ul.miage.gl_restaurant.utilities.PrintUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.TextStringBuilder;
 
@@ -45,6 +46,7 @@ public abstract class UserController {
      * @return L'id de la table à traiter.
      */
     protected long askTableId(List<Table> tables) {
+        PrintUtils.print("Veuillez saisir le numéro de la table : ");
         return Long.parseLong(
                 InputUtils.readInputInArray(
                         tables.stream().map(t -> t.getTableId().toString()).collect(Collectors.toList())

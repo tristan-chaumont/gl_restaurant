@@ -230,10 +230,10 @@ public class ServeurController extends UserController {
 
         if (table.getState().equals(TableStates.OCCUPEE) && meal.isPresent()) {
             Optional<Order> optionalOrder = orderRepository.findByMeal(meal.get().getMealId());
-            if (optionalOrder.isEmpty() || optionalOrder.get().isServed()) {
+            if (optionalOrder.isEmpty()) {
                 addArticle(meal.get());
             } else {
-                PrintUtils.println("Impossible d'ajouter un article, une commande existe déjà pour cette table.%n");
+                PrintUtils.println("Impossible d'ajouter un article, une commande a déjà été prise.%n");
             }
         } else {
             PrintUtils.println("Impossible d'ajouter un article à cette table, il n'y a aucun client.%n");
@@ -294,8 +294,7 @@ public class ServeurController extends UserController {
 
     protected void handleTable() {
         Set<Table> tables = getTablesList(auth.getUser());
-        PrintUtils.println("%s", displayServerTablesByFloor(List.copyOf(tables)));
-        PrintUtils.print("Veuillez saisir le numéro de la table : ");
+        PrintUtils.println(displayServerTablesByFloor(List.copyOf(tables)));
         var tableId = askTableId(List.copyOf(tables));
         Optional<Table> table = tableRepository.findById(tableId);
         if (table.isPresent()) {

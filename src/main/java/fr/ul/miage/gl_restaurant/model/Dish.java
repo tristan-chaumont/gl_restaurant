@@ -31,6 +31,8 @@ public class Dish {
 
     private Map<RawMaterial, Integer> rawMaterials;
 
+    public Dish() {}
+
     public Dish(Long dishId, String dishName, String category, MenuTypes menuType, Double price, boolean dailyMenu) {
         this.dishId = dishId;
         this.dishName = dishName;

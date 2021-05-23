@@ -16,10 +16,10 @@ public class BillRepositoryImpl extends Repository<Bill, Long> {
 
     private static BillRepositoryImpl instance;
 
-    private static final String FIND_ALL_SQL = "SELECT billId FROM Bills";
-    private static final String FIND_BY_ID_SQL = "SELECT billId FROM Bills WHERE billId = ?";
-    private static final String SAVE_SQL = "INSERT INTO Bills(billId) VALUES(?)";
-    private static final String UPDATE_SQL = "UPDATE Bills SET billId = ? WHERE billId = ?";
+    private static final String FIND_ALL_SQL = "SELECT billId, total, paid FROM Bills";
+    private static final String FIND_BY_ID_SQL = "SELECT billId, total, paid FROM Bills WHERE billId = ?";
+    private static final String SAVE_SQL = "INSERT INTO Bills(total, paid) VALUES(?, ?)";
+    private static final String UPDATE_SQL = "UPDATE Bills SET total = ?, paid = ? WHERE billId = ?";
     private static final String DELETE_SQL = "DELETE FROM Bills WHERE billId = ?";
 
     private BillRepositoryImpl() {
@@ -38,9 +38,7 @@ public class BillRepositoryImpl extends Repository<Bill, Long> {
             preparedStatement.setLong(1, id);
             try (var resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.first()) {
-                    Long billId = resultSet.getLong("billId");
-
-                    bill = Optional.of(new Bill(billId));
+                    bill = Optional.of(new Bill(resultSet));
                 }
             }
         } catch (SQLException e) {
@@ -53,7 +51,8 @@ public class BillRepositoryImpl extends Repository<Bill, Long> {
     public Bill save(Bill object) {
         if (object != null) {
             try (var preparedStatement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
-                preparedStatement.setLong(1, object.getBillId());
+                preparedStatement.setDouble(1, object.getTotal());
+                preparedStatement.setBoolean(2, object.isPaid());
                 preparedStatement.executeUpdate();
                 generateKey(object, preparedStatement);
             } catch (SQLException e) {
@@ -75,7 +74,17 @@ public class BillRepositoryImpl extends Repository<Bill, Long> {
 
     @Override
     public Bill update(Bill object) {
-        return null;
+        if (object != null && object.getBillId() != null) {
+            try (var preparedStatement = connection.prepareStatement(UPDATE_SQL)) {
+                preparedStatement.setDouble(1, object.getTotal());
+                preparedStatement.setBoolean(2, object.isPaid());
+                preparedStatement.setLong(3, object.getBillId());
+                preparedStatement.executeUpdate();
+            } catch (SQLException e) {
+                log.error(e.getMessage());
+            }
+        }
+        return object;
     }
 
     public void delete(Long id) {

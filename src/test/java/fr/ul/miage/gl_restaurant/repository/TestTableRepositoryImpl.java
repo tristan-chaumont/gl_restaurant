@@ -19,7 +19,7 @@ class TestTableRepositoryImpl {
     static UserRepositoryImpl userRepository;
     static TableRepositoryImpl tableRepository;
 
-    static Table table1, table2;
+    static Table table1, table2, table3;
     static User user1, user2;
 
     @BeforeAll
@@ -34,6 +34,7 @@ class TestTableRepositoryImpl {
         user2 = userRepository.save(new User("userTableTest2", "Test2", "UserTable2", Roles.SERVEUR));
         table1 = tableRepository.save(new Table(1, TableStates.OCCUPEE, 5, user1));
         table2 = tableRepository.save(new Table(2, TableStates.LIBRE, 3, user2));
+        table3 = tableRepository.save(new Table(3, TableStates.RESERVEE, 2, user2));
     }
 
     @Test
@@ -68,16 +69,25 @@ class TestTableRepositoryImpl {
     }
 
     @Test
+    @DisplayName("findByState() récupère les bons éléments")
+    void verifyFindByStateGetsRightElements() {
+        List<Table> result = tableRepository.findByState(TableStates.RESERVEE);
+        assertThat(result.size(), is(1));
+        assertThat(result.get(0).getTableId(), equalTo(table3.getTableId()));
+    }
+
+    @Test
     @DisplayName("L'insertion fonctionne")
     void verifySaveInsertElement() {
         User user = userRepository.save(new User("testInsertion1", "Test1", "Insertion1", Roles.DIRECTEUR));
         Table table = tableRepository.save(new Table(2, TableStates.LIBRE, 3, user));
         assertNotNull(table.getTableId());
-        Table result = tableRepository.findById(table.getTableId()).get();
-        assertThat(result.getFloor(), equalTo(2));
-        assertThat(result.getState(), is(TableStates.LIBRE));
-        assertThat(result.getPlaces(), equalTo(3));
-        assertThat(result.getUser(), equalTo(user));
+        Optional<Table> result = tableRepository.findById(table.getTableId());
+        assertThat(result.isPresent(), is(true));
+        assertThat(result.get().getFloor(), equalTo(2));
+        assertThat(result.get().getState(), is(TableStates.LIBRE));
+        assertThat(result.get().getPlaces(), equalTo(3));
+        assertThat(result.get().getUser(), equalTo(user));
         tableRepository.delete(table.getTableId());
         userRepository.delete(user.getUserId());
     }
@@ -88,9 +98,10 @@ class TestTableRepositoryImpl {
         table1.setFloor(4);
         table1.setState(TableStates.LIBRE);
         tableRepository.update(table1);
-        Table result = tableRepository.findById(table1.getTableId()).get();
-        assertThat(result.getFloor(), is(4));
-        assertThat(result.getState(), is(TableStates.LIBRE));
+        Optional<Table> result = tableRepository.findById(table1.getTableId());
+        assertThat(result.isPresent(), is(true));
+        assertThat(result.get().getFloor(), is(4));
+        assertThat(result.get().getState(), is(TableStates.LIBRE));
     }
 
     @Test
@@ -127,6 +138,7 @@ class TestTableRepositoryImpl {
     void tearDownAfterEach() {
         tableRepository.delete(table1.getTableId());
         tableRepository.delete(table2.getTableId());
+        tableRepository.delete(table3.getTableId());
         userRepository.delete(user1.getUserId());
         userRepository.delete(user2.getUserId());
     }
