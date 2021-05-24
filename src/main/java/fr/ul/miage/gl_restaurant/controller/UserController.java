@@ -74,10 +74,18 @@ public abstract class UserController {
     public String displayActions() {
         var stringBuilder = new TextStringBuilder();
         stringBuilder.appendln("=".repeat(50))
-                .appendln(StringUtils.center("ACCUEIL", 50))
+                .appendln(StringUtils.center(String.format("ACCUEIL (%s)", auth.getUser().getRole().toString()), 50))
                 .appendln("=".repeat(50));
         for (String action : actions) {
             stringBuilder.appendln(action);
+        }
+        return stringBuilder.toString();
+    }
+
+    protected String displaySubActions(Set<String> subActions) {
+        var stringBuilder = new TextStringBuilder();
+        for (String subAction : subActions) {
+            stringBuilder.appendln(subAction);
         }
         return stringBuilder.toString();
     }

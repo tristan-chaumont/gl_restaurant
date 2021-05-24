@@ -4,14 +4,14 @@ import fr.ul.miage.gl_restaurant.constants.Units;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.TextStringBuilder;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 @Getter
 @Setter
-@ToString
 @Data
 public class RawMaterial {
 
@@ -41,5 +41,20 @@ public class RawMaterial {
         rawMaterialName = resultSet.getString("rmName");
         stockQuantity = resultSet.getInt("stockQuantity");
         unit = Units.getUnit(resultSet.getString("unit"));
+    }
+
+    @Override
+    public String toString() {
+        var stringBuilder = new TextStringBuilder();
+        var size = 16;
+        if (!StringUtils.isBlank(rawMaterialName) && rawMaterialName.length() > 16) {
+            size = rawMaterialName.length();
+        }
+        stringBuilder.appendln("-".repeat(size + 4))
+                .appendln("| " + StringUtils.center(rawMaterialName, size) + " |")
+                .appendln("-".repeat(size + 4))
+                .appendln("Quantité en stock : %d", stockQuantity)
+                .appendln("Unité : %s", unit.toString());
+        return stringBuilder.toString();
     }
 }

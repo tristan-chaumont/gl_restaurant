@@ -5,6 +5,8 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.TextStringBuilder;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -45,5 +47,18 @@ public class User {
         lastName = resultSet.getString("lastName");
         firstName = resultSet.getString("firstName");
         role = Roles.getRole(resultSet.getString("role"));
+    }
+
+    @Override
+    public String toString() {
+        var stringBuilder = new TextStringBuilder();
+        stringBuilder.appendln("-".repeat(25))
+                .appendln("| " + StringUtils.center("Utilisateur n°" + userId, 21) + " |")
+                .appendln("-".repeat(25))
+                .appendln("Login : %s", login)
+                .appendln("Nom : %s", lastName)
+                .appendln("Prénom : %s", firstName)
+                .appendln("Rôle : %s", role.toString());
+        return stringBuilder.toString();
     }
 }

@@ -1,13 +1,12 @@
 package fr.ul.miage.gl_restaurant.utilities;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.GenericValidator;
 
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Scanner;
-import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class InputUtils {
 
@@ -19,11 +18,22 @@ public class InputUtils {
         return scanner.nextLine();
     }
 
+    public static String readNonEmptyInput() {
+        String input = readInput();
+
+        while (StringUtils.isBlank(input)) {
+            PrintUtils.print("Veuillez saisir une valeur non vide : ");
+            input = readInput();
+        }
+        return input;
+    }
+
     public static String readInputInArray(List<String> values) {
         String input = readInput();
 
         while (!values.contains(input)) {
-            PrintUtils.println("Votre saisie doit correspondre à l'un des éléments suivants : %s", String.join(", ", values));
+            List<String> copyWithoutEmptyString = List.copyOf(values).stream().filter(s -> !StringUtils.isBlank(s)).collect(Collectors.toList());
+            PrintUtils.println("Votre saisie doit correspondre à l'un des éléments suivants : %s", String.join(", ", copyWithoutEmptyString));
             PrintUtils.print("Veuillez réessayer : ");
             input = readInput();
         }
@@ -96,7 +106,7 @@ public class InputUtils {
         if (startInclusive <= input && endExclusive > input) {
             return true;
         }
-        PrintUtils.print("La valeur est trop petite ou trop grande, veuillez réessayer : ");
+        PrintUtils.print("La valeur est trop petite (< %d) ou trop grande (> %d), veuillez réessayer : ", startInclusive, endExclusive - 1);
         return false;
     }
 
@@ -111,7 +121,7 @@ public class InputUtils {
         if (startInclusive <= input && endExclusive > input) {
             return true;
         }
-        PrintUtils.print("La valeur est trop petite ou trop grande, veuillez réessayer : ");
+        PrintUtils.print("La valeur est trop petite (< %.2f) ou trop grande (> %.2f), veuillez réessayer : ", startInclusive, endExclusive - 1);
         return false;
     }
 
@@ -143,9 +153,5 @@ public class InputUtils {
             return false;
         }
         return true;
-    }
-
-    public static void main(String[] args) {
-        PrintUtils.print(InputUtils.readDate().toString());
     }
 }

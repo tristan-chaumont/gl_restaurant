@@ -5,7 +5,6 @@ import fr.ul.miage.gl_restaurant.constants.MenuTypes;
 import fr.ul.miage.gl_restaurant.model.Dish;
 import fr.ul.miage.gl_restaurant.model.Order;
 import fr.ul.miage.gl_restaurant.model.RawMaterial;
-import fr.ul.miage.gl_restaurant.model.User;
 import fr.ul.miage.gl_restaurant.repository.DishRepositoryImpl;
 import fr.ul.miage.gl_restaurant.repository.OrderRepositoryImpl;
 import fr.ul.miage.gl_restaurant.repository.RawMaterialRepositoryImpl;
@@ -55,7 +54,7 @@ public class CuisinierController extends UserController {
 
     protected long askUpdateRMId(List<RawMaterial> rms) {
         var list = rms.stream().map(rm -> rm.getRawMaterialId().toString()).collect(Collectors.toList());
-        list.add("0");
+        list.add(0, "0");
         return Long.parseLong(
                 InputUtils.readInputInArray(list)
         );
@@ -71,7 +70,7 @@ public class CuisinierController extends UserController {
 
     protected long askDeleteDishId(List<Dish> dishes) {
         var list =  dishes.stream().map(d -> d.getDishId().toString()).collect(Collectors.toList());
-        list.add("0");
+        list.add(0, "0");
         return Long.parseLong(
                 InputUtils.readInputInArray(
                         list
@@ -80,8 +79,7 @@ public class CuisinierController extends UserController {
     }
 
     protected List<RawMaterial> getRawMaterials(){
-        List<RawMaterial> rawMaterials = rawMaterialRepository.findAll();
-        return rawMaterials;
+        return rawMaterialRepository.findAll();
     }
 
     protected String displayRawMaterials(List<RawMaterial> rawMaterialList){
@@ -90,7 +88,7 @@ public class CuisinierController extends UserController {
         return stringBuilder.toString();
     }
 
-    protected List<Dish> getDishes(){
+    protected List<Dish> getNotDailyMenuDishes(){
         return dishRepository.findNotDailyMenu();
     }
 
@@ -98,12 +96,6 @@ public class CuisinierController extends UserController {
         var stringBuilder = new TextStringBuilder();
         dishes.forEach(dish -> stringBuilder.appendln("[%d] %s", dish.getDishId(), dish.getDishName()));
         return stringBuilder.toString();
-    }
-
-    protected Dish displayDish(Long dishId){
-        var dish = dishRepository.findById(dishId).get();
-        PrintUtils.println(dish.toString());
-        return dish;
     }
 
     protected String displayDishRawMaterials(Map<RawMaterial,Integer> rawMaterials){
@@ -168,124 +160,189 @@ public class CuisinierController extends UserController {
         orderRepository.update(order);
     }
 
-    public void prepareOrder(){
+    public void prepareOrder() {
         var orders = getOrdersQueue();
-        Order order = orders.first();
-        prepareOrder(order);
-        PrintUtils.println("La commande N°" + order.getOrderId() + " est prête à être servie.");
+        if (orders.isEmpty()) {
+            PrintUtils.println("Il n'y aucune commande à préparer.%n");
+        } else {
+            var order = orders.first();
+            prepareOrder(order);
+            this.ordersQueue.remove(order);
+            PrintUtils.println("La commande n°" + order.getOrderId() + " est prête à être servie.%n");
+        }
     }
 
-    public void createDish(String dishName, String category, MenuTypes menuType, Double price, HashMap<RawMaterial, Integer> rawMaterials){
+    public void createDish(String dishName, String category, MenuTypes menuType, Double price, Map<RawMaterial, Integer> rawMaterials){
         Optional<Dish> dish = dishRepository.findByName(dishName);
-        if(dish.isEmpty()){
+        if(dish.isEmpty()) {
             dishRepository.save(new Dish(dishName, category, menuType, price, false, rawMaterials));
+            PrintUtils.println("%nLe plat a bien été créé.%n");
+        } else {
+            PrintUtils.println("%nUn plat du même nom existe déjà, annulation de la création.%n");
         }
     }
 
-    public void createDish(){
-        PrintUtils.print("Veuillez saisir le nom du plat que vous voulez créer : ");
-        var dishName = InputUtils.readInput();
-        PrintUtils.print("Veuillez saisir la catégorie : ");
-        var category = InputUtils.readInput();
-        PrintUtils.print("Ce plat est-il un menu enfant ? y/n) : ");
-        var choice = InputUtils.readInputConfirmation();
-        var menuType = MenuTypes.ADULTES;
-        if(choice.equals("o")){
-            menuType = MenuTypes.ENFANTS;
-        }
-        PrintUtils.print("Veuillez choisir les ingrédients que contient votre plat : ");
-        List<RawMaterial> rawMaterialList = getRawMaterials();
-        HashMap<RawMaterial,Integer> rawMaterials = new HashMap<>();
-        boolean stop = false;
-        while(!stop){
+    protected Map<RawMaterial, Integer> selectRawMaterials(List<RawMaterial> rawMaterialList) {
+        Map<RawMaterial,Integer> rawMaterials = new HashMap<>();
+        var select = "y";
+        do {
             PrintUtils.println(displayRawMaterials(rawMaterialList));
             PrintUtils.print("Pour ajouter un ingrédient, veuillez saisir son id : ");
             var rmId = askRMId(rawMaterialList);
             PrintUtils.print("Veuillez saisir la quantité de l'ingrédient nécessaire à la confection du plat : ");
-            var quantity = InputUtils.readIntegerInput();
-            if(quantity > 0) {
-                rawMaterials.put(rawMaterialRepository.findById(rmId).get(), quantity);
+            var quantity = InputUtils.readIntegerInputInRange(1, 21);
+            Optional<RawMaterial> rm = rawMaterialRepository.findById(rmId);
+            if (rm.isPresent()) {
+                rawMaterials.put(rm.get(), quantity);
+                PrintUtils.print("Voulez-vous ajoutez d'autres ingrédient ? [y]es ou [n]o : ");
+                select = InputUtils.readInputConfirmation();
+                PrintUtils.println();
+            } else {
+                PrintUtils.println("Cette matière première n'existe pas, veuillez réessayer.");
             }
-            PrintUtils.print("Voulez-vous ajoutez d'autres ingrédient ? (y/n)");
-            if(InputUtils.readInputConfirmation().equals("n")) {
-                stop = true;
-            }
-        }
-        PrintUtils.print("Veuillez saisir le prix de ce plat : ");
-        var price = InputUtils.readDoubleInputInRange(1.0, 50.0);
-        createDish(dishName,category,menuType,price,rawMaterials);
+        } while (select.equalsIgnoreCase("y"));
+        return rawMaterials;
     }
 
-    public void updateDish(Dish dish, String dishName, String category, MenuTypes menuType, Double price, Map<RawMaterial, Integer> rawMaterials){
-        Optional<Dish> resDish = dishRepository.findByName(dishName);
-        if(resDish.isEmpty() || dishName.equals(dish.getDishName())){
-            List<Order> orders = orderRepository.findByDish(dish.getDishId());
-            if(orders.isEmpty()){
-                dish.setDishName(dishName);
-                dish.setCategory(category);
-                dish.setPrice(price);
-                dish.setMenuType(menuType);
-                dish.setRawMaterials(rawMaterials);
-                dishRepository.update(dish);
+    public void createDish() {
+        PrintUtils.print("Veuillez saisir le nom du plat que vous voulez créer : ");
+        var dishName = InputUtils.readInput();
+        PrintUtils.print("Veuillez saisir la catégorie : ");
+        var category = InputUtils.readInput();
+        PrintUtils.print("Ce plat est-il un menu enfant ? [y]es ou [n]o : ");
+        var choice = InputUtils.readInputConfirmation();
+        var menuType = choice.equalsIgnoreCase("y") ? MenuTypes.ENFANTS : MenuTypes.ADULTES;
+        List<RawMaterial> rawMaterialList = getRawMaterials();
+        if (rawMaterialList.isEmpty()) {
+            PrintUtils.println("%nIl n'existe aucune matière première pour le moment, veuillez en ajouter avant de confectionner votre plat.");
+        } else {
+            PrintUtils.println("Veuillez choisir les ingrédients que contient votre plat :%n");
+            var rawMaterials = selectRawMaterials(rawMaterialList);
+            if (rawMaterials.isEmpty()) {
+                PrintUtils.println("%nImpossible de créer un plat qui n'a pas d'ingrédients.%n");
+            } else {
+                PrintUtils.print("Veuillez saisir le prix de ce plat : ");
+                var price = InputUtils.readDoubleInputInRange(1.0, 51.0);
+                createDish(dishName, category, menuType, price, rawMaterials);
             }
         }
     }
 
-    public void updateDish(){
-        List<Dish> dishes = getDishes();
-        if(dishes.isEmpty())
-            PrintUtils.println("Il n'y pas de plat modifiable.");
+    public void updateDish(Dish dish, String dishName, String category, MenuTypes menuType, Double price, Map<RawMaterial, Integer> rawMaterials) {
+        if (rawMaterials.isEmpty()) {
+            PrintUtils.println("%nModification impossible si le plat n'a pas d'ingrédients.%n");
+        } else {
+            Optional<Dish> resDish = dishRepository.findByName(dishName);
+            if(resDish.isEmpty() || dishName.equals(dish.getDishName())) {
+                List<Order> orders = orderRepository.findByDish(dish.getDishId());
+                if (orders.isEmpty()) {
+                    dish.setDishName(dishName);
+                    dish.setCategory(category);
+                    dish.setPrice(price);
+                    dish.setMenuType(menuType);
+                    dish.setRawMaterials(rawMaterials);
+                    dishRepository.update(dish);
+                    PrintUtils.println("%nLe plat a bien été mis à jour.%n");
+                } else {
+                    PrintUtils.println("%nImpossible de modifier ce plat, car des commandes sont en cours");
+                }
+            } else {
+                PrintUtils.println("%nUn plat du même nom existe déjà, annulation de la modification.%n");
+            }
+        }
+    }
+
+    public void updateDish() {
+        List<Dish> dishes = getNotDailyMenuDishes();
+        if (dishes.isEmpty())
+            PrintUtils.println("Il n'y pas de plat modifiable.%n");
         else {
-            PrintUtils.println("Voici la liste des plats que vous pouvez modifié : ");
+            PrintUtils.println("Voici la liste des plats que vous pouvez modifier :%n");
             PrintUtils.println(displayDishes(dishes));
             PrintUtils.print("Pour modifier l'un de ces plats, veuillez saisir son id : ");
             var dishId = askDishId(dishes);
-            var dish = displayDish(dishId);
-            PrintUtils.print("Pour modifier le nom du plat, veuillez saisir un autre nom, sinon entrez le même nom : ");
-            var dishName = InputUtils.readInput();
-            PrintUtils.print("Pour modifier la catégorie, veuillez saisir la nouvelle catégorie, sinon entrez l'ancienne : ");
-            var category = InputUtils.readInput();
-            PrintUtils.print("Voulez-vous modifier le type du menu ? (y/n) : ");
-            var choice = InputUtils.readInputConfirmation();
-            var menuType = MenuTypes.ADULTES;
-            if ((dish.getMenuType() == MenuTypes.ADULTES && choice.equals("y")) || (dish.getMenuType() == MenuTypes.ENFANTS && choice.equals("n"))) {
-                menuType = MenuTypes.ENFANTS;
+            var dish = dishRepository.findById(dishId);
+            if (dish.isPresent()) {
+                updateDishInformation(dish.get());
+            } else {
+                PrintUtils.println("%nCe plat n'existe pas.%n");
             }
-            PrintUtils.print("Pour modifier le prix, veuillez saisir le nouveau prix, sinon entrez l'ancien : ");
-            var price = InputUtils.readDoubleInputInRange(1.0, 50.0);
-            var rawMaterials = dish.getRawMaterials();
-            PrintUtils.println(displayDishRawMaterials(rawMaterials));
-            var rmId = 1l;
-            while (rmId != 0) {
-                PrintUtils.print("Pour modifier l'un des ingrédients veuillez saisir son id, sinon entrez 0");
+        }
+    }
+
+    protected void updateDishInformation(Dish dish) {
+        PrintUtils.println(dish.toString());
+        PrintUtils.print("Pour modifier le nom du plat, veuillez saisir un autre nom, sinon laissez le champ vide : ");
+        var input = InputUtils.readInput();
+        var dishName = input.length() == 0 ? dish.getDishName() : input;
+        PrintUtils.print("Pour modifier la catégorie, veuillez saisir la nouvelle catégorie, sinon laissez le champ vide : ");
+        input = InputUtils.readInput();
+        var category = input.length() == 0 ? dish.getCategory() : input;
+        PrintUtils.print("Voulez-vous modifier le type du menu ? [y]es ou [n]o : ");
+        var choice = InputUtils.readInputConfirmation();
+        var menuType = MenuTypes.ADULTES;
+        if ((dish.getMenuType() == MenuTypes.ADULTES && choice.equals("y")) || (dish.getMenuType() == MenuTypes.ENFANTS && choice.equals("n"))) {
+            menuType = MenuTypes.ENFANTS;
+        }
+        PrintUtils.print("Pour modifier le prix, veuillez saisir le nouveau prix, sinon entrez le prix initial : ");
+        var price = InputUtils.readDoubleInputInRange(1.0, 51.0);
+        var rawMaterials = dish.getRawMaterials();
+        updateDishRawMaterials(rawMaterials);
+        updateDishAddNewRawMaterials(rawMaterials);
+        updateDish(dish, dishName, category, menuType, price, rawMaterials);
+    }
+
+    private void updateDishAddNewRawMaterials(Map<RawMaterial, Integer> rawMaterials) {
+        var rmId = 1L;
+        PrintUtils.println("%n| Ajout de nouveaux ingrédients%n");
+        while (rmId != 0) {
+            var rms = getRawMaterials();
+            if (rms.isEmpty()) {
+                PrintUtils.println("%nIl n'existe pas de matière première.%n");
+            } else {
+                PrintUtils.println(displayRawMaterials(rms));
+                PrintUtils.print("Pour ajouter un nouvel ingrédient, veuillez entrer son id, sinon entrez 0 : ");
+                rmId = askUpdateRMId(rms);
+                if (rmId != 0) {
+                    var rmAdd = rawMaterialRepository.findById(rmId);
+                    if (rmAdd.isPresent()) {
+                        PrintUtils.print("Entrez la quantité de cet ingrédient : ");
+                        var quantityAdd = InputUtils.readIntegerInputInRange(1, 21);
+                        rawMaterials.put(rmAdd.get(), quantityAdd);
+                    } else {
+                        PrintUtils.println("%nCette matière première n'existe pas.%n");
+                    }
+                }
+            }
+        }
+    }
+
+    private void updateDishRawMaterials(Map<RawMaterial, Integer> rawMaterials) {
+        var rmId = 1L;
+        PrintUtils.println("%n| Modification des ingrédients%n");
+        while (rmId != 0 && !rawMaterials.isEmpty()) {
+            var rms = getRawMaterials();
+            if (rms.isEmpty()) {
+                PrintUtils.println("%nIl n'existe pas de matière première.%n");
+            } else {
+                PrintUtils.println(displayRawMaterials(new ArrayList<>(rawMaterials.keySet())));
+                PrintUtils.print("Pour modifier l'un des ingrédients veuillez saisir son id, sinon entrez 0 : ");
                 rmId = askUpdateRMId(List.copyOf(rawMaterials.keySet()));
                 if (rmId != 0) {
-                    var rm = rawMaterialRepository.findById(rmId).get();
-                    PrintUtils.print("Pour modifier la quantité de cet ingrédient entrez la nouvelle valeur, sinon entrez 0 pour supprimer cet ingrédient : ");
-                    var quantity = InputUtils.readIntegerInput();
-                    if (quantity > 0) {
-                        rawMaterials.put(rm, quantity);
+                    var rm = rawMaterialRepository.findById(rmId);
+                    if (rm.isPresent()) {
+                        PrintUtils.print("Pour modifier la quantité de cet ingrédient entrez la nouvelle valeur, sinon entrez 0 pour supprimer cet ingrédient : ");
+                        var quantity = InputUtils.readIntegerInputInRange(0, 21);
+                        if (quantity > 0) {
+                            rawMaterials.put(rm.get(), quantity);
+                        } else {
+                            rawMaterials.remove(rm.get());
+                        }
                     } else {
-                        rawMaterials.remove(rm);
+                        PrintUtils.println("%nCette matière première n'existe pas.%n");
                     }
                 }
             }
-            rmId = 1l;
-            while (rmId != 0) {
-                var rms = getRawMaterials();
-                PrintUtils.print(displayRawMaterials(rms));
-                PrintUtils.print("Pour ajouter un ingrédient, veuillez entrer son id, sinon entrez 0");
-                rmId = askUpdateRMId(rms);
-                var rmAdd = rawMaterialRepository.findById(rmId).get();
-                if (rmId != 0) {
-                    PrintUtils.print("Pour modifier la quantité de cet ingrédient entrez la nouvelle valeur, sinon entrez 0 pour supprimer cet ingrédient : ");
-                    var quantityAdd = InputUtils.readIntegerInput();
-                    if (quantityAdd > 0) {
-                        rawMaterials.put(rmAdd, quantityAdd);
-                    }
-                }
-            }
-            updateDish(dish, dishName, category, menuType, price, rawMaterials);
         }
     }
 
@@ -293,26 +350,34 @@ public class CuisinierController extends UserController {
         List<Order> orders = orderRepository.findByDish(dish.getDishId());
         if (orders.isEmpty()){
             dishRepository.delete(dish.getDishId());
+            PrintUtils.println("%nLe plat a bien été supprimé.%n");
+        } else {
+            PrintUtils.println("%nLe plat ne peut pas être supprimé car il y a des commandes en cours.%n");
         }
     }
 
-    public void deleteDish(){
-        var dishes = getDishes();
+    public void deleteDish() {
+        var dishes = getNotDailyMenuDishes();
         if(dishes.isEmpty())
-            PrintUtils.println("Il n'y a pas de plat pouvant être supprimé");
+            PrintUtils.println("Il n'y a pas de plat pouvant être supprimé.%n");
         else {
             PrintUtils.println(displayDishes(dishes));
             PrintUtils.print("Pour supprimer un repas veuillez entrez son id, sinon entrez 0 : ");
             var dishId = askDeleteDishId(dishes);
             if (dishId != 0) {
-                var dish = dishRepository.findById(dishId).get();
-                deleteDish(dish);
+                var dish = dishRepository.findById(dishId);
+                if (dish.isPresent()) {
+                    deleteDish(dish.get());
+                } else {
+                    PrintUtils.println("%nCe plat n'existe pas.%n");
+                }
             }
         }
     }
 
     @Override
     public void callAction(int action) {
+        PrintUtils.println();
         switch (action) {
             case 0:
                 auth.disconnect();
@@ -330,13 +395,13 @@ public class CuisinierController extends UserController {
                 deleteDish();
                 break;
             case 5:
-                PrintUtils.println(displayOrdersQueue());
+                PrintUtils.print(displayOrdersQueue());
                 break;
             case 6:
-                PrintUtils.println(displayDailyMenu());
+                PrintUtils.print(displayDailyMenu());
                 break;
             case 7:
-                PrintUtils.println(displayStock());
+                PrintUtils.print(displayStock());
                 break;
             default:
                 break;
