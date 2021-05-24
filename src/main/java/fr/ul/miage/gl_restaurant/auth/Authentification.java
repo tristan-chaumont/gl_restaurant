@@ -43,14 +43,14 @@ public class Authentification {
     }
 
     public boolean displayInterface() {
-        PrintUtils.println("%s", "=".repeat(50));
-        PrintUtils.println("%s", StringUtils.center("Bonjour et bienvenue !", 50));
-        PrintUtils.println("%s", "=".repeat(50));
+        PrintUtils.println("=".repeat(50));
+        PrintUtils.println(StringUtils.center("Bonjour et bienvenue !", 50));
+        PrintUtils.println("=".repeat(50));
         PrintUtils.println("Pour quitter l'application, tapez : !q");
         PrintUtils.print("Pour vous connecter, veuillez entrer votre login : ");
         String input = InputUtils.readInput();
         if (input.equals("!q")) {
-            PrintUtils.println("À bientôt !");
+            PrintUtils.println("%nÀ bientôt !");
             return false;
         }
         signIn(input);

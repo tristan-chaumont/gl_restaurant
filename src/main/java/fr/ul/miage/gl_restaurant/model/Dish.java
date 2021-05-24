@@ -15,7 +15,6 @@ import java.util.Map;
 
 @Setter
 @Getter
-@ToString
 @Data
 public class Dish {
 
@@ -33,7 +32,9 @@ public class Dish {
 
     private Map<RawMaterial, Integer> rawMaterials;
 
-    public Dish() {}
+    public Dish() {
+        this.rawMaterials = new HashMap<>();
+    }
 
     public Dish(Long dishId, String dishName, String category, MenuTypes menuType, Double price, boolean dailyMenu) {
         this.dishId = dishId;
@@ -75,13 +76,20 @@ public class Dish {
     @Override
     public String toString() {
         var stringBuilder = new TextStringBuilder();
-        stringBuilder.appendln("-".repeat(20))
-                .appendln("|" + StringUtils.center(dishName, 18) + "|")
-                .appendln("-".repeat(20))
+        var size = 16;
+        if (!StringUtils.isBlank(dishName) && dishName.length() > 16) {
+            size = dishName.length();
+        }
+        stringBuilder.appendln("-".repeat(size + 4))
+                .appendln("| " + StringUtils.center(dishName, size) + " |")
+                .appendln("-".repeat(size + 4))
                 .appendln("Catégorie : %s", category)
-                .appendln("Prix : %d", price)
-                .appendln("Ingrédients : ");
-                rawMaterials.forEach((rm,quantity) -> stringBuilder.appendln(" - %d %s", quantity, rm.getRawMaterialName()));
+                .appendln("Prix : %.2f€", price)
+                .appendln("Menu %s", menuType.toString());
+        if (!rawMaterials.isEmpty()) {
+            stringBuilder.appendln("Ingrédients : ");
+            rawMaterials.forEach((rm,quantity) -> stringBuilder.appendln(" - %s (x%d)", rm.getRawMaterialName(), quantity));
+        }
         return stringBuilder.toString();
     }
 }

@@ -109,15 +109,15 @@ public class MaitreHotelController extends UserController {
                 var nbCustomers = InputUtils.readIntegerInputInRange(1, table.get().getPlaces() + 1);
 
                 if (seatClient(table.get(), nbCustomers) != null) {
-                    PrintUtils.print("Les clients ont bien été installés.%n%n");
+                    PrintUtils.print("%nLes clients ont bien été installés.%n%n");
                 } else {
-                    PrintUtils.print("Problème lors de l'installation des clients, veuillez réessayer.%n%n");
+                    PrintUtils.print("%nProblème lors de l'installation des clients, veuillez réessayer.%n%n");
                 }
             } else {
-                PrintUtils.print("Cette table n'existe pas.%n");
+                PrintUtils.print("%nCette table n'existe pas.%n");
             }
         } else {
-            PrintUtils.println("Aucune table n'est disponible.%n");
+            PrintUtils.println("%nAucune table n'est disponible.%n");
         }
     }
 
@@ -161,15 +161,15 @@ public class MaitreHotelController extends UserController {
                 Optional<User> server = userRepository.findById(serverId);
                 if (server.isPresent()) {
                     if (assignServer(table.get(), server.get())) {
-                        PrintUtils.println("Le serveur a bien été affecté à la table.%n");
+                        PrintUtils.println("%nLe serveur a bien été affecté à la table.%n");
                     } else {
-                        PrintUtils.println("Problème lors de l'affectation du serveur à la table, veuillez réessayer.%n");
+                        PrintUtils.println("%nProblème lors de l'affectation du serveur à la table, veuillez réessayer.%n");
                     }
                 } else {
-                    PrintUtils.println("Cet utilisateur n'existe pas.");
+                    PrintUtils.println("%nCet utilisateur n'existe pas.");
                 }
             } else {
-                PrintUtils.println("Cette table n'existe pas.");
+                PrintUtils.println("%nCette table n'existe pas.");
             }
         } else {
             PrintUtils.println("Aucune table n'est disponible.%n");
@@ -249,7 +249,7 @@ public class MaitreHotelController extends UserController {
             );
             bill = billRepository.save(bill);
             if (bill.getBillId() == null) {
-                PrintUtils.println("Problème lors de la création de la facture, veuillez réessayer.");
+                PrintUtils.println("%nProblème lors de la création de la facture, veuillez réessayer.");
                 return false;
             }
             if (input.equalsIgnoreCase("y")) {

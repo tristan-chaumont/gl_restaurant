@@ -212,7 +212,7 @@ class TestCuisineController {
         rawMaterialHashMap.put(rawMaterial,1);
         Dish dish = dishRepository.save(new Dish("Riz", "Plat", MenuTypes.ADULTES, 5.0, false, rawMaterialHashMap));
         expected.appendln("[%d] %s", dish.getDishId(), "Riz");
-        var dishes = cuisinierController.getDishes();
+        var dishes = cuisinierController.getNotDailyMenuDishes();
         var res = cuisinierController.displayDishes(dishes);
         dishRepository.deleteRawMaterialsByDishId(dish.getDishId());
         dishRepository.delete(dish.getDishId());

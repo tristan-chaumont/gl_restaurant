@@ -24,12 +24,13 @@ public class Main {
         while (!quit) {
             if (!auth.isConnected() && !auth.displayInterface()) {
                 quit = true;
-            }
-            userController = ControllerUtils.getController(auth);
-            while (auth.isConnected()) {
-                PrintUtils.println(userController.displayActions());
-                PrintUtils.print("Veuillez renseigner le numéro de l'action à effectuer : ");
-                userController.callAction(InputUtils.readIntegerInputInRange(0, userController.getActions().size() + 1));
+            } else {
+                userController = ControllerUtils.getController(auth);
+                while (auth.isConnected()) {
+                    PrintUtils.println(userController.displayActions());
+                    PrintUtils.print("Veuillez renseigner le numéro de l'action à effectuer : ");
+                    userController.callAction(InputUtils.readIntegerInputInRange(0, userController.getActions().size() + 1));
+                }
             }
         }
 

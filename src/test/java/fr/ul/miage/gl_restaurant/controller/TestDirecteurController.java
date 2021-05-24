@@ -77,11 +77,10 @@ class TestDirecteurController {
     @DisplayName("L'ingrédient est bien modifié")
     void testUpdateRawMaterialSucceed(){
         DirecteurController directeurController = new DirecteurController(new Authentification());
-        directeurController.updateRawMaterial(rm1, "Pâtes", 100, Units.KG);
+        directeurController.updateRawMaterial(rm1, "Pâtes", Units.KG);
         Optional<RawMaterial> result = rawMaterialRepository.findById(rm1.getRawMaterialId());
         assertThat(result.isPresent(), is(true));
         assertThat(result.get().getRawMaterialName(), is("Pâtes"));
-        assertThat(result.get().getStockQuantity(), is(100));
         assertThat(result.get().getUnit(), is(Units.KG));
     }
 
@@ -90,12 +89,11 @@ class TestDirecteurController {
     void testUpdateRawMaterialFailedSameValue(){
         RawMaterial rm = rawMaterialRepository.save(new RawMaterial("Pâtes", 100, Units.KG));
         DirecteurController directeurController = new DirecteurController(new Authentification());
-        directeurController.updateRawMaterial(rm1, "Pâtes", 100, Units.KG);
+        directeurController.updateRawMaterial(rm1, "Pâtes", Units.KG);
         Optional<RawMaterial> result = rawMaterialRepository.findById(rm1.getRawMaterialId());
         rawMaterialRepository.delete(rm.getRawMaterialId());
         assertThat(result.isPresent(), is(true));
         assertThat(result.get().getRawMaterialName(), is("Riz"));
-        assertThat(result.get().getStockQuantity(), is(100));
         assertThat(result.get().getUnit(), is(Units.KG));
     }
 
@@ -116,7 +114,7 @@ class TestDirecteurController {
         dishIntegerMap.put(dish,1);
         Order order = orderRepository.save(new Order(Timestamp.from(Instant.now()), meal, dishIntegerMap));
         DirecteurController directeurController = new DirecteurController(new Authentification());
-        directeurController.updateRawMaterial(rm1, "Pâtes", 100, Units.KG);
+        directeurController.updateRawMaterial(rm1, "Pâtes", Units.KG);
         Optional<RawMaterial> result = rawMaterialRepository.findById(rm1.getRawMaterialId());
         assertThat(result.isPresent(), is(true));
         orderRepository.delete(order.getOrderId());
@@ -125,7 +123,6 @@ class TestDirecteurController {
         tableRepository.delete(table.getTableId());
         billRepository.delete(bill.getBillId());
         assertThat(result.get().getRawMaterialName(), is("Riz"));
-        assertThat(result.get().getStockQuantity(), is(100));
         assertThat(result.get().getUnit(), is(Units.KG));
     }
 
