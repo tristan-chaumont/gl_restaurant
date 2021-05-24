@@ -8,6 +8,7 @@ import fr.ul.miage.gl_restaurant.model.Order;
 import fr.ul.miage.gl_restaurant.model.*;
 import fr.ul.miage.gl_restaurant.repository.*;
 import org.apache.commons.text.TextStringBuilder;
+import org.checkerframework.checker.units.qual.C;
 import org.junit.jupiter.api.*;
 
 import java.sql.Timestamp;
@@ -49,8 +50,8 @@ class TestCuisineController {
         table = tableRepository.save(new Table(1, TableStates.LIBRE, 4, user));
         bill = billRepository.save(new Bill(1L));
         meal = mealRepository.save(new Meal(4, Timestamp.valueOf("2021-04-27 12:00:00"), 30L, table , bill));
-        order1 = orderRepository.save(new Order(Timestamp.valueOf("2021-04-27 21:05:00"), Timestamp.valueOf("2021-04-27 12:10:00"), meal));
-        order2 = orderRepository.save(new Order(Timestamp.valueOf("2021-04-27 22:35:00"), Timestamp.valueOf("2021-04-27 19:45:00"), meal));
+        order1 = orderRepository.save(new Order(Timestamp.valueOf("2021-04-27 21:05:00"), Timestamp.valueOf("2021-04-27 21:10:00"), meal));
+        order2 = orderRepository.save(new Order(Timestamp.valueOf("2021-04-27 22:35:00"), Timestamp.valueOf("2021-04-27 22:45:00"), meal));
         order3 = orderRepository.save(new Order(Timestamp.valueOf("2021-04-27 12:05:00"), null, meal));
         order4 = orderRepository.save(new Order(Timestamp.valueOf("2021-04-27 19:35:00"), null, meal));
         order5 = orderRepository.save(new Order(Timestamp.valueOf("2021-04-27 12:00:00"), null, meal));
@@ -218,6 +219,18 @@ class TestCuisineController {
         rawMaterialRepository.delete(rawMaterial.getRawMaterialId());
         assertThat(res, is(expected.toString()));
     }
+
+    @Test
+    @DisplayName("La moyenne du temps de préparation est correct")
+    void verifyAveragePrepTime() {
+        CuisinierController cuisinierController = new CuisinierController(new Authentification());
+        cuisinierController.addPreparationTime(order1);
+        cuisinierController.addPreparationTime(order2);
+        var res = cuisinierController.averagePreparationTime();
+        assertThat(res, is("En moyenne, un plat est préparé en 7,50 minutes\r\n"));
+    }
+
+
 
     @AfterEach
     void tearDownAfterEach() {

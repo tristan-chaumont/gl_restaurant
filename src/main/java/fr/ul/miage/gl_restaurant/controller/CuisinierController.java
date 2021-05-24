@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 public class CuisinierController extends UserController {
 
     private final TreeSet<Order> ordersQueue;
+    private double preparationTime;
 
     private final DishRepositoryImpl dishRepository = DishRepositoryImpl.getInstance();
     private final OrderRepositoryImpl orderRepository = OrderRepositoryImpl.getInstance();
@@ -37,12 +38,13 @@ public class CuisinierController extends UserController {
     private static final String ACTION_5 = "5 : Afficher les commandes à préparer";
     private static final String ACTION_6 = "6 : Afficher la carte du jour";
     private static final String ACTION_7 = "7 : Afficher les stocks";
+    private static final String ACTION_8 = "8 : Afficher le temps de préparation moyen";
 
 
     public CuisinierController(Authentification auth) {
         super(auth);
         this.ordersQueue = new TreeSet<>();
-        this.actions.addAll(Arrays.asList(ACTION_1, ACTION_2, ACTION_3, ACTION_4, ACTION_5, ACTION_6, ACTION_7));
+        this.actions.addAll(Arrays.asList(ACTION_1, ACTION_2, ACTION_3, ACTION_4, ACTION_5, ACTION_6, ACTION_7, ACTION_8));
     }
 
     protected long askRMId(List<RawMaterial> rms) {
@@ -158,6 +160,18 @@ public class CuisinierController extends UserController {
         return stringBuilder.toString();
     }
 
+    protected void addPreparationTime(Order order){
+        preparationTime += (order.getPreparationDate().getTime() - order.getOrderDate().getTime())/60000;
+    }
+
+    public String averagePreparationTime(){
+        var orders = orderRepository.findPrepOrder();
+        var avg = preparationTime / orders.size();
+        var stringBuilder = new TextStringBuilder();
+        stringBuilder.appendln("En moyenne, un plat est préparé en %.2f minutes", avg);
+        return stringBuilder.toString();
+    }
+
     /**
      * Prépare la commande prise par un serveur.
      * Pas besoin de vérifier les stocks, car ils sont décrémentés lorsque le serveur prend la commande.
@@ -165,6 +179,7 @@ public class CuisinierController extends UserController {
      */
     public void prepareOrder(Order order) {
         order.setPreparationDate(Timestamp.from(Instant.now()));
+        addPreparationTime(order);
         orderRepository.update(order);
     }
 
@@ -337,6 +352,9 @@ public class CuisinierController extends UserController {
                 break;
             case 7:
                 PrintUtils.println(displayStock());
+                break;
+            case 8:
+                PrintUtils.println(averagePreparationTime());
                 break;
             default:
                 break;

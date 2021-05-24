@@ -18,6 +18,7 @@ public class OrderRepositoryImpl extends Repository<Order, Long> {
     private static final String FIND_CURRENT_ORDERS = "SELECT orderId, orderDate, preparationDate, served, mealId FROM Orders WHERE preparationDate IS NULL";
     private static final String FIND_BY_ID_SQL = "SELECT orderId, orderDate, preparationDate, served, mealId FROM Orders WHERE orderId = ?";
     private static final String FIND_BY_MEAL_SQL = "SELECT orderId, orderDate, preparationDate, served, mealId FROM Orders WHERE mealId = ?";
+    private static final String FIND_BY_PREPDATE_SQL = "SELECT orderId, orderDate, preparationDate, served, mealId FROM Orders WHERE preparationDate IS NOT NULL";
     private static final String SAVE_SQL = "INSERT INTO Orders(orderDate, preparationDate, served, mealId) VALUES(?, ?, ?, ?)";
     private static final String UPDATE_SQL = "UPDATE Orders SET orderDate = ?, preparationDate = ?, served = ?, mealId = ? WHERE orderId = ?";
     private static final String DELETE_SQL = "DELETE FROM Orders WHERE orderId = ?";
@@ -38,6 +39,10 @@ public class OrderRepositoryImpl extends Repository<Order, Long> {
 
     public List<Order> findCurrentOrders() {
         return findAllHelper(FIND_CURRENT_ORDERS);
+    }
+
+    public List<Order> findPrepOrder() {
+        return findAllHelper(FIND_BY_PREPDATE_SQL);
     }
 
     private List<Order> findAllHelper(String query) {
