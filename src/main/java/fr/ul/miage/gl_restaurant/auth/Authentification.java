@@ -5,7 +5,6 @@ import fr.ul.miage.gl_restaurant.repository.UserRepositoryImpl;
 import fr.ul.miage.gl_restaurant.utilities.InputUtils;
 import fr.ul.miage.gl_restaurant.utilities.PrintUtils;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -13,7 +12,6 @@ import java.util.Optional;
 
 @Slf4j
 @Getter
-@Setter
 public class Authentification {
 
     private User user;

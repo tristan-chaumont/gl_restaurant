@@ -3,20 +3,23 @@ package fr.ul.miage.gl_restaurant.controller;
 import fr.ul.miage.gl_restaurant.auth.Authentification;
 import fr.ul.miage.gl_restaurant.constants.MenuTypes;
 import fr.ul.miage.gl_restaurant.constants.TableStates;
+import fr.ul.miage.gl_restaurant.constants.Units;
 import fr.ul.miage.gl_restaurant.model.Order;
 import fr.ul.miage.gl_restaurant.model.*;
 import fr.ul.miage.gl_restaurant.repository.*;
 import org.apache.commons.text.TextStringBuilder;
 import org.junit.jupiter.api.*;
+import org.mockito.internal.verification.Times;
 
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class TestServeurController {
 
@@ -26,6 +29,7 @@ class TestServeurController {
     static DishRepositoryImpl dishRepository;
     static MealRepositoryImpl mealRepository;
     static OrderRepositoryImpl orderRepository;
+    static RawMaterialRepositoryImpl rawMaterialRepository;
     Table table1Floor1, table2Floor1, table1Floor2, table2Floor2;
     Meal meal1;
     Dish dish1, dish2;
@@ -38,6 +42,7 @@ class TestServeurController {
         dishRepository = DishRepositoryImpl.getInstance();
         mealRepository = MealRepositoryImpl.getInstance();
         orderRepository = OrderRepositoryImpl.getInstance();
+        rawMaterialRepository = RawMaterialRepositoryImpl.getInstance();
         serveurController = new ServeurController(new Authentification());
         user = userRepository.findByLogin("chaumontt").orElse(null);
     }
@@ -144,6 +149,49 @@ class TestServeurController {
     void verifyDisplayOrderRecapFail() {
         Order order = new Order();
         assertThat(serveurController.displayOrderRecap(order), equalTo(""));
+    }
+
+    @Test
+    @DisplayName("takeOrder() sauvegarde la commande et change les stocks")
+    void verifyTakeOrderSucceed() {
+        Order order = new Order(Timestamp.from(Instant.now()), false, meal1);
+        RawMaterial rawMaterial1 = new RawMaterial("Saumon", 100, Units.KG);
+        RawMaterial rawMaterial2 = new RawMaterial("Pâtes", 100, Units.KG);
+        Dish dish3 = new Dish("Saumon", "Poisson", MenuTypes.ADULTES, 5.0, true);
+        Dish dish4 = new Dish("Pâtes", "Pâtes", MenuTypes.ADULTES, 5.0, true);
+        rawMaterial1 = rawMaterialRepository.save(rawMaterial1);
+        rawMaterial2 = rawMaterialRepository.save(rawMaterial2);
+        dish3.addRawMaterial(rawMaterial1, 1);
+        dish4.addRawMaterial(rawMaterial2, 2);
+        dish3 = dishRepository.save(dish3);
+        dish4 = dishRepository.save(dish4);
+        order.addDish(dish3, 5);
+        order.addDish(dish4, 5);
+
+        boolean result = serveurController.takeOrder(order);
+        assertNotNull(order.getOrderId());
+        assertThat(result, is(true));
+
+        orderRepository.delete(order.getOrderId());
+        dishRepository.delete(dish3.getDishId());
+        dishRepository.delete(dish4.getDishId());
+        rawMaterialRepository.delete(rawMaterial1.getRawMaterialId());
+        rawMaterialRepository.delete(rawMaterial2.getRawMaterialId());
+    }
+
+    @Test
+    @DisplayName("getTableList retourne la liste des tables de l'utilisateur chaumontt")
+    void verifyGetTablesListSucceed() {
+        Set<Table> tables = serveurController.getTablesList(user);
+        assertThat(tables.size(), is(3));
+    }
+
+    @Test
+    @DisplayName("getTableList retourne une liste vide car l'utilisateur n'est pas un serveur")
+    void verifyGetTablesListFail() {
+        User tempUser = userRepository.findByLogin("luct").orElse(null);
+        Set<Table> tables = serveurController.getTablesList(tempUser);
+        assertThat(tables.isEmpty(), is(true));
     }
 
     @AfterEach

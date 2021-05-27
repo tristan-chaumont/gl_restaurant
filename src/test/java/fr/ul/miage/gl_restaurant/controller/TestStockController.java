@@ -61,6 +61,8 @@ class TestStockController {
         stockController.updateDailyMenuBasedOnRemainingStock();
         Optional<Dish> updatedDish1 = dishRepository.findById(dish1.getDishId());
         Optional<Dish> updatedDish2 = dishRepository.findById(dish2.getDishId());
+        assertThat(updatedDish1.isPresent(), is(true));
+        assertThat(updatedDish2.isPresent(), is(true));
         assertThat(updatedDish1.get().isDailyMenu(), is(false));
         assertThat(updatedDish2.get().isDailyMenu(), is(false));
     }
@@ -70,7 +72,22 @@ class TestStockController {
     void verifyDailyMenuStaysTrueBecauseThereIsEnoughStock() {
         stockController.updateDailyMenuBasedOnRemainingStock();
         Optional<Dish> updatedDish3 = dishRepository.findById(dish3.getDishId());
+        assertThat(updatedDish3.isPresent(), is(true));
         assertThat(updatedDish3.get().isDailyMenu(), is(true));
+    }
+
+    @Test
+    @DisplayName("Restock les matières premières en rupture de stock")
+    void verifyRestockSucceed() {
+        int rm1InitialStock = rawMaterial1.getStockQuantity();
+        int rm2InitialStock = rawMaterial2.getStockQuantity();
+        stockController.restock();
+        Optional<RawMaterial> resRM1 = rawMaterialRepository.findById(rawMaterial1.getRawMaterialId());
+        Optional<RawMaterial> resRM2 = rawMaterialRepository.findById(rawMaterial1.getRawMaterialId());
+        assertThat(resRM1.isPresent(), is(true));
+        assertThat(resRM2.isPresent(), is(true));
+        assertThat(resRM1.get().getStockQuantity(), is(rm1InitialStock + StockController.RESTOCK_QUANTITY));
+        assertThat(resRM2.get().getStockQuantity(), is(rm2InitialStock + StockController.RESTOCK_QUANTITY));
     }
 
     @AfterEach

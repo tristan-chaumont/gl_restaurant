@@ -6,9 +6,11 @@ import fr.ul.miage.gl_restaurant.model.Dish;
 import fr.ul.miage.gl_restaurant.model.RawMaterial;
 import org.junit.jupiter.api.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
@@ -145,6 +147,23 @@ class TestDishRepositoryImpl {
     }
 
     @Test
+    @DisplayName("L'insertion échoue car l'objet est null")
+    void verifySaveFailBecauseObjectIsNull() {
+        Dish dish = dishRepository.save(null);
+        assertNull(dish);
+    }
+
+    @Test
+    @DisplayName("L'insertion échoue car l'id de l'objet n'est pas null")
+    void verifySaveFailBecauseIdIsNotNull() {
+        Dish dish = new Dish(999999L, "Test", "Test", MenuTypes.ADULTES, 5.0, true);
+        Dish res = dishRepository.save(dish);
+        assertThat(res, equalTo(dish));
+        Optional<Dish> optionalDish = dishRepository.findById(dish.getDishId());
+        assertThat(optionalDish.isEmpty(), is(true));
+    }
+
+    @Test
     @DisplayName("La modification du plat fonctionne")
     void verifyUpdateSucceed() {
         dish1.setDishName("Poisson pané");
@@ -193,6 +212,21 @@ class TestDishRepositoryImpl {
     }
 
     @Test
+    @DisplayName("La modification échoue car l'objet est null")
+    void verifyUpdateFailBecauseObjectIsNull() {
+        Dish dish = dishRepository.update(null);
+        assertNull(dish);
+    }
+
+    @Test
+    @DisplayName("La modification échoue car l'id est null")
+    void verifyUpdateFailBecauseIdIsNull() {
+        Dish dish = new Dish("Saumon", "Poisson", MenuTypes.ADULTES, 8.5, false);
+        Dish res = dishRepository.update(dish);
+        assertThat(res, equalTo(dish));
+    }
+
+    @Test
     @DisplayName("La suppression de l'utilisateur fonctionne")
     void verifyDeleteSucceed() {
         Dish dish = new Dish("TestDelete1", "TestDelete1", MenuTypes.ADULTES, 2.0, false);
@@ -213,6 +247,15 @@ class TestDishRepositoryImpl {
         assertThat(newTotalDishes, equalTo(totalDishes));
     }
 
+    @Test
+    @DisplayName("La suppression ne fonctionne pas car l'id est null")
+    void verifyDeleteFailBecauseIdIsNull() {
+        int totalDishes = dishRepository.findAll().size();
+        dishRepository.delete(null);
+        int newTotalDishes = dishRepository.findAll().size();
+        assertThat(newTotalDishes, is(totalDishes));
+    }
+
     /* RAW MATERIAL */
 
     @Test
@@ -221,6 +264,44 @@ class TestDishRepositoryImpl {
         Map<RawMaterial, Integer> rawMaterials = dishRepository.findRawMaterialsByDishId(dish1.getDishId());
         assertThat(rawMaterials.size(), is(1));
         assertThat(rawMaterials.get(rawMaterial1), is(1));
+    }
+
+    @Test
+    @DisplayName("Aucune matière première n'est trouvée car le plat n'existe pas")
+    void verifyFindRawMaterialsByDishIdReturnsAnEmptyMap() {
+        Map<RawMaterial, Integer> rawMaterials = dishRepository.findRawMaterialsByDishId(null);
+        assertThat(rawMaterials.size(), is(0));
+    }
+
+    @Test
+    @DisplayName("Aucune matière première n'est sauvegardée car l'id du plat est null")
+    void verifyFindRawMaterialsByDishIdFailBecauseDishIsNull() {
+        dishRepository.saveRawMaterialsByDishId(null, new HashMap<>());
+        Map<RawMaterial, Integer> rawMaterials = dishRepository.findRawMaterialsByDishId(null);
+        assertThat(rawMaterials.size(), is(0));
+    }
+
+    @Test
+    @DisplayName("Aucune matière première n'est sauvegardée car la map de matières premières est null")
+    void verifySaveRawMaterialsByDishIdFailBecauseRawMaterialsMapIsNull() {
+        Dish dish = new Dish("Test", "Test", MenuTypes.ADULTES, 5.0, true);
+        dish = dishRepository.save(dish);
+        dishRepository.saveRawMaterialsByDishId(dish.getDishId(), null);
+        Map<RawMaterial, Integer> rawMaterials = dishRepository.findRawMaterialsByDishId(dish.getDishId());
+        assertThat(rawMaterials.size(), is(0));
+        dishRepository.delete(dish.getDishId());
+    }
+
+    @Test
+    @DisplayName("Aucune matière première n'est sauvgeradée car l'id de la matière première est null")
+    void verifySaveRawMaterialsByDishIdFailBecauseRawMaterialIdIsNull() {
+        Map<RawMaterial, Integer> rawMaterials = new HashMap<>() {{
+            put(new RawMaterial("Test", 100, Units.KG), 1);
+        }};
+        dishRepository.saveRawMaterialsByDishId(dish1.getDishId(), rawMaterials);
+        var dish1RMs = dishRepository.findRawMaterialsByDishId(dish1.getDishId());
+        // 1 et non 0, car il y en a déjà une sauvegardée dans initializeBeforeEach
+        assertThat(dish1RMs.size(), is(1));
     }
 
     @Test
@@ -261,6 +342,17 @@ class TestDishRepositoryImpl {
         dishRepository.delete(dish1.getDishId());
         Map<RawMaterial, Integer> rawMaterials = dishRepository.findRawMaterialsByDishId(dish1.getDishId());
         assertThat(rawMaterials.size(), is(0));
+    }
+
+    @Test
+    @DisplayName("Les matières premières ne sont pas supprimées car le plat n'existe pas")
+    void verifyDeleteRawMaterialByDishIdFailBecauseDishIsNull() {
+        AtomicInteger totalDishesRM = new AtomicInteger();
+        dishRepository.findAll().forEach(d -> d.getRawMaterials().forEach((rm, q) -> totalDishesRM.addAndGet(1)));
+        dishRepository.deleteRawMaterialsByDishId(null);
+        AtomicInteger newTotalDishesRM = new AtomicInteger();
+        dishRepository.findAll().forEach(d -> d.getRawMaterials().forEach((rm, q) -> newTotalDishesRM.addAndGet(1)));
+        assertThat(newTotalDishesRM.get(), is(totalDishesRM.get()));
     }
 
     @AfterEach

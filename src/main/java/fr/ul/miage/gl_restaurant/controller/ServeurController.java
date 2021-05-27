@@ -34,6 +34,7 @@ public class ServeurController extends UserController {
     private static final String ACTION_1 = "1 : Afficher les tables qui m'ont été affectées ainsi que leur état";
     private static final String ACTION_2 = "2 : Gérer une table";
 
+    @Getter
     private final Set<String> subActions;
 
     /**
