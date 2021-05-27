@@ -16,7 +16,6 @@ public class BillRepositoryImpl extends Repository<Bill, Long> {
 
     private static BillRepositoryImpl instance;
 
-    private static final String FIND_ALL_SQL = "SELECT billId, total, paid FROM Bills";
     private static final String FIND_BY_ID_SQL = "SELECT billId, total, paid FROM Bills WHERE billId = ?";
     private static final String SAVE_SQL = "INSERT INTO Bills(total, paid) VALUES(?, ?)";
     private static final String UPDATE_SQL = "UPDATE Bills SET total = ?, paid = ? WHERE billId = ?";

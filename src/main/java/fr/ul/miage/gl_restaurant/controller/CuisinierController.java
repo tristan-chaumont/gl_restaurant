@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.TextStringBuilder;
 
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -100,12 +101,6 @@ public class CuisinierController extends UserController {
         return stringBuilder.toString();
     }
 
-    protected String displayDishRawMaterials(Map<RawMaterial,Integer> rawMaterials){
-        var stringBuilder = new TextStringBuilder();
-        rawMaterials.forEach((rm,q) -> stringBuilder.appendln("[%d] %s : %d", rm.getRawMaterialId(), rm.getRawMaterialName(), q));
-        return stringBuilder.toString();
-    }
-
     /**
      * Récupère toutes les commandes prises par les serveurs et qui n'ont pas encore été préparées.
      * On fait une requête DB à chaque fois pour actualiser les commandes.
@@ -153,15 +148,25 @@ public class CuisinierController extends UserController {
     }
 
     protected void addPreparationTime(Order order){
-        preparationTime += (order.getPreparationDate().getTime() - order.getOrderDate().getTime())/60000;
+        preparationTime += (double) (order.getPreparationDate().getTime() - order.getOrderDate().getTime()) / 60000;
     }
 
     public String averagePreparationTime(){
         var orders = orderRepository.findPrepOrder();
         var avg = preparationTime / orders.size();
-        var stringBuilder = new TextStringBuilder();
-        stringBuilder.appendln("En moyenne, un plat est préparé en %.2f minutes", avg);
-        return stringBuilder.toString();
+        double nanos = avg * Duration.ofMinutes(1).toNanos();
+        var duration = Duration.ofNanos(Math.round(nanos));
+
+        long hours = duration.toHours();
+        int minutes = duration.toMinutesPart();
+        int seconds = duration.toSecondsPart();
+
+        if (hours == 0) {
+            return String.format("En moyenne, un plat est préparé en %d minutes et %d secondes.", minutes, seconds);
+        } else {
+            return String.format("En moyenne, un plat est préparé en %d heures, %d minutes et %d secondes", hours, minutes, seconds);
+        }
+
     }
 
     /**
@@ -343,20 +348,29 @@ public class CuisinierController extends UserController {
                 PrintUtils.println(displayRawMaterials(new ArrayList<>(rawMaterials.keySet())));
                 PrintUtils.print("Pour modifier l'un des ingrédients veuillez saisir son id, sinon entrez 0 : ");
                 rmId = askUpdateRMId(List.copyOf(rawMaterials.keySet()));
-                if (rmId != 0) {
-                    var rm = rawMaterialRepository.findById(rmId);
-                    if (rm.isPresent()) {
-                        PrintUtils.print("Pour modifier la quantité de cet ingrédient entrez la nouvelle valeur, sinon entrez 0 pour supprimer cet ingrédient : ");
-                        var quantity = InputUtils.readIntegerInputInRange(0, 21);
-                        if (quantity > 0) {
-                            rawMaterials.put(rm.get(), quantity);
-                        } else {
-                            rawMaterials.remove(rm.get());
-                        }
-                    } else {
-                        PrintUtils.println("%nCette matière première n'existe pas.%n");
-                    }
+                updateRawMaterialQuantity(rawMaterials, rmId);
+            }
+        }
+    }
+
+    /**
+     * Demande à l'utilisateur de modifier la quantité d'un ingrédient pour un plat.
+     * @param rawMaterials Liste des ingrédients du plat.
+     * @param rmId Ingrédient à modifier.
+     */
+    private void updateRawMaterialQuantity(Map<RawMaterial, Integer> rawMaterials, long rmId) {
+        if (rmId != 0) {
+            var rm = rawMaterialRepository.findById(rmId);
+            if (rm.isPresent()) {
+                PrintUtils.print("Pour modifier la quantité de cet ingrédient entrez la nouvelle valeur, sinon entrez 0 pour supprimer cet ingrédient : ");
+                var quantity = InputUtils.readIntegerInputInRange(0, 21);
+                if (quantity > 0) {
+                    rawMaterials.put(rm.get(), quantity);
+                } else {
+                    rawMaterials.remove(rm.get());
                 }
+            } else {
+                PrintUtils.println("%nCette matière première n'existe pas.%n");
             }
         }
     }

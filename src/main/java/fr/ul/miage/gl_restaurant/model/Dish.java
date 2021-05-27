@@ -4,7 +4,6 @@ import fr.ul.miage.gl_restaurant.constants.MenuTypes;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.TextStringBuilder;
 

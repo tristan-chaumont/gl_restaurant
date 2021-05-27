@@ -4,11 +4,9 @@ import fr.ul.miage.gl_restaurant.auth.Authentification;
 import fr.ul.miage.gl_restaurant.constants.TableStates;
 import fr.ul.miage.gl_restaurant.controller.*;
 import fr.ul.miage.gl_restaurant.model.Reservation;
-import fr.ul.miage.gl_restaurant.model.Table;
 import fr.ul.miage.gl_restaurant.repository.ReservationRepositoryImpl;
 import fr.ul.miage.gl_restaurant.repository.TableRepositoryImpl;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 

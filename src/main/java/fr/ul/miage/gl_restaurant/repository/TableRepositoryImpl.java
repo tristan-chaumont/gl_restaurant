@@ -14,8 +14,6 @@ public class TableRepositoryImpl extends Repository<Table, Long> {
 
     private static TableRepositoryImpl instance;
 
-    private static final String TABLEID_COLUMN_NAME = "tableId";
-
     private static final String FIND_ALL_SQL = "SELECT tableId, floor, state, places, userId FROM Tables";
     private static final String FIND_BY_ID_SQL = "SELECT tableId, floor, state, places, userId FROM Tables WHERE tableId = ?";
     private static final String FIND_BY_USERID_SQL = "SELECT tableId, floor, state, places, userId FROM Tables WHERE userId = ?";

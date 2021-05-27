@@ -7,7 +7,10 @@ import fr.ul.miage.gl_restaurant.repository.TableRepositoryImpl;
 import org.apache.commons.text.TextStringBuilder;
 import org.junit.jupiter.api.*;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;

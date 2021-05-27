@@ -267,7 +267,7 @@ public class ServeurController extends UserController {
         PrintUtils.println();
         switch (action) {
             case 1:
-                System.out.println(table);
+                PrintUtils.println(table.toString());
                 break;
             case 2:
                 handleAddArticle(table);
@@ -309,7 +309,7 @@ public class ServeurController extends UserController {
                 auth.disconnect();
                 break;
             case 1:
-                System.out.println(displayServerTablesByFloor(List.copyOf(getTablesList(auth.getUser()))));
+                PrintUtils.println(displayServerTablesByFloor(List.copyOf(getTablesList(auth.getUser()))));
                 break;
             case 2:
                 handleTable();

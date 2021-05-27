@@ -4,7 +4,10 @@ import fr.ul.miage.gl_restaurant.model.Dish;
 import fr.ul.miage.gl_restaurant.model.Order;
 import lombok.extern.slf4j.Slf4j;
 
-import java.sql.*;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.*;
 
 @Slf4j
@@ -22,7 +25,7 @@ public class OrderRepositoryImpl extends Repository<Order, Long> {
     private static final String SAVE_SQL = "INSERT INTO Orders(orderDate, preparationDate, served, mealId) VALUES(?, ?, ?, ?)";
     private static final String UPDATE_SQL = "UPDATE Orders SET orderDate = ?, preparationDate = ?, served = ?, mealId = ? WHERE orderId = ?";
     private static final String DELETE_SQL = "DELETE FROM Orders WHERE orderId = ?";
-    private static final String FIND_BY_DISH_SQL = "SELECT distinct Orders.orderId, orderDate, preparationDate, served, mealId FROM Orders INNER JOIN Dishes_Orders ON Orders.orderID = Dishes_Orders.orderId WHERE dishId = ? AND served = true";
+    private static final String FIND_BY_DISH_SQL = "SELECT distinct Orders.orderId, orderDate, preparationDate, served, mealId FROM Orders INNER JOIN Dishes_Orders ON Orders.orderID = Dishes_Orders.orderId WHERE dishId = ?";
 
     private static final String FIND_DISHES_BY_ORDER_ID = "SELECT dishId, orderId, quantity FROM Dishes_Orders WHERE orderId = ?";
     private static final String SAVE_DISHES_SQL = "INSERT INTO Dishes_Orders(dishId, orderId, quantity) VALUES(?, ?, ?)";

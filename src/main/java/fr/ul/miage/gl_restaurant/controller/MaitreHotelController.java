@@ -94,6 +94,14 @@ public class MaitreHotelController extends UserController {
         return meal;
     }
 
+    protected void printTableDoesNotExist() {
+        PrintUtils.print("%nCette table n'existe pas.%n");
+    }
+
+    protected void printNoTableIsAvailable() {
+        PrintUtils.println("%nAucune table n'est disponible.%n");
+    }
+
     /**
      * Interface pour affecter les clients à une table.
      * Appelle la méthode seatClient(table, nbCustomers).
@@ -114,10 +122,10 @@ public class MaitreHotelController extends UserController {
                     PrintUtils.print("%nProblème lors de l'installation des clients, veuillez réessayer.%n%n");
                 }
             } else {
-                PrintUtils.print("%nCette table n'existe pas.%n");
+                printTableDoesNotExist();
             }
         } else {
-            PrintUtils.println("%nAucune table n'est disponible.%n");
+            printNoTableIsAvailable();
         }
     }
 
@@ -277,24 +285,28 @@ public class MaitreHotelController extends UserController {
                 Optional<Meal> meal = mealRepository.findAll().stream().filter(m ->
                         m.getTable().getTableId().equals(table.get().getTableId()) && m.getBill() == null).findFirst();
                 if (meal.isPresent()) {
-                    Optional<Order> order = orderRepository.findByMeal(meal.get().getMealId());
-                    if (order.isPresent()) {
-                        if (createBill(meal.get(), order.get(), table.get())) {
-                            PrintUtils.println("%nLa facture a bien été créée.%n");
-                        } else {
-                            PrintUtils.println("%nLa création de la facture a été annulée");
-                        }
-                    } else {
-                        PrintUtils.println("%nIl n'existe aucune commande pour cette table.%n");
-                    }
+                    handleBillCreation(table.get(), meal.get());
                 } else {
                     PrintUtils.println("%nLa facture de cette table a déjà été créée.%n");
                 }
             } else {
-                PrintUtils.println("%nCette table n'existe pas.%n");
+                printTableDoesNotExist();
             }
         } else {
-            PrintUtils.println("%nAucune table n'est disponible.%n");
+            printNoTableIsAvailable();
+        }
+    }
+
+    private void handleBillCreation(Table table, Meal meal) {
+        Optional<Order> order = orderRepository.findByMeal(meal.getMealId());
+        if (order.isPresent()) {
+            if (createBill(meal, order.get(), table)) {
+                PrintUtils.println("%nLa facture a bien été créée.%n");
+            } else {
+                PrintUtils.println("%nLa création de la facture a été annulée");
+            }
+        } else {
+            PrintUtils.println("%nIl n'existe aucune commande pour cette table.%n");
         }
     }
 
@@ -338,7 +350,7 @@ public class MaitreHotelController extends UserController {
                 }
             }
         } else {
-            PrintUtils.println("%nAucune table n'est disponible.%n");
+            printNoTableIsAvailable();
         }
     }
 
@@ -365,25 +377,29 @@ public class MaitreHotelController extends UserController {
                 var dateInput = InputUtils.readDate();
                 PrintUtils.print("Créer la réservation pour le déjeuner [1] ou pour le dîner [2] : ");
                 var input = InputUtils.readIntegerInputInRange(1, 3);
-                if (verifyReservationIsPossible(table.get(), dateInput, input == 1)) {
-                    var reservation = reservationRepository.save(new Reservation(input == 1, table.get(), dateInput));
-                    if (reservation.getReservationId() != null) {
-                        if (LocalDate.now().isEqual(dateInput) && DateUtils.isDateLunch(LocalDateTime.now()) == (input == 1)) {
-                            table.get().setState(TableStates.RESERVEE);
-                            tableRepository.update(table.get());
-                        }
-                        PrintUtils.println("%nRéservation créée avec succès.%n");
-                    } else {
-                        PrintUtils.println("%nProblème lors de la création de la réservation, veuillez réessayer.");
-                    }
-                } else {
-                    PrintUtils.println("%nRéservation impossible pour cette date, veuillez réessayer.%n");
-                }
+                handleReservationCreation(table.get(), dateInput, input);
             } else {
-                PrintUtils.println("%nCette table n'existe pas.%n");
+                printTableDoesNotExist();
             }
         } else {
-            PrintUtils.println("%nAucune table n'est disponible.%n");
+            printNoTableIsAvailable();
+        }
+    }
+
+    private void handleReservationCreation(Table table, LocalDate dateInput, int input) {
+        if (verifyReservationIsPossible(table, dateInput, input == 1)) {
+            var reservation = reservationRepository.save(new Reservation(input == 1, table, dateInput));
+            if (reservation.getReservationId() != null) {
+                if (LocalDate.now().isEqual(dateInput) && DateUtils.isDateLunch(LocalDateTime.now()) == (input == 1)) {
+                    table.setState(TableStates.RESERVEE);
+                    tableRepository.update(table);
+                }
+                PrintUtils.println("%nRéservation créée avec succès.%n");
+            } else {
+                PrintUtils.println("%nProblème lors de la création de la réservation, veuillez réessayer.");
+            }
+        } else {
+            PrintUtils.println("%nRéservation impossible pour cette date, veuillez réessayer.%n");
         }
     }
 

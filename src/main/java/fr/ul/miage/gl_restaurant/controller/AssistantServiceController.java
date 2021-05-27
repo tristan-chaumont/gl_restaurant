@@ -7,7 +7,9 @@ import fr.ul.miage.gl_restaurant.repository.TableRepositoryImpl;
 import fr.ul.miage.gl_restaurant.utilities.PrintUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class AssistantServiceController extends UserController {
