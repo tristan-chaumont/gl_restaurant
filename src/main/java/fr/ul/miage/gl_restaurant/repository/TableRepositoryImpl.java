@@ -106,7 +106,7 @@ public class TableRepositoryImpl extends Repository<Table, Long> {
         preparedStatement.setInt(1, object.getFloor());
         preparedStatement.setString(2, object.getState().toString());
         preparedStatement.setInt(3, object.getPlaces());
-        if (object.getUser() == null) {
+        if (object.getUser() == null || object.getUser().getUserId() == null) {
             preparedStatement.setNull(4, Types.INTEGER);
         } else {
             preparedStatement.setLong(4, object.getUser().getUserId());

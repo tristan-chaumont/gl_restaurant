@@ -25,8 +25,6 @@ public class Reservation {
 
     private LocalDate reservationDate;
 
-    public Reservation() {}
-
     public Reservation(Long reservationId, boolean lunch, Table table, LocalDate reservationDate) {
         this.reservationId = reservationId;
         this.lunch = lunch;

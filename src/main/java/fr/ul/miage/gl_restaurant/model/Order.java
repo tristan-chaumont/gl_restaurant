@@ -9,7 +9,6 @@ import lombok.ToString;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -34,14 +33,6 @@ public class Order implements Comparable<Order> {
 
     public Order() {
         this.dishes = new HashMap<>();
-    }
-
-    public Order(Long orderId, Meal meal) {
-        this.orderId = orderId;
-        this.orderDate = Timestamp.from(Instant.now());
-        this.preparationDate = null;
-        this.served = false;
-        this.meal = meal;
     }
 
     public Order(Long orderId, Timestamp orderDate, Timestamp preparationDate, Meal meal) {
@@ -77,10 +68,6 @@ public class Order implements Comparable<Order> {
 
     public Order(Timestamp orderDate, boolean served, Meal meal) {
         this(null, orderDate, null, served, meal, new HashMap<>());
-    }
-
-    public Order(Timestamp orderDate, Timestamp preparationDate, Meal meal, Map<Dish, Integer> dishes) {
-        this(null, orderDate, preparationDate, meal, dishes);
     }
 
     public Order(Timestamp orderDate,  Meal meal, Map<Dish, Integer> dishes) {

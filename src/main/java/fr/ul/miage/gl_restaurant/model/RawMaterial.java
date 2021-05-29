@@ -23,8 +23,6 @@ public class RawMaterial {
 
     private Units unit;
 
-    public RawMaterial() {}
-
     public RawMaterial(Long rawMaterialId, String rawMaterialName, Integer stockQuantity, Units unit) {
         this.rawMaterialId = rawMaterialId;
         this.rawMaterialName = rawMaterialName;

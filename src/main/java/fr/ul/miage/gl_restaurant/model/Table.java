@@ -29,8 +29,6 @@ public class Table {
 
     private User user;
 
-    public Table() {}
-
     public Table(Long tableId, Integer floor, TableStates state, Integer places, User user) {
         this.tableId = tableId;
         this.floor = floor;
@@ -61,7 +59,7 @@ public class Table {
     public String toString() {
         var stringBuilder = new TextStringBuilder();
         stringBuilder.appendln("-".repeat(20))
-                .appendln("|" + StringUtils.center("Table " +tableId, 18) + "|")
+                .appendln("| " + StringUtils.center("Table n°" + tableId, 16) + " |")
                 .appendln("-".repeat(20))
                 .appendln("Étage : %d", floor);
         if (user == null) {

@@ -45,8 +45,8 @@ public class AssistantServiceController extends UserController {
 
     protected void layTable() {
         List<Table> dirtyTables = getDirtyTables(tableRepository.findAll());
-        PrintUtils.println("%s", StringUtils.center("Liste des tables sales :", 50));
-        PrintUtils.println("%s", displayTablesByFloor(dirtyTables));
+        PrintUtils.println(StringUtils.center("Liste des tables sales :", 50));
+        PrintUtils.println(displayTablesByFloor(dirtyTables));
         var tableId = askTableId(dirtyTables);
         Optional<Table> table = tableRepository.findById(tableId);
         if (table.isPresent()) {
@@ -58,6 +58,10 @@ public class AssistantServiceController extends UserController {
         }
     }
 
+    protected void printTablesByFloor() {
+        PrintUtils.println(displayTablesByFloor(getDirtyTables(tableRepository.findAll())));
+    }
+
     @Override
     public void callAction(int action) {
         PrintUtils.println();
@@ -66,7 +70,7 @@ public class AssistantServiceController extends UserController {
                 auth.disconnect();
                 break;
             case 1:
-                PrintUtils.println("%s", displayTablesByFloor(getDirtyTables(tableRepository.findAll())));
+                printTablesByFloor();
                 break;
             case 2:
                 layTable();

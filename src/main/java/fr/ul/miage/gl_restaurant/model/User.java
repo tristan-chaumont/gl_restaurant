@@ -4,7 +4,6 @@ import fr.ul.miage.gl_restaurant.constants.Roles;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.TextStringBuilder;
 
@@ -13,7 +12,6 @@ import java.sql.SQLException;
 
 @Setter
 @Getter
-@ToString
 @Data
 public class User {
 
@@ -26,8 +24,6 @@ public class User {
     private String firstName;
 
     private Roles role;
-
-    public User() {}
 
     public User(Long userId, String login, String lastName, String firstName, Roles role) {
         this.userId = userId;
