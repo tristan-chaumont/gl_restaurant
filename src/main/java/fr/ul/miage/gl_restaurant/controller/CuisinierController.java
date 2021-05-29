@@ -153,20 +153,23 @@ public class CuisinierController extends UserController {
 
     public String averagePreparationTime(){
         var orders = orderRepository.findPrepOrder();
-        var avg = preparationTime / orders.size();
-        double nanos = avg * Duration.ofMinutes(1).toNanos();
-        var duration = Duration.ofNanos(Math.round(nanos));
+        if (!orders.isEmpty()) {
+            var avg = preparationTime / orders.size();
+            double nanos = avg * Duration.ofMinutes(1).toNanos();
+            var duration = Duration.ofNanos(Math.round(nanos));
 
-        long hours = duration.toHours();
-        int minutes = duration.toMinutesPart();
-        int seconds = duration.toSecondsPart();
+            long hours = duration.toHours();
+            int minutes = duration.toMinutesPart();
+            int seconds = duration.toSecondsPart();
 
-        if (hours == 0) {
-            return String.format("En moyenne, un plat est préparé en %d minutes et %d secondes.", minutes, seconds);
+            if (hours == 0) {
+                return String.format("En moyenne, un plat est préparé en %d minutes et %d secondes.", minutes, seconds);
+            } else {
+                return String.format("En moyenne, un plat est préparé en %d heures, %d minutes et %d secondes", hours, minutes, seconds);
+            }
         } else {
-            return String.format("En moyenne, un plat est préparé en %d heures, %d minutes et %d secondes", hours, minutes, seconds);
+            return "Aucune commande n'a été prise pour le moment.";
         }
-
     }
 
     /**

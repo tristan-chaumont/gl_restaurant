@@ -12,6 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.TextStringBuilder;
 
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -38,18 +39,20 @@ public class MaitreHotelController extends UserController {
     private static final String ACTION_4 = "4 : Afficher la liste des tables ainsi que leur serveur";
     private static final String ACTION_5 = "5 : Créer une facture";
     private static final String ACTION_6 = "6 : Faire payer une facture";
+    private static final String ACTION_7 = "7 : Afficher le temps moyen que passent les clients dans le restaurant";
 
     public MaitreHotelController(Authentification auth) {
         super(auth);
         this.actions.addAll(
-            Arrays.asList(
-                ACTION_1,
-                ACTION_2,
-                ACTION_3,
-                ACTION_4,
-                ACTION_5,
-                ACTION_6
-            )
+                Arrays.asList(
+                        ACTION_1,
+                        ACTION_2,
+                        ACTION_3,
+                        ACTION_4,
+                        ACTION_5,
+                        ACTION_6,
+                        ACTION_7
+                )
         );
     }
 
@@ -402,6 +405,26 @@ public class MaitreHotelController extends UserController {
             PrintUtils.println("%nRéservation impossible pour cette date, veuillez réessayer.%n");
         }
     }
+    
+    protected String calculateTimeCustomersSpendInRestaurant() {
+        List<Meal> meals = mealRepository.findAll().stream().filter(m -> m.getMealDuration() != null).collect(Collectors.toList());
+        if (!meals.isEmpty()) {
+            long avgTimeSpent = meals.stream().map(Meal::getMealDuration).mapToLong(Long::longValue).sum() / meals.size();
+            var duration = Duration.ofSeconds(avgTimeSpent);
+
+            long hours = duration.toHours();
+            int minutes = duration.toMinutesPart();
+            int seconds = duration.toSecondsPart();
+
+            if (hours == 0) {
+                return String.format("En moyenne, un client passe %d minutes et %d secondes dans le restaurant.", minutes, seconds);
+            } else {
+                return String.format("En moyenne, un client passe %d heure(s), %d minutes et %d secondes dans le restaurant.", hours, minutes, seconds);
+            }
+        } else {
+            return "Impossible à calculer, il n'y a eu aucun client jusqu'à présent.";
+        }
+    }
 
     @Override
     public void callAction(int action) {
@@ -427,6 +450,9 @@ public class MaitreHotelController extends UserController {
                 break;
             case 6:
                 payBill();
+                break;
+            case 7:
+                PrintUtils.println("%s%n", calculateTimeCustomersSpendInRestaurant());
                 break;
             default:
                 break;
