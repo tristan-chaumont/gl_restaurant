@@ -9,6 +9,8 @@ import fr.ul.miage.gl_restaurant.utilities.PrintUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.TextStringBuilder;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -377,7 +379,7 @@ public class DirecteurController extends UserController {
      * et que la facture de celle-ci a été payée.
      * La liste des profits est triée par ordre décroissant.
      */
-    protected Map<Dish, Double> generateDishesProfit() {
+    protected Map<Dish, Double> generateDishesProfits() {
         Map<Dish, Double> profits = new HashMap<>();
         // on initialise la map des profits avec tous les plats et 0€ de profit
         dishRepository.findAll().forEach(d -> profits.put(d, 0.0));
@@ -407,7 +409,7 @@ public class DirecteurController extends UserController {
      * Calcul les profits totaux du déjeuner et du dîner.
      * @return Un tableau avec le profit du déjeuner et celui du dîner.
      */
-    protected double[] generateMealsProfit() {
+    protected double[] generateMealsProfits() {
         var profits = new double[2];
         List<Meal> meals = mealRepository.findAll().stream().filter(m -> m.getBill() != null && m.getBill().isPaid()).collect(Collectors.toList());
         meals.forEach(m -> {
@@ -420,12 +422,74 @@ public class DirecteurController extends UserController {
         return profits;
     }
 
+    /**
+     * Génère les profits du jour.
+     * @return Profits du jour.
+     */
+    protected double generateDailyProfits() {
+        double profit;
+        var today = LocalDate.now();
+        List<Meal> meals = mealRepository.findAll()
+                .stream()
+                // si la date du jour est égale à la date du repas, et qu'il y a une facture payée, alors c'est bon
+                .filter(m -> m.getStartDate().toLocalDateTime().toLocalDate().isEqual(today) && m.getBill() != null && m.getBill().isPaid())
+                .collect(Collectors.toList());
+        profit = meals.stream().mapToDouble(m -> m.getBill().getTotal()).sum();
+        return profit;
+    }
+
+    /**
+     * Helper pour générer les profits de la semaine et du mois.
+     * @param startDate Date de départ.
+     * @param endDate Date d'arrivée.
+     * @return Profit entre les deux dates.
+     */
+    protected double generateProfitsBetweenDates(LocalDate startDate, LocalDate endDate) {
+        List<Meal> meals = mealRepository.findAll()
+                .stream()
+                // si la date du jour est égale à la date du repas, et qu'il y a une facture payée, alors c'est bon
+                .filter(m -> {
+                    var bill = m.getBill();
+                    var mealDate = m.getStartDate().toLocalDateTime().toLocalDate();
+                    boolean isDateInRange = (mealDate.isEqual(startDate) || mealDate.isAfter(startDate))
+                            && (mealDate.isEqual(endDate) || mealDate.isBefore(endDate));
+                    return isDateInRange && bill != null && bill.isPaid();
+                })
+                .collect(Collectors.toList());
+        return meals.stream().mapToDouble(m -> m.getBill().getTotal()).sum();
+    }
+
+    /**
+     * Génère les profits de la semaine.
+     * Du début de la semaine à aujourd'hui.
+     * @return Les profits de la semaine.
+     */
+    protected double generateWeeklyProfits() {
+        var today = LocalDate.now();
+        var dayOfWeek = today.getDayOfWeek().getValue();
+        var startOfWeek = today.minus(dayOfWeek - 1L, ChronoUnit.DAYS);
+
+        return generateProfitsBetweenDates(startOfWeek, today);
+    }
+
+    /**
+     * Génère les profits du mois.
+     * Du début du mois à aujourd'hui.
+     * @return Les profits du mois.
+     */
+    protected double generateMonthlyProfits() {
+        var today = LocalDate.now();
+        var startOfMonth = today.withDayOfMonth(1);
+
+        return generateProfitsBetweenDates(startOfMonth, today);
+    }
+
     protected String displayDishesProfit() {
         PrintUtils.println("-".repeat(50));
         PrintUtils.println(StringUtils.center("Profits des plats du restaurant", 50));
         PrintUtils.println("-".repeat(50));
         var stringBuilder = new TextStringBuilder();
-        generateDishesProfit().forEach((dish, profit) ->
+        generateDishesProfits().forEach((dish, profit) ->
             stringBuilder.appendln("- %s : %.2f€", dish.getDishName(), profit)
         );
         return stringBuilder.toString();

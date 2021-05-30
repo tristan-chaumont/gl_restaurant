@@ -13,6 +13,9 @@ import org.junit.jupiter.api.*;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -272,7 +275,7 @@ class TestDirecteurController {
     @DisplayName("Génère le profit de tous les plats")
     void verifyGenerateDishesProfitSucceed() {
         generateTwoOrders();
-        Map<Dish, Double> profits = directeurController.generateDishesProfit();
+        Map<Dish, Double> profits = directeurController.generateDishesProfits();
         assertThat(profits, hasEntry(equalTo(dish1), equalTo(25.0)));
         assertThat(profits, hasEntry(equalTo(dish2), equalTo(30.6)));
         assertThat(profits, hasEntry(equalTo(dish3), equalTo(0.0)));
@@ -306,7 +309,7 @@ class TestDirecteurController {
         Meal newMeal4 = mealRepository.save(new Meal(2, Timestamp.valueOf("2021-05-21 18:00:00"), 10L, table, newBill4));
         Meal newMeal5 = mealRepository.save(new Meal(2, Timestamp.valueOf("2021-05-21 19:00:00"), 10L, table, newBill5));
 
-        double[] profits = directeurController.generateMealsProfit();
+        double[] profits = directeurController.generateMealsProfits();
         assertThat(profits.length, is(2));
         assertThat(profits[0], is(150.0));
         assertThat(profits[1], is(140.0));
@@ -327,10 +330,136 @@ class TestDirecteurController {
     @Test
     @DisplayName("Les profits du déjeuner et du dîner sont égaux à 0")
     void verifyGenerateMealsProfitFail() {
-        double[] profits = directeurController.generateMealsProfit();
+        double[] profits = directeurController.generateMealsProfits();
         assertThat(profits.length, is(2));
         assertThat(profits[0], is(0.0));
         assertThat(profits[1], is(0.0));
+    }
+
+    @Test
+    @DisplayName("Les profits du jour sont corrects")
+    void verifyGenerateDailyProfitSucceed() {
+        // Dates
+        LocalDateTime today = LocalDateTime.now();
+        LocalDateTime yesterday = LocalDateTime.now().minus(1, ChronoUnit.DAYS);
+
+        Table table = tableRepository.save(new Table(2, TableStates.LIBRE, 4, null));
+        Bill newBill1 = billRepository.save(new Bill(50.0, true));
+        Bill newBill2 = billRepository.save(new Bill(50.0, false));
+        Bill newBill4 = billRepository.save(new Bill(100.0, true));
+        Bill newBill5 = billRepository.save(new Bill(40.0, true));
+        Meal newMeal1 = mealRepository.save(new Meal(2, Timestamp.valueOf(today), 10L, table, newBill1));
+        Meal newMeal2 = mealRepository.save(new Meal(2, Timestamp.valueOf(today), 10L, table, newBill2));
+        Meal newMeal4 = mealRepository.save(new Meal(2, Timestamp.valueOf(yesterday), 10L, table, newBill4));
+        Meal newMeal5 = mealRepository.save(new Meal(2, Timestamp.valueOf(today), 10L, table, newBill5));
+
+        double profits = directeurController.generateDailyProfits();
+        assertThat(profits, is(90.0));
+
+        mealRepository.delete(newMeal1.getMealId());
+        mealRepository.delete(newMeal2.getMealId());
+        mealRepository.delete(newMeal4.getMealId());
+        mealRepository.delete(newMeal5.getMealId());
+        tableRepository.delete(table.getTableId());
+        billRepository.delete(newBill1.getBillId());
+        billRepository.delete(newBill2.getBillId());
+        billRepository.delete(newBill4.getBillId());
+        billRepository.delete(newBill5.getBillId());
+    }
+
+    @Test
+    @DisplayName("Les profits du jour sont nuls")
+    void verifyGenerateDailyProfitFail() {
+        double profits = directeurController.generateDailyProfits();
+        assertThat(profits, is(0.0));
+    }
+
+    @Test
+    @DisplayName("Les profits de la semaine sont corrects")
+    void verifyGenerateWeeklyProfitSucceed() {
+        //Dates
+        var dayOfWeek = LocalDate.of(2021, 5, 27);
+        var startOfWeek = LocalDate.of(2021, 5, 24);
+        var beforeStartOfWeek = LocalDate.of(2021, 5, 23);
+        var may25 = LocalDate.of(2021, 5, 25);
+
+        Table table = tableRepository.save(new Table(2, TableStates.LIBRE, 4, null));
+        Bill newBill1 = billRepository.save(new Bill(50.0, true));
+        Bill newBill2 = billRepository.save(new Bill(50.0, false));
+        Bill newBill3 = billRepository.save(new Bill(100.0, true));
+        Bill newBill4 = billRepository.save(new Bill(100.0, true));
+        Bill newBill5 = billRepository.save(new Bill(40.0, true));
+        Meal newMeal1 = mealRepository.save(new Meal(2, Timestamp.valueOf(dayOfWeek.atStartOfDay()), 10L, table, newBill1));
+        Meal newMeal2 = mealRepository.save(new Meal(2, Timestamp.valueOf(dayOfWeek.atStartOfDay()), 10L, table, newBill2));
+        Meal newMeal3 = mealRepository.save(new Meal(2, Timestamp.valueOf(startOfWeek.atStartOfDay()), 10L, table, newBill3));
+        Meal newMeal4 = mealRepository.save(new Meal(2, Timestamp.valueOf(may25.atStartOfDay()), 10L, table, newBill4));
+        Meal newMeal5 = mealRepository.save(new Meal(2, Timestamp.valueOf(beforeStartOfWeek.atStartOfDay()), 10L, table, newBill5));
+
+        double profits = directeurController.generateWeeklyProfits();
+        assertThat(profits, is(250.0));
+
+        mealRepository.delete(newMeal1.getMealId());
+        mealRepository.delete(newMeal2.getMealId());
+        mealRepository.delete(newMeal3.getMealId());
+        mealRepository.delete(newMeal4.getMealId());
+        mealRepository.delete(newMeal5.getMealId());
+        tableRepository.delete(table.getTableId());
+        billRepository.delete(newBill1.getBillId());
+        billRepository.delete(newBill2.getBillId());
+        billRepository.delete(newBill3.getBillId());
+        billRepository.delete(newBill4.getBillId());
+        billRepository.delete(newBill5.getBillId());
+    }
+
+    @Test
+    @DisplayName("Les profits du mois sont corrects")
+    void verifyGenerateMonthlyProfitSucceed() {
+        //Dates
+        var dayOfMonth = LocalDate.of(2021, 5, 5);
+        var startOfMonth = LocalDate.of(2021, 5, 1);
+        var beforeStartOfMonth = LocalDate.of(2021, 4, 30);
+        var may4 = LocalDate.of(2021, 5, 4);
+
+        Table table = tableRepository.save(new Table(2, TableStates.LIBRE, 4, null));
+        Bill newBill1 = billRepository.save(new Bill(50.0, true));
+        Bill newBill2 = billRepository.save(new Bill(50.0, false));
+        Bill newBill3 = billRepository.save(new Bill(100.0, true));
+        Bill newBill4 = billRepository.save(new Bill(100.0, true));
+        Bill newBill5 = billRepository.save(new Bill(40.0, true));
+        Meal newMeal1 = mealRepository.save(new Meal(2, Timestamp.valueOf(dayOfMonth.atStartOfDay()), 10L, table, newBill1));
+        Meal newMeal2 = mealRepository.save(new Meal(2, Timestamp.valueOf(dayOfMonth.atStartOfDay()), 10L, table, newBill2));
+        Meal newMeal3 = mealRepository.save(new Meal(2, Timestamp.valueOf(startOfMonth.atStartOfDay()), 10L, table, newBill3));
+        Meal newMeal4 = mealRepository.save(new Meal(2, Timestamp.valueOf(may4.atStartOfDay()), 10L, table, newBill4));
+        Meal newMeal5 = mealRepository.save(new Meal(2, Timestamp.valueOf(beforeStartOfMonth.atStartOfDay()), 10L, table, newBill5));
+
+        double profits = directeurController.generateMonthlyProfits();
+        assertThat(profits, is(250.0));
+
+        mealRepository.delete(newMeal1.getMealId());
+        mealRepository.delete(newMeal2.getMealId());
+        mealRepository.delete(newMeal3.getMealId());
+        mealRepository.delete(newMeal4.getMealId());
+        mealRepository.delete(newMeal5.getMealId());
+        tableRepository.delete(table.getTableId());
+        billRepository.delete(newBill1.getBillId());
+        billRepository.delete(newBill2.getBillId());
+        billRepository.delete(newBill3.getBillId());
+        billRepository.delete(newBill4.getBillId());
+        billRepository.delete(newBill5.getBillId());
+    }
+
+    @Test
+    @DisplayName("Les profits du mois sont nuls")
+    void verifyGenerateMonthlyProfitFail() {
+        double profits = directeurController.generateMonthlyProfits();
+        assertThat(profits, is(0.0));
+    }
+
+    @Test
+    @DisplayName("Les profits de la semaine sont nuls")
+    void verifyGenerateWeeklyProfitFail() {
+        double profits = directeurController.generateWeeklyProfits();
+        assertThat(profits, is(0.0));
     }
 
     @AfterEach
