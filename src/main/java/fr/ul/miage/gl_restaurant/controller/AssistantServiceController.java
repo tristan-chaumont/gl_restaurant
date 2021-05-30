@@ -3,16 +3,15 @@ package fr.ul.miage.gl_restaurant.controller;
 import fr.ul.miage.gl_restaurant.auth.Authentification;
 import fr.ul.miage.gl_restaurant.constants.TableStates;
 import fr.ul.miage.gl_restaurant.model.Table;
-import fr.ul.miage.gl_restaurant.repository.TableRepositoryImpl;
 import fr.ul.miage.gl_restaurant.utilities.PrintUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class AssistantServiceController extends UserController {
-
-    private final TableRepositoryImpl tableRepository = TableRepositoryImpl.getInstance();
 
     /**
      * ACTIONS DE L'UTILISATEUR
@@ -43,8 +42,8 @@ public class AssistantServiceController extends UserController {
 
     protected void layTable() {
         List<Table> dirtyTables = getDirtyTables(tableRepository.findAll());
-        PrintUtils.println("%s", StringUtils.center("Liste des tables sales :", 50));
-        PrintUtils.println("%s", displayTablesByFloor(dirtyTables));
+        PrintUtils.println(StringUtils.center("Liste des tables sales :", 50));
+        PrintUtils.println(displayTablesByFloor(dirtyTables));
         var tableId = askTableId(dirtyTables);
         Optional<Table> table = tableRepository.findById(tableId);
         if (table.isPresent()) {
@@ -56,6 +55,10 @@ public class AssistantServiceController extends UserController {
         }
     }
 
+    protected void printTablesByFloor() {
+        PrintUtils.println(displayTablesByFloor(getDirtyTables(tableRepository.findAll())));
+    }
+
     @Override
     public void callAction(int action) {
         PrintUtils.println();
@@ -64,7 +67,7 @@ public class AssistantServiceController extends UserController {
                 auth.disconnect();
                 break;
             case 1:
-                PrintUtils.println("%s", displayTablesByFloor(getDirtyTables(tableRepository.findAll())));
+                printTablesByFloor();
                 break;
             case 2:
                 layTable();

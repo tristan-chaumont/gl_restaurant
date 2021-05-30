@@ -4,7 +4,6 @@ import fr.ul.miage.gl_restaurant.auth.Authentification;
 import fr.ul.miage.gl_restaurant.constants.Roles;
 import fr.ul.miage.gl_restaurant.constants.TableStates;
 import fr.ul.miage.gl_restaurant.model.*;
-import fr.ul.miage.gl_restaurant.repository.*;
 import fr.ul.miage.gl_restaurant.utilities.InputUtils;
 import fr.ul.miage.gl_restaurant.utilities.PrintUtils;
 import lombok.Getter;
@@ -22,18 +21,13 @@ public class ServeurController extends UserController {
     @Getter
     private Order order;
 
-    private final OrderRepositoryImpl orderRepository = OrderRepositoryImpl.getInstance();
-    private final TableRepositoryImpl tableRepository = TableRepositoryImpl.getInstance();
-    private final RawMaterialRepositoryImpl rawMaterialRepository = RawMaterialRepositoryImpl.getInstance();
-    private final DishRepositoryImpl dishRepository = DishRepositoryImpl.getInstance();
-    private final MealRepositoryImpl mealRepository = MealRepositoryImpl.getInstance();
-
     /**
      * ACTIONS DE L'UTILISATEUR
      */
     private static final String ACTION_1 = "1 : Afficher les tables qui m'ont été affectées ainsi que leur état";
     private static final String ACTION_2 = "2 : Gérer une table";
 
+    @Getter
     private final Set<String> subActions;
 
     /**
@@ -86,17 +80,17 @@ public class ServeurController extends UserController {
             PrintUtils.println(StringUtils.center("Récap. de la commande", 50));
             PrintUtils.println("-".repeat(50));
             PrintUtils.println(displayOrderRecap(this.order));
-            PrintUtils.println("Voulez-vous transmettre la commande à la cuisine ? ([y]es ou [n]o)");
+            PrintUtils.print("Voulez-vous transmettre la commande à la cuisine ? ([y]es ou [n]o) : ");
             String input = InputUtils.readInputConfirmation();
             if (input.equals("y")) {
                 if (takeOrder(this.order)) {
-                    PrintUtils.println("La commande a bien été transmise à la cuisine.%n");
+                    PrintUtils.println("%nLa commande a bien été transmise à la cuisine.%n");
                 } else {
-                    PrintUtils.println("Problème lors de la validation de la commande.%n");
+                    PrintUtils.println("%nProblème lors de la validation de la commande.%n");
                 }
             }
         } else {
-            PrintUtils.println("Il n'y aucune commande existante pour cette table.%n");
+            PrintUtils.println("%nIl n'y aucune commande existante pour cette table.%n");
         }
     }
 
@@ -209,13 +203,12 @@ public class ServeurController extends UserController {
                 PrintUtils.print("Veuillez insérer la quantité de ce plat à ajouter : ");
                 var quantity = InputUtils.readIntegerInputInRange(1, 10);
                 addArticleToOrder(meal, dish, quantity);
-                PrintUtils.println();
-
+                PrintUtils.println("%nL'article a bien été ajouté.%n");
             } else {
-                PrintUtils.println("Il n'existe aucun plat dans cette catégorie.%n");
+                PrintUtils.println("%nIl n'existe aucun plat dans cette catégorie.%n");
             }
         } else {
-            PrintUtils.println("Vous ne pouvez pas ajouter d'article à cette table, il n'en existe aucun.");
+            PrintUtils.println("%nVous ne pouvez pas ajouter d'article à cette table, il n'en existe aucun.");
             PrintUtils.println("Veuillez vérifier que vous avez ajouter des plats et qu'ils ont une catégorie.%n");
         }
     }
@@ -233,10 +226,10 @@ public class ServeurController extends UserController {
             if (optionalOrder.isEmpty()) {
                 addArticle(meal.get());
             } else {
-                PrintUtils.println("Impossible d'ajouter un article, une commande a déjà été prise.%n");
+                PrintUtils.println("%nImpossible d'ajouter un article, une commande a déjà été prise.%n");
             }
         } else {
-            PrintUtils.println("Impossible d'ajouter un article à cette table, il n'y a aucun client.%n");
+            PrintUtils.println("%nImpossible d'ajouter un article à cette table, il n'y a aucun client.%n");
         }
     }
 
@@ -268,7 +261,7 @@ public class ServeurController extends UserController {
         PrintUtils.println();
         switch (action) {
             case 1:
-                System.out.println(table);
+                PrintUtils.println(table.toString());
                 break;
             case 2:
                 handleAddArticle(table);
@@ -284,25 +277,21 @@ public class ServeurController extends UserController {
         }
     }
 
-    protected String displaySubActions() {
-        var stringBuilder = new TextStringBuilder();
-        for (String subAction : subActions) {
-            stringBuilder.appendln(subAction);
-        }
-        return stringBuilder.toString();
-    }
-
     protected void handleTable() {
         Set<Table> tables = getTablesList(auth.getUser());
-        PrintUtils.println(displayServerTablesByFloor(List.copyOf(tables)));
-        var tableId = askTableId(List.copyOf(tables));
-        Optional<Table> table = tableRepository.findById(tableId);
-        if (table.isPresent()) {
-            PrintUtils.println("%n%s", displaySubActions());
-            PrintUtils.print("Veuillez renseigner le numéro de l'action à effectuer : ");
-            callSubAction(InputUtils.readIntegerInputInRange(0, subActions.size() + 1), table.get());
+        if (tables.isEmpty()) {
+            PrintUtils.println("Vous n'avez été assigné à aucune table.%n");
         } else {
-            PrintUtils.println("Cette table n'existe pas.");
+            PrintUtils.println(displayServerTablesByFloor(List.copyOf(tables)));
+            var tableId = askTableId(List.copyOf(tables));
+            Optional<Table> table = tableRepository.findById(tableId);
+            if (table.isPresent()) {
+                PrintUtils.println("%n%s", displaySubActions(this.subActions));
+                PrintUtils.print("Veuillez renseigner le numéro de l'action à effectuer : ");
+                callSubAction(InputUtils.readIntegerInputInRange(0, subActions.size() + 1), table.get());
+            } else {
+                PrintUtils.println("%nCette table n'existe pas.");
+            }
         }
     }
 
@@ -314,7 +303,7 @@ public class ServeurController extends UserController {
                 auth.disconnect();
                 break;
             case 1:
-                System.out.println(displayServerTablesByFloor(List.copyOf(getTablesList(auth.getUser()))));
+                PrintUtils.println(displayServerTablesByFloor(List.copyOf(getTablesList(auth.getUser()))));
                 break;
             case 2:
                 handleTable();

@@ -214,7 +214,7 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
 
     /* RAW MATERIAL */
 
-    public Map<RawMaterial, Integer> findRawMaterialsByDishId(Long id) {
+    protected Map<RawMaterial, Integer> findRawMaterialsByDishId(Long id) {
         Map<RawMaterial, Integer> rawMaterials = new HashMap<>();
         if (id != null) {
             try (var preparedStatement = connection.prepareStatement(FIND_RM_BY_DISH_ID_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
@@ -234,7 +234,7 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
         return rawMaterials;
     }
 
-    private void saveRawMaterialsByDishId(Long dishId, Map<RawMaterial, Integer> rawMaterials) {
+    protected void saveRawMaterialsByDishId(Long dishId, Map<RawMaterial, Integer> rawMaterials) {
         if (dishId != null && rawMaterials != null) {
             rawMaterials.forEach((rm, quantity) -> {
                 if (rm.getRawMaterialId() != null) {
@@ -251,7 +251,7 @@ public class DishRepositoryImpl extends Repository<Dish, Long> {
         }
     }
 
-    public void updateRawMaterialsByDishId(Long dishId, Map<RawMaterial, Integer> rawMaterials) {
+    protected void updateRawMaterialsByDishId(Long dishId, Map<RawMaterial, Integer> rawMaterials) {
         deleteRawMaterialsByDishId(dishId);
         saveRawMaterialsByDishId(dishId, rawMaterials);
     }

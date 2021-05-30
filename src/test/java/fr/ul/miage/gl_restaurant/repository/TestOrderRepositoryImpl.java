@@ -82,6 +82,17 @@ class TestOrderRepositoryImpl {
     }
 
     @Test
+    @DisplayName("findCurrentOrders() récupère toutes les commandes qui ont une preparationDate à null")
+    void verifyFindPrepOrderReturnsRightElements() {
+        Order order3 = orderRepository.save(new Order(Timestamp.valueOf("2021-04-27 12:05:00"), Timestamp.valueOf("2021-04-27 12:15:00"), meal1));
+        Order order4 = orderRepository.save(new Order(Timestamp.valueOf("2021-04-27 19:35:00"), null, meal2));
+        List<Order> result = orderRepository.findPrepOrder();
+        orderRepository.delete(order3.getOrderId());
+        orderRepository.delete(order4.getOrderId());
+        assertThat(result.size(), is(3));
+    }
+
+    @Test
     @DisplayName("findById() récupère la bonne commande")
     void verifyFindByIdGetsOrder() {
         Optional<Order> result = orderRepository.findById(order1.getOrderId());

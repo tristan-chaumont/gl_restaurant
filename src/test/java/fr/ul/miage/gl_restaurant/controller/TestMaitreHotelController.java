@@ -3,8 +3,8 @@ package fr.ul.miage.gl_restaurant.controller;
 import fr.ul.miage.gl_restaurant.auth.Authentification;
 import fr.ul.miage.gl_restaurant.constants.Roles;
 import fr.ul.miage.gl_restaurant.constants.TableStates;
-import fr.ul.miage.gl_restaurant.model.*;
 import fr.ul.miage.gl_restaurant.model.Order;
+import fr.ul.miage.gl_restaurant.model.*;
 import fr.ul.miage.gl_restaurant.repository.*;
 import fr.ul.miage.gl_restaurant.utilities.DateUtils;
 import fr.ul.miage.gl_restaurant.utilities.InputUtils;
@@ -310,6 +310,34 @@ class TestMaitreHotelController {
             assertThat(result, is(false));
             reservationRepository.delete(reservationDinner.getReservationId());
         }
+    }
+
+    @Test
+    @DisplayName("Ne calcule pas le temps moyen que les clients passent dans le restaurant car il n'y a pas eu de clients")
+    void verifyCalculateTimeCustomersSpendInRestaurantFail() {
+        assertThat(maitreHotelController.calculateTimeCustomersSpendInRestaurant(), equalTo("Impossible à calculer, il n'y a eu aucun client jusqu'à présent."));
+    }
+
+    @Test
+    @DisplayName("Calcule le temps moyen que les clients passent dans le restaurant (au-delà de 1 heure)")
+    void verifyCalculateTimeCustomersSpendInRestaurantSucceedAbove1Hour() {
+        Meal meal1 = mealRepository.save(new Meal(4, Timestamp.from(Instant.now()), 3600L, table1, null));
+        Meal meal2 = mealRepository.save(new Meal(4, Timestamp.from(Instant.now()), 4500L, table1, null));
+        String actual = maitreHotelController.calculateTimeCustomersSpendInRestaurant();
+        assertThat(actual, equalTo("En moyenne, un client passe 1 heure(s), 7 minutes et 30 secondes dans le restaurant."));
+        mealRepository.delete(meal1.getMealId());
+        mealRepository.delete(meal2.getMealId());
+    }
+
+    @Test
+    @DisplayName("Calcule le temps moyen que les clients passent dans le restaurant (en-dessous de 1 heure)")
+    void verifyCalculateTimeCustomersSpendInRestaurantSucceedBelow1Hour() {
+        Meal meal1 = mealRepository.save(new Meal(4, Timestamp.from(Instant.now()), 30L, table1, null));
+        Meal meal2 = mealRepository.save(new Meal(4, Timestamp.from(Instant.now()), 40L, table1, null));
+        String actual = maitreHotelController.calculateTimeCustomersSpendInRestaurant();
+        assertThat(actual, equalTo("En moyenne, un client passe 0 minutes et 35 secondes dans le restaurant."));
+        mealRepository.delete(meal1.getMealId());
+        mealRepository.delete(meal2.getMealId());
     }
 
     @AfterEach

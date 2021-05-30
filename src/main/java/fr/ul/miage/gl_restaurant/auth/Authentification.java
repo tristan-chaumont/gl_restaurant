@@ -5,7 +5,6 @@ import fr.ul.miage.gl_restaurant.repository.UserRepositoryImpl;
 import fr.ul.miage.gl_restaurant.utilities.InputUtils;
 import fr.ul.miage.gl_restaurant.utilities.PrintUtils;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -13,7 +12,6 @@ import java.util.Optional;
 
 @Slf4j
 @Getter
-@Setter
 public class Authentification {
 
     private User user;
@@ -43,14 +41,14 @@ public class Authentification {
     }
 
     public boolean displayInterface() {
-        PrintUtils.println("%s", "=".repeat(50));
-        PrintUtils.println("%s", StringUtils.center("Bonjour et bienvenue !", 50));
-        PrintUtils.println("%s", "=".repeat(50));
+        PrintUtils.println("=".repeat(50));
+        PrintUtils.println(StringUtils.center("Bonjour et bienvenue !", 50));
+        PrintUtils.println("=".repeat(50));
         PrintUtils.println("Pour quitter l'application, tapez : !q");
         PrintUtils.print("Pour vous connecter, veuillez entrer votre login : ");
         String input = InputUtils.readInput();
         if (input.equals("!q")) {
-            PrintUtils.println("À bientôt !");
+            PrintUtils.println("%nÀ bientôt !");
             return false;
         }
         signIn(input);

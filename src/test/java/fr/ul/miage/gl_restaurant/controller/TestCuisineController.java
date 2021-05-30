@@ -12,9 +12,12 @@ import org.junit.jupiter.api.*;
 
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 class TestCuisineController {
@@ -49,18 +52,11 @@ class TestCuisineController {
         table = tableRepository.save(new Table(1, TableStates.LIBRE, 4, user));
         bill = billRepository.save(new Bill(1L));
         meal = mealRepository.save(new Meal(4, Timestamp.valueOf("2021-04-27 12:00:00"), 30L, table , bill));
-        order1 = orderRepository.save(new Order(Timestamp.valueOf("2021-04-27 21:05:00"), Timestamp.valueOf("2021-04-27 12:10:00"), meal));
-        order2 = orderRepository.save(new Order(Timestamp.valueOf("2021-04-27 22:35:00"), Timestamp.valueOf("2021-04-27 19:45:00"), meal));
+        order1 = orderRepository.save(new Order(Timestamp.valueOf("2021-04-27 21:05:00"), Timestamp.valueOf("2021-04-27 21:10:00"), meal));
+        order2 = orderRepository.save(new Order(Timestamp.valueOf("2021-04-27 22:35:00"), Timestamp.valueOf("2021-04-27 22:45:00"), meal));
         order3 = orderRepository.save(new Order(Timestamp.valueOf("2021-04-27 12:05:00"), null, meal));
         order4 = orderRepository.save(new Order(Timestamp.valueOf("2021-04-27 19:35:00"), null, meal));
         order5 = orderRepository.save(new Order(Timestamp.valueOf("2021-04-27 12:00:00"), null, meal));
-    }
-
-    @Test
-    @DisplayName("La file d'attente des commandes est triée et ne comporte que les commandes non préparées")
-    void verifyGetOrdersQueueReturnsOrderedQueue() {
-        CuisinierController cuisinierController = new CuisinierController(new Authentification());
-
     }
 
     @Test
@@ -68,7 +64,7 @@ class TestCuisineController {
     void verifyAddDishSucceed() {
         CuisinierController cuisinierController = new CuisinierController(new Authentification());
         RawMaterial rm = rawMaterialRepository.save(new RawMaterial("Riz", 100, Units.KG));
-        HashMap<RawMaterial, Integer> rawMaterialHashMap = new HashMap<RawMaterial, Integer>();
+        HashMap<RawMaterial, Integer> rawMaterialHashMap = new HashMap<>();
         rawMaterialHashMap.put(rm,1);
         cuisinierController.createDish("Riz", "PLat", MenuTypes.ADULTES, 5.0, rawMaterialHashMap);
         List<Dish> dishes = dishRepository.findAll();
@@ -82,7 +78,7 @@ class TestCuisineController {
     void verifyAddDishFailedDoublon() {
         CuisinierController cuisinierController = new CuisinierController(new Authentification());
         RawMaterial rm = rawMaterialRepository.save(new RawMaterial("Riz", 100, Units.KG));
-        HashMap<RawMaterial, Integer> rawMaterialHashMap = new HashMap<RawMaterial, Integer>();
+        HashMap<RawMaterial, Integer> rawMaterialHashMap = new HashMap<>();
         rawMaterialHashMap.put(rm,1);
         Dish dish = new Dish("Riz", "PLat", MenuTypes.ADULTES, 5.0, false);
         dish.addRawMaterial(rm,1);
@@ -99,7 +95,7 @@ class TestCuisineController {
     void verifyUpdateDishSucceed() {
         CuisinierController cuisinierController = new CuisinierController(new Authentification());
         RawMaterial rm = rawMaterialRepository.save(new RawMaterial("Riz", 100, Units.KG));
-        HashMap<RawMaterial, Integer> rawMaterialHashMap = new HashMap<RawMaterial, Integer>();
+        HashMap<RawMaterial, Integer> rawMaterialHashMap = new HashMap<>();
         rawMaterialHashMap.put(rm,1);
         Dish dish = new Dish("Riz", "Plat", MenuTypes.ADULTES, 5.0, false);
         dish.addRawMaterial(rm,1);
@@ -119,14 +115,14 @@ class TestCuisineController {
         Bill bill = billRepository.save(new Bill(2L));
         Meal meal = mealRepository.save(new Meal(4, Timestamp.valueOf("2021-04-27 12:00:00"), 30L, table , bill));
         RawMaterial rawMaterial = rawMaterialRepository.save(new RawMaterial("Riz", 100, Units.KG));
-        HashMap<RawMaterial, Integer> rawMaterialHashMap = new HashMap<RawMaterial, Integer>();
+        HashMap<RawMaterial, Integer> rawMaterialHashMap = new HashMap<>();
         rawMaterialHashMap.put(rawMaterial,1);
         Dish dish = dishRepository.save(new Dish("Riz", "Plat", MenuTypes.ADULTES, 5.0, true, rawMaterialHashMap));
-        Map<Dish,Integer> dishIntegerMap = new HashMap<Dish,Integer>();
+        Map<Dish,Integer> dishIntegerMap = new HashMap<>();
         dishIntegerMap.put(dish,1);
         Order order = orderRepository.save(new Order(Timestamp.from(Instant.now()), meal, dishIntegerMap));
         CuisinierController cuisinierController = new CuisinierController(new Authentification());
-        cuisinierController.updateDish(dish, "Riz", "PLat", MenuTypes.ADULTES, 6.0, rawMaterialHashMap);
+        cuisinierController.updateDish(dish, "Riz", "Plat", MenuTypes.ADULTES, 6.0, rawMaterialHashMap);
         Dish result = dishRepository.findById(dish.getDishId()).get();
         orderRepository.delete(order.getOrderId());
         dishRepository.delete(dish.getDishId());
@@ -142,7 +138,7 @@ class TestCuisineController {
     void verifyUpdateDishFailedDoublon() {
         CuisinierController cuisinierController = new CuisinierController(new Authentification());
         RawMaterial rm = rawMaterialRepository.save(new RawMaterial("Riz", 100, Units.KG));
-        HashMap<RawMaterial, Integer> rawMaterialHashMap = new HashMap<RawMaterial, Integer>();
+        HashMap<RawMaterial, Integer> rawMaterialHashMap = new HashMap<>();
         rawMaterialHashMap.put(rm,1);
         Dish dish = new Dish("Riz", "PLat", MenuTypes.ADULTES, 5.0, false);
         dish.addRawMaterial(rm,1);
@@ -163,7 +159,7 @@ class TestCuisineController {
     void verifyDeleteDishSucceed() {
         CuisinierController cuisinierController = new CuisinierController(new Authentification());
         RawMaterial rm = rawMaterialRepository.save(new RawMaterial("Riz", 100, Units.KG));
-        HashMap<RawMaterial, Integer> rawMaterialHashMap = new HashMap<RawMaterial, Integer>();
+        HashMap<RawMaterial, Integer> rawMaterialHashMap = new HashMap<>();
         rawMaterialHashMap.put(rm,1);
         Dish dish = new Dish("Riz", "PLat", MenuTypes.ADULTES, 5.0, false);
         dish.addRawMaterial(rm,1);
@@ -183,10 +179,10 @@ class TestCuisineController {
         Bill bill = billRepository.save(new Bill(2L));
         Meal meal = mealRepository.save(new Meal(4, Timestamp.valueOf("2021-04-27 12:00:00"), 30L, table , bill));
         RawMaterial rawMaterial = rawMaterialRepository.save(new RawMaterial("Riz", 100, Units.KG));
-        HashMap<RawMaterial, Integer> rawMaterialHashMap = new HashMap<RawMaterial, Integer>();
+        HashMap<RawMaterial, Integer> rawMaterialHashMap = new HashMap<>();
         rawMaterialHashMap.put(rawMaterial,1);
         Dish dish = dishRepository.save(new Dish("Riz", "Plat", MenuTypes.ADULTES, 5.0, false, rawMaterialHashMap));
-        Map<Dish,Integer> dishIntegerMap = new HashMap<Dish,Integer>();
+        Map<Dish,Integer> dishIntegerMap = new HashMap<>();
         dishIntegerMap.put(dish,1);
         Order order = orderRepository.save(new Order(Timestamp.from(Instant.now()), meal, dishIntegerMap));
         CuisinierController cuisinierController = new CuisinierController(new Authentification());
@@ -207,17 +203,29 @@ class TestCuisineController {
         CuisinierController cuisinierController = new CuisinierController(new Authentification());
         var expected = new TextStringBuilder();
         RawMaterial rawMaterial = rawMaterialRepository.save(new RawMaterial("Riz", 100, Units.KG));
-        HashMap<RawMaterial, Integer> rawMaterialHashMap = new HashMap<RawMaterial, Integer>();
+        HashMap<RawMaterial, Integer> rawMaterialHashMap = new HashMap<>();
         rawMaterialHashMap.put(rawMaterial,1);
         Dish dish = dishRepository.save(new Dish("Riz", "Plat", MenuTypes.ADULTES, 5.0, false, rawMaterialHashMap));
         expected.appendln("[%d] %s", dish.getDishId(), "Riz");
-        var dishes = cuisinierController.getDishes();
+        var dishes = cuisinierController.getNotDailyMenuDishes();
         var res = cuisinierController.displayDishes(dishes);
         dishRepository.deleteRawMaterialsByDishId(dish.getDishId());
         dishRepository.delete(dish.getDishId());
         rawMaterialRepository.delete(rawMaterial.getRawMaterialId());
         assertThat(res, is(expected.toString()));
     }
+
+    @Test
+    @DisplayName("La moyenne du temps de préparation est correct")
+    void verifyAveragePrepTime() {
+        CuisinierController cuisinierController = new CuisinierController(new Authentification());
+        cuisinierController.addPreparationTime(order1);
+        cuisinierController.addPreparationTime(order2);
+        var res = cuisinierController.averagePreparationTime();
+        assertThat(res, equalTo("En moyenne, un plat est préparé en 7 minutes et 30 secondes."));
+    }
+
+
 
     @AfterEach
     void tearDownAfterEach() {

@@ -4,7 +4,6 @@ import fr.ul.miage.gl_restaurant.auth.Authentification;
 import fr.ul.miage.gl_restaurant.constants.Roles;
 import fr.ul.miage.gl_restaurant.constants.TableStates;
 import fr.ul.miage.gl_restaurant.model.*;
-import fr.ul.miage.gl_restaurant.repository.*;
 import fr.ul.miage.gl_restaurant.utilities.DateUtils;
 import fr.ul.miage.gl_restaurant.utilities.InputUtils;
 import fr.ul.miage.gl_restaurant.utilities.PrintUtils;
@@ -12,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.TextStringBuilder;
 
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -22,13 +22,6 @@ import java.util.stream.Collectors;
 
 public class MaitreHotelController extends UserController {
 
-    private final TableRepositoryImpl tableRepository = TableRepositoryImpl.getInstance();
-    private final MealRepositoryImpl mealRepository = MealRepositoryImpl.getInstance();
-    private final UserRepositoryImpl userRepository = UserRepositoryImpl.getInstance();
-    private final OrderRepositoryImpl orderRepository = OrderRepositoryImpl.getInstance();
-    private final BillRepositoryImpl billRepository = BillRepositoryImpl.getInstance();
-    private final ReservationRepositoryImpl reservationRepository = ReservationRepositoryImpl.getInstance();
-
     /**
      * ACTIONS DE L'UTILISATEUR
      */
@@ -38,18 +31,20 @@ public class MaitreHotelController extends UserController {
     private static final String ACTION_4 = "4 : Afficher la liste des tables ainsi que leur serveur";
     private static final String ACTION_5 = "5 : Créer une facture";
     private static final String ACTION_6 = "6 : Faire payer une facture";
+    private static final String ACTION_7 = "7 : Afficher le temps moyen que passent les clients dans le restaurant";
 
     public MaitreHotelController(Authentification auth) {
         super(auth);
         this.actions.addAll(
-            Arrays.asList(
-                ACTION_1,
-                ACTION_2,
-                ACTION_3,
-                ACTION_4,
-                ACTION_5,
-                ACTION_6
-            )
+                Arrays.asList(
+                        ACTION_1,
+                        ACTION_2,
+                        ACTION_3,
+                        ACTION_4,
+                        ACTION_5,
+                        ACTION_6,
+                        ACTION_7
+                )
         );
     }
 
@@ -94,6 +89,14 @@ public class MaitreHotelController extends UserController {
         return meal;
     }
 
+    protected void printTableDoesNotExist() {
+        PrintUtils.print("%nCette table n'existe pas.%n");
+    }
+
+    protected void printNoTableIsAvailable() {
+        PrintUtils.println("%nAucune table n'est disponible.%n");
+    }
+
     /**
      * Interface pour affecter les clients à une table.
      * Appelle la méthode seatClient(table, nbCustomers).
@@ -109,15 +112,15 @@ public class MaitreHotelController extends UserController {
                 var nbCustomers = InputUtils.readIntegerInputInRange(1, table.get().getPlaces() + 1);
 
                 if (seatClient(table.get(), nbCustomers) != null) {
-                    PrintUtils.print("Les clients ont bien été installés.%n%n");
+                    PrintUtils.print("%nLes clients ont bien été installés.%n%n");
                 } else {
-                    PrintUtils.print("Problème lors de l'installation des clients, veuillez réessayer.%n%n");
+                    PrintUtils.print("%nProblème lors de l'installation des clients, veuillez réessayer.%n%n");
                 }
             } else {
-                PrintUtils.print("Cette table n'existe pas.%n");
+                printTableDoesNotExist();
             }
         } else {
-            PrintUtils.println("Aucune table n'est disponible.%n");
+            printNoTableIsAvailable();
         }
     }
 
@@ -161,15 +164,15 @@ public class MaitreHotelController extends UserController {
                 Optional<User> server = userRepository.findById(serverId);
                 if (server.isPresent()) {
                     if (assignServer(table.get(), server.get())) {
-                        PrintUtils.println("Le serveur a bien été affecté à la table.%n");
+                        PrintUtils.println("%nLe serveur a bien été affecté à la table.%n");
                     } else {
-                        PrintUtils.println("Problème lors de l'affectation du serveur à la table, veuillez réessayer.%n");
+                        PrintUtils.println("%nProblème lors de l'affectation du serveur à la table, veuillez réessayer.%n");
                     }
                 } else {
-                    PrintUtils.println("Cet utilisateur n'existe pas.");
+                    PrintUtils.println("%nCet utilisateur n'existe pas.");
                 }
             } else {
-                PrintUtils.println("Cette table n'existe pas.");
+                PrintUtils.println("%nCette table n'existe pas.");
             }
         } else {
             PrintUtils.println("Aucune table n'est disponible.%n");
@@ -249,7 +252,7 @@ public class MaitreHotelController extends UserController {
             );
             bill = billRepository.save(bill);
             if (bill.getBillId() == null) {
-                PrintUtils.println("Problème lors de la création de la facture, veuillez réessayer.");
+                PrintUtils.println("%nProblème lors de la création de la facture, veuillez réessayer.");
                 return false;
             }
             if (input.equalsIgnoreCase("y")) {
@@ -277,24 +280,28 @@ public class MaitreHotelController extends UserController {
                 Optional<Meal> meal = mealRepository.findAll().stream().filter(m ->
                         m.getTable().getTableId().equals(table.get().getTableId()) && m.getBill() == null).findFirst();
                 if (meal.isPresent()) {
-                    Optional<Order> order = orderRepository.findByMeal(meal.get().getMealId());
-                    if (order.isPresent()) {
-                        if (createBill(meal.get(), order.get(), table.get())) {
-                            PrintUtils.println("%nLa facture a bien été créée.%n");
-                        } else {
-                            PrintUtils.println("%nLa création de la facture a été annulée");
-                        }
-                    } else {
-                        PrintUtils.println("%nIl n'existe aucune commande pour cette table.%n");
-                    }
+                    handleBillCreation(table.get(), meal.get());
                 } else {
                     PrintUtils.println("%nLa facture de cette table a déjà été créée.%n");
                 }
             } else {
-                PrintUtils.println("%nCette table n'existe pas.%n");
+                printTableDoesNotExist();
             }
         } else {
-            PrintUtils.println("%nAucune table n'est disponible.%n");
+            printNoTableIsAvailable();
+        }
+    }
+
+    private void handleBillCreation(Table table, Meal meal) {
+        Optional<Order> order = orderRepository.findByMeal(meal.getMealId());
+        if (order.isPresent()) {
+            if (createBill(meal, order.get(), table)) {
+                PrintUtils.println("%nLa facture a bien été créée.%n");
+            } else {
+                PrintUtils.println("%nLa création de la facture a été annulée");
+            }
+        } else {
+            PrintUtils.println("%nIl n'existe aucune commande pour cette table.%n");
         }
     }
 
@@ -338,7 +345,7 @@ public class MaitreHotelController extends UserController {
                 }
             }
         } else {
-            PrintUtils.println("%nAucune table n'est disponible.%n");
+            printNoTableIsAvailable();
         }
     }
 
@@ -365,25 +372,49 @@ public class MaitreHotelController extends UserController {
                 var dateInput = InputUtils.readDate();
                 PrintUtils.print("Créer la réservation pour le déjeuner [1] ou pour le dîner [2] : ");
                 var input = InputUtils.readIntegerInputInRange(1, 3);
-                if (verifyReservationIsPossible(table.get(), dateInput, input == 1)) {
-                    var reservation = reservationRepository.save(new Reservation(input == 1, table.get(), dateInput));
-                    if (reservation.getReservationId() != null) {
-                        if (LocalDate.now().isEqual(dateInput) && DateUtils.isDateLunch(LocalDateTime.now()) == (input == 1)) {
-                            table.get().setState(TableStates.RESERVEE);
-                            tableRepository.update(table.get());
-                        }
-                        PrintUtils.println("%nRéservation créée avec succès.%n");
-                    } else {
-                        PrintUtils.println("%nProblème lors de la création de la réservation, veuillez réessayer.");
-                    }
-                } else {
-                    PrintUtils.println("%nRéservation impossible pour cette date, veuillez réessayer.%n");
-                }
+                handleReservationCreation(table.get(), dateInput, input);
             } else {
-                PrintUtils.println("%nCette table n'existe pas.%n");
+                printTableDoesNotExist();
             }
         } else {
-            PrintUtils.println("%nAucune table n'est disponible.%n");
+            printNoTableIsAvailable();
+        }
+    }
+
+    private void handleReservationCreation(Table table, LocalDate dateInput, int input) {
+        if (verifyReservationIsPossible(table, dateInput, input == 1)) {
+            var reservation = reservationRepository.save(new Reservation(input == 1, table, dateInput));
+            if (reservation.getReservationId() != null) {
+                if (LocalDate.now().isEqual(dateInput) && DateUtils.isDateLunch(LocalDateTime.now()) == (input == 1)) {
+                    table.setState(TableStates.RESERVEE);
+                    tableRepository.update(table);
+                }
+                PrintUtils.println("%nRéservation créée avec succès.%n");
+            } else {
+                PrintUtils.println("%nProblème lors de la création de la réservation, veuillez réessayer.");
+            }
+        } else {
+            PrintUtils.println("%nRéservation impossible pour cette date, veuillez réessayer.%n");
+        }
+    }
+    
+    protected String calculateTimeCustomersSpendInRestaurant() {
+        List<Meal> meals = mealRepository.findAll().stream().filter(m -> m.getMealDuration() != null).collect(Collectors.toList());
+        if (!meals.isEmpty()) {
+            long avgTimeSpent = meals.stream().map(Meal::getMealDuration).mapToLong(Long::longValue).sum() / meals.size();
+            var duration = Duration.ofSeconds(avgTimeSpent);
+
+            long hours = duration.toHours();
+            int minutes = duration.toMinutesPart();
+            int seconds = duration.toSecondsPart();
+
+            if (hours == 0) {
+                return String.format("En moyenne, un client passe %d minutes et %d secondes dans le restaurant.", minutes, seconds);
+            } else {
+                return String.format("En moyenne, un client passe %d heure(s), %d minutes et %d secondes dans le restaurant.", hours, minutes, seconds);
+            }
+        } else {
+            return "Impossible à calculer, il n'y a eu aucun client jusqu'à présent.";
         }
     }
 
@@ -411,6 +442,9 @@ public class MaitreHotelController extends UserController {
                 break;
             case 6:
                 payBill();
+                break;
+            case 7:
+                PrintUtils.println("%s%n", calculateTimeCustomersSpendInRestaurant());
                 break;
             default:
                 break;

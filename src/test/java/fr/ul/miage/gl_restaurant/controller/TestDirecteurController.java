@@ -5,22 +5,36 @@ import fr.ul.miage.gl_restaurant.constants.MenuTypes;
 import fr.ul.miage.gl_restaurant.constants.Roles;
 import fr.ul.miage.gl_restaurant.constants.TableStates;
 import fr.ul.miage.gl_restaurant.constants.Units;
-import fr.ul.miage.gl_restaurant.model.*;
 import fr.ul.miage.gl_restaurant.model.Order;
+import fr.ul.miage.gl_restaurant.model.*;
 import fr.ul.miage.gl_restaurant.repository.*;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.TextStringBuilder;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class TestDirecteurController {
 
+    @Spy
     static DirecteurController directeurController;
     static RawMaterialRepositoryImpl rawMaterialRepository;
     static TableRepositoryImpl tableRepository;
@@ -50,7 +64,7 @@ class TestDirecteurController {
     }
 
     @BeforeEach
-    void initiazeBeforeEach(){
+    void initializeBeforeEach(){
         rm1 = rawMaterialRepository.save(new RawMaterial("Riz", 100, Units.KG));
     }
 
@@ -77,11 +91,10 @@ class TestDirecteurController {
     @DisplayName("L'ingrédient est bien modifié")
     void testUpdateRawMaterialSucceed(){
         DirecteurController directeurController = new DirecteurController(new Authentification());
-        directeurController.updateRawMaterial(rm1, "Pâtes", 100, Units.KG);
+        directeurController.updateRawMaterial(rm1, "Pâtes", Units.KG);
         Optional<RawMaterial> result = rawMaterialRepository.findById(rm1.getRawMaterialId());
         assertThat(result.isPresent(), is(true));
         assertThat(result.get().getRawMaterialName(), is("Pâtes"));
-        assertThat(result.get().getStockQuantity(), is(100));
         assertThat(result.get().getUnit(), is(Units.KG));
     }
 
@@ -90,12 +103,11 @@ class TestDirecteurController {
     void testUpdateRawMaterialFailedSameValue(){
         RawMaterial rm = rawMaterialRepository.save(new RawMaterial("Pâtes", 100, Units.KG));
         DirecteurController directeurController = new DirecteurController(new Authentification());
-        directeurController.updateRawMaterial(rm1, "Pâtes", 100, Units.KG);
+        directeurController.updateRawMaterial(rm1, "Pâtes", Units.KG);
         Optional<RawMaterial> result = rawMaterialRepository.findById(rm1.getRawMaterialId());
         rawMaterialRepository.delete(rm.getRawMaterialId());
         assertThat(result.isPresent(), is(true));
         assertThat(result.get().getRawMaterialName(), is("Riz"));
-        assertThat(result.get().getStockQuantity(), is(100));
         assertThat(result.get().getUnit(), is(Units.KG));
     }
 
@@ -116,7 +128,7 @@ class TestDirecteurController {
         dishIntegerMap.put(dish,1);
         Order order = orderRepository.save(new Order(Timestamp.from(Instant.now()), meal, dishIntegerMap));
         DirecteurController directeurController = new DirecteurController(new Authentification());
-        directeurController.updateRawMaterial(rm1, "Pâtes", 100, Units.KG);
+        directeurController.updateRawMaterial(rm1, "Pâtes", Units.KG);
         Optional<RawMaterial> result = rawMaterialRepository.findById(rm1.getRawMaterialId());
         assertThat(result.isPresent(), is(true));
         orderRepository.delete(order.getOrderId());
@@ -125,7 +137,6 @@ class TestDirecteurController {
         tableRepository.delete(table.getTableId());
         billRepository.delete(bill.getBillId());
         assertThat(result.get().getRawMaterialName(), is("Riz"));
-        assertThat(result.get().getStockQuantity(), is(100));
         assertThat(result.get().getUnit(), is(Units.KG));
     }
 
@@ -160,8 +171,8 @@ class TestDirecteurController {
         directeurController.addUser("bouchev", "Bouché", "Valentine", Roles.MAITRE_HOTEL);
         var res = userRepository.findAll();
         var user = userRepository.findByLogin("bouchev");
-        userRepository.delete(user.get().getUserId());
         assertThat(user.isPresent(), is(true));
+        userRepository.delete(user.get().getUserId());
         assertThat(res.size(), is(6));
     }
 
@@ -271,7 +282,7 @@ class TestDirecteurController {
     @DisplayName("Génère le profit de tous les plats")
     void verifyGenerateDishesProfitSucceed() {
         generateTwoOrders();
-        Map<Dish, Double> profits = directeurController.generateDishesProfit();
+        Map<Dish, Double> profits = directeurController.generateDishesProfits();
         assertThat(profits, hasEntry(equalTo(dish1), equalTo(25.0)));
         assertThat(profits, hasEntry(equalTo(dish2), equalTo(30.6)));
         assertThat(profits, hasEntry(equalTo(dish3), equalTo(0.0)));
@@ -288,6 +299,257 @@ class TestDirecteurController {
                 .appendln("- TESTDISH3 : 0.00€");
         assertThat(directeurController.displayDishesProfit(), equalTo(expected.toString()));
         deleteAllOrders();
+    }
+
+    @Test
+    @DisplayName("Les profits du déjeuner et du dîner sont corrects")
+    void verifyGenerateMealsProfitSucceed() {
+        Table table = tableRepository.save(new Table(2, TableStates.LIBRE, 4, null));
+        Bill newBill1 = billRepository.save(new Bill(50.0, true));
+        Bill newBill2 = billRepository.save(new Bill(50.0, false));
+        Bill newBill3 = billRepository.save(new Bill(100.0, true));
+        Bill newBill4 = billRepository.save(new Bill(100.0, true));
+        Bill newBill5 = billRepository.save(new Bill(40.0, true));
+        Meal newMeal1 = mealRepository.save(new Meal(2, Timestamp.valueOf("2021-05-21 12:00:00"), 10L, table, newBill1));
+        Meal newMeal2 = mealRepository.save(new Meal(2, Timestamp.valueOf("2021-05-21 14:00:00"), 10L, table, newBill2));
+        Meal newMeal3 = mealRepository.save(new Meal(2, Timestamp.valueOf("2021-05-21 14:00:00"), 10L, table, newBill3));
+        Meal newMeal4 = mealRepository.save(new Meal(2, Timestamp.valueOf("2021-05-21 18:00:00"), 10L, table, newBill4));
+        Meal newMeal5 = mealRepository.save(new Meal(2, Timestamp.valueOf("2021-05-21 19:00:00"), 10L, table, newBill5));
+
+        double[] profits = directeurController.generateMealsProfits();
+        assertThat(profits.length, is(2));
+        assertThat(profits[0], is(150.0));
+        assertThat(profits[1], is(140.0));
+
+        mealRepository.delete(newMeal1.getMealId());
+        mealRepository.delete(newMeal2.getMealId());
+        mealRepository.delete(newMeal3.getMealId());
+        mealRepository.delete(newMeal4.getMealId());
+        mealRepository.delete(newMeal5.getMealId());
+        tableRepository.delete(table.getTableId());
+        billRepository.delete(newBill1.getBillId());
+        billRepository.delete(newBill2.getBillId());
+        billRepository.delete(newBill3.getBillId());
+        billRepository.delete(newBill4.getBillId());
+        billRepository.delete(newBill5.getBillId());
+    }
+
+    @Test
+    @DisplayName("Les profits du déjeuner et du dîner sont égaux à 0")
+    void verifyGenerateMealsProfitFail() {
+        double[] profits = directeurController.generateMealsProfits();
+        assertThat(profits.length, is(2));
+        assertThat(profits[0], is(0.0));
+        assertThat(profits[1], is(0.0));
+    }
+
+    @Test
+    @DisplayName("Les profits du jour sont corrects")
+    void verifyGenerateDailyProfitSucceed() {
+        // Dates
+        LocalDateTime today = LocalDateTime.now();
+        LocalDateTime yesterday = LocalDateTime.now().minus(1, ChronoUnit.DAYS);
+
+        Table table = tableRepository.save(new Table(2, TableStates.LIBRE, 4, null));
+        Bill newBill1 = billRepository.save(new Bill(50.0, true));
+        Bill newBill2 = billRepository.save(new Bill(50.0, false));
+        Bill newBill4 = billRepository.save(new Bill(100.0, true));
+        Bill newBill5 = billRepository.save(new Bill(40.0, true));
+        Meal newMeal1 = mealRepository.save(new Meal(2, Timestamp.valueOf(today), 10L, table, newBill1));
+        Meal newMeal2 = mealRepository.save(new Meal(2, Timestamp.valueOf(today), 10L, table, newBill2));
+        Meal newMeal4 = mealRepository.save(new Meal(2, Timestamp.valueOf(yesterday), 10L, table, newBill4));
+        Meal newMeal5 = mealRepository.save(new Meal(2, Timestamp.valueOf(today), 10L, table, newBill5));
+
+        double profits = directeurController.generateDailyProfits();
+        assertThat(profits, is(90.0));
+
+        mealRepository.delete(newMeal1.getMealId());
+        mealRepository.delete(newMeal2.getMealId());
+        mealRepository.delete(newMeal4.getMealId());
+        mealRepository.delete(newMeal5.getMealId());
+        tableRepository.delete(table.getTableId());
+        billRepository.delete(newBill1.getBillId());
+        billRepository.delete(newBill2.getBillId());
+        billRepository.delete(newBill4.getBillId());
+        billRepository.delete(newBill5.getBillId());
+    }
+
+    @Test
+    @DisplayName("Les profits du jour sont nuls")
+    void verifyGenerateDailyProfitFail() {
+        double profits = directeurController.generateDailyProfits();
+        assertThat(profits, is(0.0));
+    }
+
+    @Test
+    @DisplayName("Les profits de la semaine sont corrects")
+    void verifyGenerateWeeklyProfitSucceed() {
+        //Dates
+        var dayOfWeek = LocalDate.of(2021, 5, 27);
+        var startOfWeek = LocalDate.of(2021, 5, 24);
+        var beforeStartOfWeek = LocalDate.of(2021, 5, 23);
+        var may25 = LocalDate.of(2021, 5, 25);
+
+        Table table = tableRepository.save(new Table(2, TableStates.LIBRE, 4, null));
+        Bill newBill1 = billRepository.save(new Bill(50.0, true));
+        Bill newBill2 = billRepository.save(new Bill(50.0, false));
+        Bill newBill3 = billRepository.save(new Bill(100.0, true));
+        Bill newBill4 = billRepository.save(new Bill(100.0, true));
+        Bill newBill5 = billRepository.save(new Bill(40.0, true));
+        Meal newMeal1 = mealRepository.save(new Meal(2, Timestamp.valueOf(dayOfWeek.atStartOfDay()), 10L, table, newBill1));
+        Meal newMeal2 = mealRepository.save(new Meal(2, Timestamp.valueOf(dayOfWeek.atStartOfDay()), 10L, table, newBill2));
+        Meal newMeal3 = mealRepository.save(new Meal(2, Timestamp.valueOf(startOfWeek.atStartOfDay()), 10L, table, newBill3));
+        Meal newMeal4 = mealRepository.save(new Meal(2, Timestamp.valueOf(may25.atStartOfDay()), 10L, table, newBill4));
+        Meal newMeal5 = mealRepository.save(new Meal(2, Timestamp.valueOf(beforeStartOfWeek.atStartOfDay()), 10L, table, newBill5));
+
+        double profits = directeurController.generateWeeklyProfits();
+        assertThat(profits, is(250.0));
+
+        mealRepository.delete(newMeal1.getMealId());
+        mealRepository.delete(newMeal2.getMealId());
+        mealRepository.delete(newMeal3.getMealId());
+        mealRepository.delete(newMeal4.getMealId());
+        mealRepository.delete(newMeal5.getMealId());
+        tableRepository.delete(table.getTableId());
+        billRepository.delete(newBill1.getBillId());
+        billRepository.delete(newBill2.getBillId());
+        billRepository.delete(newBill3.getBillId());
+        billRepository.delete(newBill4.getBillId());
+        billRepository.delete(newBill5.getBillId());
+    }
+
+    @Test
+    @DisplayName("Les profits du mois sont corrects")
+    void verifyGenerateMonthlyProfitSucceed() {
+        //Dates
+        var dayOfMonth = LocalDate.of(2021, 5, 5);
+        var startOfMonth = LocalDate.of(2021, 5, 1);
+        var beforeStartOfMonth = LocalDate.of(2021, 4, 30);
+        var may4 = LocalDate.of(2021, 5, 4);
+
+        Table table = tableRepository.save(new Table(2, TableStates.LIBRE, 4, null));
+        Bill newBill1 = billRepository.save(new Bill(50.0, true));
+        Bill newBill2 = billRepository.save(new Bill(50.0, false));
+        Bill newBill3 = billRepository.save(new Bill(100.0, true));
+        Bill newBill4 = billRepository.save(new Bill(100.0, true));
+        Bill newBill5 = billRepository.save(new Bill(40.0, true));
+        Meal newMeal1 = mealRepository.save(new Meal(2, Timestamp.valueOf(dayOfMonth.atStartOfDay()), 10L, table, newBill1));
+        Meal newMeal2 = mealRepository.save(new Meal(2, Timestamp.valueOf(dayOfMonth.atStartOfDay()), 10L, table, newBill2));
+        Meal newMeal3 = mealRepository.save(new Meal(2, Timestamp.valueOf(startOfMonth.atStartOfDay()), 10L, table, newBill3));
+        Meal newMeal4 = mealRepository.save(new Meal(2, Timestamp.valueOf(may4.atStartOfDay()), 10L, table, newBill4));
+        Meal newMeal5 = mealRepository.save(new Meal(2, Timestamp.valueOf(beforeStartOfMonth.atStartOfDay()), 10L, table, newBill5));
+
+        double profits = directeurController.generateMonthlyProfits();
+        assertThat(profits, is(250.0));
+
+        mealRepository.delete(newMeal1.getMealId());
+        mealRepository.delete(newMeal2.getMealId());
+        mealRepository.delete(newMeal3.getMealId());
+        mealRepository.delete(newMeal4.getMealId());
+        mealRepository.delete(newMeal5.getMealId());
+        tableRepository.delete(table.getTableId());
+        billRepository.delete(newBill1.getBillId());
+        billRepository.delete(newBill2.getBillId());
+        billRepository.delete(newBill3.getBillId());
+        billRepository.delete(newBill4.getBillId());
+        billRepository.delete(newBill5.getBillId());
+    }
+
+    @Test
+    @DisplayName("Les profits du mois sont nuls")
+    void verifyGenerateMonthlyProfitFail() {
+        double profits = directeurController.generateMonthlyProfits();
+        assertThat(profits, is(0.0));
+    }
+
+    @Test
+    @DisplayName("Les profits globaux sont corrects")
+    void verifyGenerateGlobalProfitsSucceed() {
+        Table table = tableRepository.save(new Table(2, TableStates.LIBRE, 4, null));
+        Bill newBill1 = billRepository.save(new Bill(50.0, true));
+        Bill newBill2 = billRepository.save(new Bill(50.0, false));
+        Bill newBill3 = billRepository.save(new Bill(100.0, true));
+        Bill newBill4 = billRepository.save(new Bill(100.0, true));
+        Bill newBill5 = billRepository.save(new Bill(40.0, true));
+        Meal newMeal1 = mealRepository.save(new Meal(2, Timestamp.valueOf("2021-05-21 12:00:00"), 10L, table, newBill1));
+        Meal newMeal2 = mealRepository.save(new Meal(2, Timestamp.valueOf("2021-05-21 14:00:00"), 10L, table, newBill2));
+        Meal newMeal3 = mealRepository.save(new Meal(2, Timestamp.valueOf("2021-05-21 14:00:00"), 10L, table, newBill3));
+        Meal newMeal4 = mealRepository.save(new Meal(2, Timestamp.valueOf("2021-05-21 18:00:00"), 10L, table, newBill4));
+        Meal newMeal5 = mealRepository.save(new Meal(2, Timestamp.valueOf("2021-05-21 19:00:00"), 10L, table, newBill5));
+
+        double profits = directeurController.generateGlobalProfits();
+        assertThat(profits, is(290.0));
+
+        mealRepository.delete(newMeal1.getMealId());
+        mealRepository.delete(newMeal2.getMealId());
+        mealRepository.delete(newMeal3.getMealId());
+        mealRepository.delete(newMeal4.getMealId());
+        mealRepository.delete(newMeal5.getMealId());
+        tableRepository.delete(table.getTableId());
+        billRepository.delete(newBill1.getBillId());
+        billRepository.delete(newBill2.getBillId());
+        billRepository.delete(newBill3.getBillId());
+        billRepository.delete(newBill4.getBillId());
+        billRepository.delete(newBill5.getBillId());
+    }
+
+    @Test
+    @DisplayName("Les profits globaux sont nuls")
+    void verifyGenerateGlobalProfitsFail() {
+        double profits = directeurController.generateGlobalProfits();
+        assertThat(profits, is(0.0));
+    }
+
+    @Test
+    @DisplayName("Analyse des ventes - pas de rentrée d'argent")
+    void verifyDisplaySalesAnalysisNoProfits() {
+        var expected = new TextStringBuilder();
+
+        when(directeurController.generateDailyProfits()).thenReturn(0.0);
+        when(directeurController.generateWeeklyProfits()).thenReturn(0.0);
+        when(directeurController.generateMonthlyProfits()).thenReturn(0.0);
+        when(directeurController.generateMealsProfits()).thenReturn(new double[]{0.0, 0.0});
+        when(directeurController.generateGlobalProfits()).thenReturn(0.0);
+
+        expected.appendln("-".repeat(50))
+                .appendln(StringUtils.center("Analyse des ventes", 50))
+                .appendln("-".repeat(50))
+                .appendNewLine()
+                .appendln("Profits du jour : Pas encore de rentrée d'argent aujourd'hui.")
+                .appendln("Profits de la semaine : Pas encore de rentrée d'argent cette semaine.")
+                .appendln("Profits du mois : Pas encore de rentrée d'argent ce mois.")
+                .appendln("Profits globaux depuis l'ouverture du restaurant :")
+                .appendln("\t- Déjeuner : Pas encore de rentrée d'argent pour les déjeuners.")
+                .appendln("\t- Dîner : Pas encore de rentrée d'argent pour les dîners.")
+                .appendln("\t- Total : Pas encore de rentrée d'argent depuis l'ouverture du restaurant.");
+
+        assertThat(directeurController.displaySalesAnalysis(), equalTo(expected.toString()));
+    }
+
+    @Test
+    @DisplayName("Analyse des ventes - rentrée d'argent")
+    void verifyDisplaySalesAnalysisWithProfitsForEachFunction() {
+        var expected = new TextStringBuilder();
+
+        when(directeurController.generateDailyProfits()).thenReturn(5.0);
+        when(directeurController.generateWeeklyProfits()).thenReturn(10.0);
+        when(directeurController.generateMonthlyProfits()).thenReturn(30.5555);
+        when(directeurController.generateMealsProfits()).thenReturn(new double[]{30.0, 0.5555});
+        when(directeurController.generateGlobalProfits()).thenReturn(55.5555);
+
+        expected.appendln("-".repeat(50))
+                .appendln(StringUtils.center("Analyse des ventes", 50))
+                .appendln("-".repeat(50))
+                .appendNewLine()
+                .appendln("Profits du jour : %.2f€", 5.0)
+                .appendln("Profits de la semaine : %.2f€", 10.0)
+                .appendln("Profits du mois : %.2f€", 30.5555)
+                .appendln("Profits globaux depuis l'ouverture du restaurant :")
+                .appendln("\t- Déjeuner : .%2f€", 30.0)
+                .appendln("\t- Dîner : %.2f€", 0.5555)
+                .appendln("\t- Total : %.2f€", 55.5555);
+
+        assertThat(directeurController.displaySalesAnalysis(), equalTo(expected.toString()));
     }
 
     @AfterEach

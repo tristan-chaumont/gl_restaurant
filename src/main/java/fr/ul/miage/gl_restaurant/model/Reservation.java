@@ -6,7 +6,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import java.sql.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.Optional;
 
@@ -23,8 +24,6 @@ public class Reservation {
     private Table table;
 
     private LocalDate reservationDate;
-
-    public Reservation() {}
 
     public Reservation(Long reservationId, boolean lunch, Table table, LocalDate reservationDate) {
         this.reservationId = reservationId;

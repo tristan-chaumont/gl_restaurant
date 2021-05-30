@@ -12,8 +12,8 @@ public class StockController {
 
     private final DishRepositoryImpl dishRepository;
     private final RawMaterialRepositoryImpl rawMaterialRepository;
-    private static final int THRESHOLDOUT_OF_STOCK_RM = 20;
-    private static final int RESTOCK_QUANTITY = 100;
+    protected static final int THRESHOLDOUT_OF_STOCK_RM = 20;
+    protected static final int RESTOCK_QUANTITY = 100;
 
     public StockController() {
         this.dishRepository = DishRepositoryImpl.getInstance();
