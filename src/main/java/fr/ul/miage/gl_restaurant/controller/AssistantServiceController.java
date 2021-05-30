@@ -3,7 +3,6 @@ package fr.ul.miage.gl_restaurant.controller;
 import fr.ul.miage.gl_restaurant.auth.Authentification;
 import fr.ul.miage.gl_restaurant.constants.TableStates;
 import fr.ul.miage.gl_restaurant.model.Table;
-import fr.ul.miage.gl_restaurant.repository.TableRepositoryImpl;
 import fr.ul.miage.gl_restaurant.utilities.PrintUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -13,8 +12,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class AssistantServiceController extends UserController {
-
-    private final TableRepositoryImpl tableRepository = TableRepositoryImpl.getInstance();
 
     /**
      * ACTIONS DE L'UTILISATEUR

@@ -54,7 +54,7 @@ class TestDirecteurController {
     }
 
     @BeforeEach
-    void initiazeBeforeEach(){
+    void initializeBeforeEach(){
         rm1 = rawMaterialRepository.save(new RawMaterial("Riz", 100, Units.KG));
     }
 
@@ -161,8 +161,8 @@ class TestDirecteurController {
         directeurController.addUser("bouchev", "Bouché", "Valentine", Roles.MAITRE_HOTEL);
         var res = userRepository.findAll();
         var user = userRepository.findByLogin("bouchev");
-        userRepository.delete(user.get().getUserId());
         assertThat(user.isPresent(), is(true));
+        userRepository.delete(user.get().getUserId());
         assertThat(res.size(), is(6));
     }
 
@@ -289,6 +289,48 @@ class TestDirecteurController {
                 .appendln("- TESTDISH3 : 0.00€");
         assertThat(directeurController.displayDishesProfit(), equalTo(expected.toString()));
         deleteAllOrders();
+    }
+
+    @Test
+    @DisplayName("Les profits du déjeuner et du dîner sont corrects")
+    void verifyGenerateMealsProfitSucceed() {
+        Table table = tableRepository.save(new Table(2, TableStates.LIBRE, 4, null));
+        Bill newBill1 = billRepository.save(new Bill(50.0, true));
+        Bill newBill2 = billRepository.save(new Bill(50.0, false));
+        Bill newBill3 = billRepository.save(new Bill(100.0, true));
+        Bill newBill4 = billRepository.save(new Bill(100.0, true));
+        Bill newBill5 = billRepository.save(new Bill(40.0, true));
+        Meal newMeal1 = mealRepository.save(new Meal(2, Timestamp.valueOf("2021-05-21 12:00:00"), 10L, table, newBill1));
+        Meal newMeal2 = mealRepository.save(new Meal(2, Timestamp.valueOf("2021-05-21 14:00:00"), 10L, table, newBill2));
+        Meal newMeal3 = mealRepository.save(new Meal(2, Timestamp.valueOf("2021-05-21 14:00:00"), 10L, table, newBill3));
+        Meal newMeal4 = mealRepository.save(new Meal(2, Timestamp.valueOf("2021-05-21 18:00:00"), 10L, table, newBill4));
+        Meal newMeal5 = mealRepository.save(new Meal(2, Timestamp.valueOf("2021-05-21 19:00:00"), 10L, table, newBill5));
+
+        double[] profits = directeurController.generateMealsProfit();
+        assertThat(profits.length, is(2));
+        assertThat(profits[0], is(150.0));
+        assertThat(profits[1], is(140.0));
+
+        mealRepository.delete(newMeal1.getMealId());
+        mealRepository.delete(newMeal2.getMealId());
+        mealRepository.delete(newMeal3.getMealId());
+        mealRepository.delete(newMeal4.getMealId());
+        mealRepository.delete(newMeal5.getMealId());
+        tableRepository.delete(table.getTableId());
+        billRepository.delete(newBill1.getBillId());
+        billRepository.delete(newBill2.getBillId());
+        billRepository.delete(newBill3.getBillId());
+        billRepository.delete(newBill4.getBillId());
+        billRepository.delete(newBill5.getBillId());
+    }
+
+    @Test
+    @DisplayName("Les profits du déjeuner et du dîner sont égaux à 0")
+    void verifyGenerateMealsProfitFail() {
+        double[] profits = directeurController.generateMealsProfit();
+        assertThat(profits.length, is(2));
+        assertThat(profits[0], is(0.0));
+        assertThat(profits[1], is(0.0));
     }
 
     @AfterEach

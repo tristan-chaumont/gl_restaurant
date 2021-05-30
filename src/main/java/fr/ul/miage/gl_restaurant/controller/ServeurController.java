@@ -4,7 +4,6 @@ import fr.ul.miage.gl_restaurant.auth.Authentification;
 import fr.ul.miage.gl_restaurant.constants.Roles;
 import fr.ul.miage.gl_restaurant.constants.TableStates;
 import fr.ul.miage.gl_restaurant.model.*;
-import fr.ul.miage.gl_restaurant.repository.*;
 import fr.ul.miage.gl_restaurant.utilities.InputUtils;
 import fr.ul.miage.gl_restaurant.utilities.PrintUtils;
 import lombok.Getter;
@@ -21,12 +20,6 @@ public class ServeurController extends UserController {
 
     @Getter
     private Order order;
-
-    private final OrderRepositoryImpl orderRepository = OrderRepositoryImpl.getInstance();
-    private final TableRepositoryImpl tableRepository = TableRepositoryImpl.getInstance();
-    private final RawMaterialRepositoryImpl rawMaterialRepository = RawMaterialRepositoryImpl.getInstance();
-    private final DishRepositoryImpl dishRepository = DishRepositoryImpl.getInstance();
-    private final MealRepositoryImpl mealRepository = MealRepositoryImpl.getInstance();
 
     /**
      * ACTIONS DE L'UTILISATEUR

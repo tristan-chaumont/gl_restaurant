@@ -3,11 +3,7 @@ package fr.ul.miage.gl_restaurant.controller;
 import fr.ul.miage.gl_restaurant.auth.Authentification;
 import fr.ul.miage.gl_restaurant.constants.Roles;
 import fr.ul.miage.gl_restaurant.constants.Units;
-import fr.ul.miage.gl_restaurant.model.Dish;
-import fr.ul.miage.gl_restaurant.model.Order;
-import fr.ul.miage.gl_restaurant.model.RawMaterial;
-import fr.ul.miage.gl_restaurant.model.User;
-import fr.ul.miage.gl_restaurant.repository.*;
+import fr.ul.miage.gl_restaurant.model.*;
 import fr.ul.miage.gl_restaurant.utilities.InputUtils;
 import fr.ul.miage.gl_restaurant.utilities.PrintUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -20,12 +16,7 @@ import java.util.stream.IntStream;
 
 public class DirecteurController extends UserController {
 
-    private final DishRepositoryImpl dishRepository = DishRepositoryImpl.getInstance();
-    private final RawMaterialRepositoryImpl rawMaterialRepository = RawMaterialRepositoryImpl.getInstance();
-    private final OrderRepositoryImpl orderRepository = OrderRepositoryImpl.getInstance();
     private final StockController stockController;
-    private final UserRepositoryImpl userRepository = UserRepositoryImpl.getInstance();
-    private final TableRepositoryImpl tableRepository = TableRepositoryImpl.getInstance();
 
     /**
      * ACTION DE L'UTILISATEUR
@@ -410,6 +401,23 @@ public class DirecteurController extends UserController {
                         Map.Entry::getValue,
                         (oldValue, newValue) -> oldValue, LinkedHashMap::new
                 ));
+    }
+
+    /**
+     * Calcul les profits totaux du déjeuner et du dîner.
+     * @return Un tableau avec le profit du déjeuner et celui du dîner.
+     */
+    protected double[] generateMealsProfit() {
+        var profits = new double[2];
+        List<Meal> meals = mealRepository.findAll().stream().filter(m -> m.getBill() != null && m.getBill().isPaid()).collect(Collectors.toList());
+        meals.forEach(m -> {
+            if (m.getStartDate().toLocalDateTime().getHour() < 17) {
+                profits[0] += m.getBill().getTotal();
+            } else {
+                profits[1] += m.getBill().getTotal();
+            }
+        });
+        return profits;
     }
 
     protected String displayDishesProfit() {

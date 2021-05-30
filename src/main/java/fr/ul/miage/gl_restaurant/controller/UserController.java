@@ -2,6 +2,7 @@ package fr.ul.miage.gl_restaurant.controller;
 
 import fr.ul.miage.gl_restaurant.auth.Authentification;
 import fr.ul.miage.gl_restaurant.model.Table;
+import fr.ul.miage.gl_restaurant.repository.*;
 import fr.ul.miage.gl_restaurant.utilities.InputUtils;
 import fr.ul.miage.gl_restaurant.utilities.PrintUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -11,6 +12,18 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public abstract class UserController {
+
+    /**
+     * Repositories
+     */
+    protected final RawMaterialRepositoryImpl rawMaterialRepository = RawMaterialRepositoryImpl.getInstance();
+    protected final OrderRepositoryImpl orderRepository = OrderRepositoryImpl.getInstance();
+    protected final UserRepositoryImpl userRepository = UserRepositoryImpl.getInstance();
+    protected final TableRepositoryImpl tableRepository = TableRepositoryImpl.getInstance();
+    protected final MealRepositoryImpl mealRepository = MealRepositoryImpl.getInstance();
+    protected final DishRepositoryImpl dishRepository = DishRepositoryImpl.getInstance();
+    protected final BillRepositoryImpl billRepository = BillRepositoryImpl.getInstance();
+    protected final ReservationRepositoryImpl reservationRepository = ReservationRepositoryImpl.getInstance();
 
     protected Authentification auth;
 

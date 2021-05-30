@@ -4,7 +4,6 @@ import fr.ul.miage.gl_restaurant.auth.Authentification;
 import fr.ul.miage.gl_restaurant.constants.Roles;
 import fr.ul.miage.gl_restaurant.constants.TableStates;
 import fr.ul.miage.gl_restaurant.model.*;
-import fr.ul.miage.gl_restaurant.repository.*;
 import fr.ul.miage.gl_restaurant.utilities.DateUtils;
 import fr.ul.miage.gl_restaurant.utilities.InputUtils;
 import fr.ul.miage.gl_restaurant.utilities.PrintUtils;
@@ -22,13 +21,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class MaitreHotelController extends UserController {
-
-    private final TableRepositoryImpl tableRepository = TableRepositoryImpl.getInstance();
-    private final MealRepositoryImpl mealRepository = MealRepositoryImpl.getInstance();
-    private final UserRepositoryImpl userRepository = UserRepositoryImpl.getInstance();
-    private final OrderRepositoryImpl orderRepository = OrderRepositoryImpl.getInstance();
-    private final BillRepositoryImpl billRepository = BillRepositoryImpl.getInstance();
-    private final ReservationRepositoryImpl reservationRepository = ReservationRepositoryImpl.getInstance();
 
     /**
      * ACTIONS DE L'UTILISATEUR
