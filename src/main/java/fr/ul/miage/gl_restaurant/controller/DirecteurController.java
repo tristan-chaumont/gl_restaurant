@@ -29,6 +29,7 @@ public class DirecteurController extends UserController {
     private static final String ACTION_4 = "4 : Ajouter des plats au menu du jour";
     private static final String ACTION_5 = "5 : Retirer des plats du menu du jour";
     private static final String ACTION_6 = "6 : Gérer les utilisateurs";
+    private static final String ACTION_7 = "7 : Afficher l'analyse des ventes";
 
     private static final String SUB_ACTION_0 = "0 : Retour";
 
@@ -58,7 +59,8 @@ public class DirecteurController extends UserController {
                 ACTION_3,
                 ACTION_4,
                 ACTION_5,
-                ACTION_6
+                ACTION_6,
+                ACTION_7
         ));
         this.rmSubActions = new LinkedHashSet<>();
         this.rmSubActions.addAll(Arrays.asList(
@@ -484,6 +486,66 @@ public class DirecteurController extends UserController {
         return generateProfitsBetweenDates(startOfMonth, today);
     }
 
+    /**
+     * Génère les profits globaux depuis l'ouverture du restaurant.
+     * @return Les profits globaux.
+     */
+    protected double generateGlobalProfits() {
+        List<Meal> meals = mealRepository.findAll().stream().filter(m -> m.getBill() != null && m.getBill().isPaid()).collect(Collectors.toList());
+        return meals.stream().mapToDouble(m -> m.getBill().getTotal()).sum();
+    }
+
+    protected String displaySalesAnalysis() {
+        var stringBuilder = new TextStringBuilder();
+        stringBuilder.appendln("-".repeat(50))
+                .appendln(StringUtils.center("Analyse des ventes", 50))
+                .appendln("-".repeat(50));
+        stringBuilder.appendNewLine();
+        // Profits du jour
+        double profits = generateDailyProfits();
+        if (profits == 0.0) {
+            stringBuilder.appendln("Profits du jour : Pas encore de rentrée d'argent aujourd'hui.");
+        } else {
+            stringBuilder.appendln("Profits du jour : %.2f€", profits);
+        }
+        // Profits de la semaine
+        profits = generateWeeklyProfits();
+        if (profits == 0.0) {
+            stringBuilder.appendln("Profits de la semaine : Pas encore de rentrée d'argent cette semaine.");
+        } else {
+            stringBuilder.appendln("Profits de la semaine : %.2f€", profits);
+        }
+        // Profits du mois
+        profits = generateMonthlyProfits();
+        if (profits == 0.0) {
+            stringBuilder.appendln("Profits du mois : Pas encore de rentrée d'argent ce mois.");
+        } else {
+            stringBuilder.appendln("Profits du mois : %.2f€", profits);
+        }
+        stringBuilder.appendln("Profits globaux depuis l'ouverture du restaurant :");
+        // Profits globaux des déjeuners et dîners
+        var mealsProfits = generateMealsProfits();
+        if (mealsProfits[0] == 0.0) {
+            stringBuilder.appendln("\t- Déjeuner : Pas encore de rentrée d'argent pour les déjeuners.");
+        } else {
+            stringBuilder.appendln("\t- Déjeuner : .%2f€", mealsProfits[0]);
+        }
+        if (mealsProfits[1] == 0.0) {
+            stringBuilder.appendln("\t- Dîner : Pas encore de rentrée d'argent pour les dîners.");
+        } else {
+            stringBuilder.appendln("\t- Dîner : %.2f€", mealsProfits[1]);
+        }
+        // Profit total
+        profits = generateGlobalProfits();
+        if (profits == 0.0) {
+            stringBuilder.appendln("\t- Total : Pas encore de rentrée d'argent depuis l'ouverture du restaurant.");
+        } else {
+            stringBuilder.appendln("\t- Total : %.2f€", profits);
+        }
+
+        return stringBuilder.toString();
+    }
+
     protected String displayDishesProfit() {
         PrintUtils.println("-".repeat(50));
         PrintUtils.println(StringUtils.center("Profits des plats du restaurant", 50));
@@ -565,6 +627,9 @@ public class DirecteurController extends UserController {
                 break;
             case 6:
                 handleUsers();
+                break;
+            case 7:
+                PrintUtils.println(displaySalesAnalysis());
                 break;
             default:
                 break;

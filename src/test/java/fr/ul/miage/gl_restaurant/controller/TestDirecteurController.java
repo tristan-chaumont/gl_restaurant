@@ -8,8 +8,12 @@ import fr.ul.miage.gl_restaurant.constants.Units;
 import fr.ul.miage.gl_restaurant.model.Order;
 import fr.ul.miage.gl_restaurant.model.*;
 import fr.ul.miage.gl_restaurant.repository.*;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.TextStringBuilder;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -25,9 +29,12 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class TestDirecteurController {
 
+    @Spy
     static DirecteurController directeurController;
     static RawMaterialRepositoryImpl rawMaterialRepository;
     static TableRepositoryImpl tableRepository;
@@ -456,10 +463,93 @@ class TestDirecteurController {
     }
 
     @Test
-    @DisplayName("Les profits de la semaine sont nuls")
-    void verifyGenerateWeeklyProfitFail() {
-        double profits = directeurController.generateWeeklyProfits();
+    @DisplayName("Les profits globaux sont corrects")
+    void verifyGenerateGlobalProfitsSucceed() {
+        Table table = tableRepository.save(new Table(2, TableStates.LIBRE, 4, null));
+        Bill newBill1 = billRepository.save(new Bill(50.0, true));
+        Bill newBill2 = billRepository.save(new Bill(50.0, false));
+        Bill newBill3 = billRepository.save(new Bill(100.0, true));
+        Bill newBill4 = billRepository.save(new Bill(100.0, true));
+        Bill newBill5 = billRepository.save(new Bill(40.0, true));
+        Meal newMeal1 = mealRepository.save(new Meal(2, Timestamp.valueOf("2021-05-21 12:00:00"), 10L, table, newBill1));
+        Meal newMeal2 = mealRepository.save(new Meal(2, Timestamp.valueOf("2021-05-21 14:00:00"), 10L, table, newBill2));
+        Meal newMeal3 = mealRepository.save(new Meal(2, Timestamp.valueOf("2021-05-21 14:00:00"), 10L, table, newBill3));
+        Meal newMeal4 = mealRepository.save(new Meal(2, Timestamp.valueOf("2021-05-21 18:00:00"), 10L, table, newBill4));
+        Meal newMeal5 = mealRepository.save(new Meal(2, Timestamp.valueOf("2021-05-21 19:00:00"), 10L, table, newBill5));
+
+        double profits = directeurController.generateGlobalProfits();
+        assertThat(profits, is(290.0));
+
+        mealRepository.delete(newMeal1.getMealId());
+        mealRepository.delete(newMeal2.getMealId());
+        mealRepository.delete(newMeal3.getMealId());
+        mealRepository.delete(newMeal4.getMealId());
+        mealRepository.delete(newMeal5.getMealId());
+        tableRepository.delete(table.getTableId());
+        billRepository.delete(newBill1.getBillId());
+        billRepository.delete(newBill2.getBillId());
+        billRepository.delete(newBill3.getBillId());
+        billRepository.delete(newBill4.getBillId());
+        billRepository.delete(newBill5.getBillId());
+    }
+
+    @Test
+    @DisplayName("Les profits globaux sont nuls")
+    void verifyGenerateGlobalProfitsFail() {
+        double profits = directeurController.generateGlobalProfits();
         assertThat(profits, is(0.0));
+    }
+
+    @Test
+    @DisplayName("Analyse des ventes - pas de rentrée d'argent")
+    void verifyDisplaySalesAnalysisNoProfits() {
+        var expected = new TextStringBuilder();
+
+        when(directeurController.generateDailyProfits()).thenReturn(0.0);
+        when(directeurController.generateWeeklyProfits()).thenReturn(0.0);
+        when(directeurController.generateMonthlyProfits()).thenReturn(0.0);
+        when(directeurController.generateMealsProfits()).thenReturn(new double[]{0.0, 0.0});
+        when(directeurController.generateGlobalProfits()).thenReturn(0.0);
+
+        expected.appendln("-".repeat(50))
+                .appendln(StringUtils.center("Analyse des ventes", 50))
+                .appendln("-".repeat(50))
+                .appendNewLine()
+                .appendln("Profits du jour : Pas encore de rentrée d'argent aujourd'hui.")
+                .appendln("Profits de la semaine : Pas encore de rentrée d'argent cette semaine.")
+                .appendln("Profits du mois : Pas encore de rentrée d'argent ce mois.")
+                .appendln("Profits globaux depuis l'ouverture du restaurant :")
+                .appendln("\t- Déjeuner : Pas encore de rentrée d'argent pour les déjeuners.")
+                .appendln("\t- Dîner : Pas encore de rentrée d'argent pour les dîners.")
+                .appendln("\t- Total : Pas encore de rentrée d'argent depuis l'ouverture du restaurant.");
+
+        assertThat(directeurController.displaySalesAnalysis(), equalTo(expected.toString()));
+    }
+
+    @Test
+    @DisplayName("Analyse des ventes - rentrée d'argent")
+    void verifyDisplaySalesAnalysisWithProfitsForEachFunction() {
+        var expected = new TextStringBuilder();
+
+        when(directeurController.generateDailyProfits()).thenReturn(5.0);
+        when(directeurController.generateWeeklyProfits()).thenReturn(10.0);
+        when(directeurController.generateMonthlyProfits()).thenReturn(30.5555);
+        when(directeurController.generateMealsProfits()).thenReturn(new double[]{30.0, 0.5555});
+        when(directeurController.generateGlobalProfits()).thenReturn(55.5555);
+
+        expected.appendln("-".repeat(50))
+                .appendln(StringUtils.center("Analyse des ventes", 50))
+                .appendln("-".repeat(50))
+                .appendNewLine()
+                .appendln("Profits du jour : %.2f€", 5.0)
+                .appendln("Profits de la semaine : %.2f€", 10.0)
+                .appendln("Profits du mois : %.2f€", 30.5555)
+                .appendln("Profits globaux depuis l'ouverture du restaurant :")
+                .appendln("\t- Déjeuner : .%2f€", 30.0)
+                .appendln("\t- Dîner : %.2f€", 0.5555)
+                .appendln("\t- Total : %.2f€", 55.5555);
+
+        assertThat(directeurController.displaySalesAnalysis(), equalTo(expected.toString()));
     }
 
     @AfterEach
