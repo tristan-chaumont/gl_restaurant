@@ -33,3 +33,16 @@ url=<url vers votre DB>   # exemple : jdbc:postgresql://localhost:5432/restauran
 username=<identifiant de connexion à la DB>
 password=<mot de passe de connexion à la DB>
 ```
+
+# Infos sur les tests
+
+## Tests omis
+
+Nous avons décidé de ne pas tester certaines classes, à savoir `InputUtils` qui lit des entrées utilisateur, `PrintUtils` qui effectue un appel à `System.out.printf` et la classe `Main`.
+
+## SonarQube
+
+Dans SonarQube, cela se traduit par l'ajout des exclusions suivantes pour le Code Coverage : 
+- `**/utilities/InputUtils.java`
+- `**/utilities/PrintUtils.java`
+- `**/Main.java`
